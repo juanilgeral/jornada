@@ -719,6 +719,67 @@ let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
 
+// Chave do estado salvo por usuário + data
+function stateKey() {
+  const hoje = new Date();
+  const d = `${hoje.getFullYear()}-${hoje.getMonth()+1}-${hoje.getDate()}`;
+  return `jt_state_${currentUser?.login}_${d}`;
+}
+function salvarEstado() {
+  localStorage.setItem(stateKey(), JSON.stringify(jornadaState));
+}
+function carregarEstado() {
+  const saved = localStorage.getItem(stateKey());
+  if (saved) jornadaState = JSON.parse(saved);
+  else jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
+}
+function restaurarBotoes() {
+  const ordem = ['inicio', 'parada', 'retorno', 'fim'];
+  let proximoIdx = 0;
+  for (let i = 0; i < ordem.length; i++) {
+    if (jornadaState[ordem[i]]) proximoIdx = i + 1;
+  }
+  ordem.forEach((tipo, idx) => {
+    const btn = document.getElementById(`btn-${tipo}`);
+    const timeEl = document.getElementById(`time-${tipo}`);
+    if (jornadaState[tipo]) {
+      btn.disabled = true;
+      btn.classList.remove('available', 'active-btn');
+      btn.classList.add('done');
+      timeEl.textContent = jornadaState[tipo];
+      if (!btn.querySelector('.btn-badge')) {
+        const badge = document.createElement('div');
+        badge.className = 'btn-badge';
+        badge.textContent = '✓';
+        btn.appendChild(badge);
+      }
+      updateStatusDisplay(tipo);
+      addToHistoryFromState(tipo, jornadaState[tipo]);
+    } else if (idx <= proximoIdx) {
+      btn.disabled = false;
+      btn.classList.add('available');
+      btn.classList.remove('done');
+    } else {
+      btn.disabled = true;
+      btn.classList.remove('available', 'done');
+    }
+  });
+}
+function addToHistoryFromState(tipo, hora) {
+  const list = document.getElementById('history-list');
+  if (list.querySelector('[style*="text-align:center"]') || list.textContent.includes('Nenhum')) list.innerHTML = '';
+  const cores = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `
+    <span class="history-dot" style="background:${cores[tipo]}"></span>
+    <span class="history-event">${EVENTOS[tipo].label}</span>
+    <span class="history-time">${hora}</span>
+    <span class="history-sent">✓</span>
+  `;
+  list.appendChild(item);
+}
+
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
@@ -795,7 +856,9 @@ function iniciarApp() {
   document.getElementById('header-user').textContent = currentUser.nome;
   initClock();
   iniciarGPS();
+  carregarEstado();
   renderHistory();
+  restaurarBotoes();
 }
 
 // ═══════════════════════════════════════════
@@ -887,6 +950,7 @@ async function registrar(tipo) {
   };
 
   jornadaState[tipo] = hora;
+  salvarEstado();
   document.getElementById(`time-${tipo}`).textContent = hora;
   marcarBotao(tipo);
 
@@ -950,7 +1014,6 @@ function addToHistory(tipo, hora) {
 }
 
 function renderHistory() {
-  // Limpa ao iniciar (dados ficam no Sheets)
   document.getElementById('history-list').innerHTML =
     '<div style="font-size:0.78rem; color:var(--muted); text-align:center; padding:1rem;">Nenhum registro ainda</div>';
 }
