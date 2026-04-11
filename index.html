@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0f1e">
+<title>Jornada Juanil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2234;
+    --border: #1f2d45;
+    --accent: #00d4aa;
+    --accent2: #0066ff;
+    --warn: #ff6b35;
+    --text: #e8edf5;
+    --muted: #5a6a82;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; min-height: 100dvh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at 30% 20%, #001a3a 0%, var(--bg) 60%),
+                radial-gradient(ellipse at 80% 80%, #002a1a 0%, transparent 50%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #login-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 39px,
+      rgba(0,212,170,0.03) 40px
+    ), repeating-linear-gradient(
+      90deg, transparent, transparent 39px,
+      rgba(0,212,170,0.03) 40px
+    );
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 360px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .brand {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .brand-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 0 40px rgba(0,212,170,0.3);
+  }
+
+  .brand h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .brand span {
+    color: var(--accent);
+  }
+
+  .brand p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .form-group input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-group input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,212,170,0.1);
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #00a885);
+    color: #001a14;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  }
+
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:hover { box-shadow: 0 0 20px rgba(0,212,170,0.4); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .error-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+    color: var(--red);
+    margin-top: 0.75rem;
+    display: none;
+  }
+
+  /* ── MAIN APP ── */
+  #app-screen {
+    background: var(--bg);
+  }
+
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-left h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .header-left p {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .btn-logout {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-logout:hover { color: var(--red); border-color: var(--red); }
+
+  .app-body {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* ── STATUS CARD ── */
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .status-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 16px 16px 0 0;
+  }
+
+  .status-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .status-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .clock-display {
+    font-size: 2.2rem;
+    font-weight: 500;
+    letter-spacing: -1px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .date-display {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  /* ── GPS CARD ── */
+  .gps-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .gps-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(0,102,255,0.15);
+    border: 1px solid rgba(0,102,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .gps-info { flex: 1; min-width: 0; }
+  .gps-info p { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .gps-coords {
+    font-size: 0.78rem;
+    color: var(--text);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gps-status {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
+  .gps-ok { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .gps-wait { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+  .gps-err { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+  /* ── JORNADA BUTTONS ── */
+  .jornada-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .jornada-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 0.75rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .jornada-btn:active { transform: scale(0.96); }
+
+  .jornada-btn.available:hover {
+    border-color: var(--accent);
+    background: rgba(0,212,170,0.05);
+  }
+
+  .jornada-btn.done {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .jornada-btn.active-btn {
+    border-color: var(--accent);
+    background: rgba(0,212,170,0.08);
+    box-shadow: 0 0 20px rgba(0,212,170,0.15);
+  }
+
+  .jornada-btn .btn-icon {
+    font-size: 1.6rem;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .jornada-btn .btn-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--text);
+    display: block;
+    line-height: 1.2;
+  }
+
+  .jornada-btn .btn-time {
+    font-size: 0.68rem;
+    color: var(--accent);
+    margin-top: 0.3rem;
+    display: block;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .jornada-btn .btn-badge {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 16px; height: 16px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    color: white;
+  }
+
+  /* ── HISTORY ── */
+  .section-title {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    animation: slide-in 0.3s ease;
+  }
+
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .history-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .history-event { flex: 1; color: var(--text); }
+  .history-time { color: var(--muted); font-size: 0.72rem; }
+  .history-sent { color: var(--green); font-size: 0.65rem; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.82rem;
+    color: var(--text);
+    z-index: 999;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+  #toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+
+  /* ── LOADING OVERLAY ── */
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,15,30,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    display: none;
+  }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SETUP SCREEN ── */
+  #setup-screen {
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at 70% 30%, #001a3a 0%, var(--bg) 60%);
+  }
+
+  .setup-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+  }
+
+  .setup-card h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    color: var(--accent);
+  }
+
+  .setup-card p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .setup-card .info-box {
+    background: rgba(0,102,255,0.08);
+    border: 1px solid rgba(0,102,255,0.2);
+    border-radius: 10px;
+    padding: 0.9rem;
+    font-size: 0.75rem;
+    color: #7eb3ff;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .setup-card .info-box strong { color: var(--text); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 380px) {
+    .jornada-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN (primeira vez) -->
+<div id="setup-screen" class="screen">
+  <div class="setup-card">
+    <h2>⚙️ Configuração Inicial</h2>
+    <p>Configure a URL do Google Apps Script para enviar os dados à planilha.</p>
+    <div class="info-box">
+      <strong>Como obter a URL:</strong><br>
+      1. Abra sua planilha no Google Sheets<br>
+      2. Menu: Extensões → Apps Script<br>
+      3. Cole o código do arquivo <strong>script.gs</strong><br>
+      4. Implante como "Aplicativo da Web"<br>
+      5. Copie a URL gerada aqui
+    </div>
+    <div class="form-group">
+      <label>URL do Apps Script</label>
+      <input type="url" id="setup-url" placeholder="https://script.google.com/macros/s/..." autocomplete="off">
+    </div>
+    <button class="btn-primary" onclick="saveSetup()">💾 Salvar e Continuar</button>
+  </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="screen active">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">🚌</div>
+      <h1>Jornada <span>Juanil</span></h1>
+      <p>Controle de Jornada · Rodoviários</p>
+    </div>
+    <div class="form-group">
+      <label>Usuário / Matrícula</label>
+      <input type="text" id="login-user" placeholder="ex: joao.silva" autocomplete="username" autocapitalize="none">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="btn-primary" onclick="doLogin()" id="btn-login">Entrar</button>
+    <div class="error-msg" id="login-error">Usuário ou senha incorretos.</div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen" class="screen">
+  <div class="app-header">
+    <div class="header-left">
+      <h2>Jornada Juanil</h2>
+      <p id="header-user">—</p>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Sair</button>
+  </div>
+
+  <div class="app-body">
+
+    <!-- Status + Relógio -->
+    <div class="status-card">
+      <div class="clock-display" id="clock">00:00:00</div>
+      <div class="date-display" id="datedisp">—</div>
+      <div style="margin-top:0.75rem; display:flex; align-items:center; gap:0.5rem;">
+        <span class="status-dot" id="status-dot" style="background:var(--muted)"></span>
+        <span style="font-size:0.78rem; color:var(--muted)" id="status-text">Nenhum registro hoje</span>
+      </div>
+    </div>
+
+    <!-- GPS -->
+    <div class="gps-card">
+      <div class="gps-icon">📍</div>
+      <div class="gps-info">
+        <p>Localização GPS</p>
+        <div class="gps-coords" id="gps-coords">Aguardando...</div>
+      </div>
+      <span class="gps-status gps-wait" id="gps-badge">aguard.</span>
+    </div>
+
+    <!-- Botões Jornada -->
+    <div>
+      <div class="section-title">Registrar Ponto</div>
+      <div class="jornada-grid">
+        <button class="jornada-btn available" id="btn-inicio" onclick="registrar('inicio')">
+          <span class="btn-icon">🟢</span>
+          <span class="btn-label">Início de Jornada</span>
+          <span class="btn-time" id="time-inicio">—</span>
+        </button>
+        <button class="jornada-btn" id="btn-parada" onclick="registrar('parada')" disabled>
+          <span class="btn-icon">🍽️</span>
+          <span class="btn-label">Parada Refeição</span>
+          <span class="btn-time" id="time-parada">—</span>
+        </button>
+        <button class="jornada-btn" id="btn-retorno" onclick="registrar('retorno')" disabled>
+          <span class="btn-icon">↩️</span>
+          <span class="btn-label">Retorno Refeição</span>
+          <span class="btn-time" id="time-retorno">—</span>
+        </button>
+        <button class="jornada-btn" id="btn-fim" onclick="registrar('fim')" disabled>
+          <span class="btn-icon">🔴</span>
+          <span class="btn-label">Fim de Jornada</span>
+          <span class="btn-time" id="time-fim">—</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Histórico do dia -->
+    <div>
+      <div class="section-title">Registros de Hoje</div>
+      <div class="history-list" id="history-list">
+        <div style="font-size:0.78rem; color:var(--muted); text-align:center; padding:1rem;">
+          Nenhum registro ainda
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+<!-- Loading -->
+<div id="loading"><div class="spinner"></div></div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG — USUÁRIOS (adicione aqui)
+// Em produção, isso fica no Apps Script
+// ═══════════════════════════════════════════
+const USERS = {
+  // ── GESTOR ──
+  "admin":          { senha: "Admin@2024!",     nome: "Administrador" },
+
+  // ── MOTORISTAS ──
+  "adriano":        { senha: "Adri@2024",       nome: "Adriano" },
+  "alexandre":      { senha: "Alex@2024",       nome: "Alexandre" },
+  "anderson":       { senha: "Ande@2024",       nome: "Anderson" },
+  "andre":          { senha: "Andr@2024",       nome: "André" },
+  "camara":         { senha: "Cama@2024",       nome: "Camara" },
+  "celio":          { senha: "Celi@2024",       nome: "Célio" },
+  "claudinei":      { senha: "Cldi@2024",       nome: "Claudinei" },
+  "claudio":        { senha: "Clau@2024",       nome: "Cláudio" },
+  "devanilso":      { senha: "Deva@2024",       nome: "Devanilso" },
+  "edilson":        { senha: "Edil@2024",       nome: "Edilson" },
+  "eduardo":        { senha: "Edua@2024",       nome: "Eduardo" },
+  "gilmar":         { senha: "Gilm@2024",       nome: "Gilmar" },
+  "heriberto":      { senha: "Heri@2024",       nome: "Heriberto" },
+  "isaias":         { senha: "Isai@2024",       nome: "Isaias" },
+  "joel":           { senha: "Joel@2024",       nome: "Joel" },
+  "luiz":           { senha: "Luiz@2024",       nome: "Luíz" },
+  "marcio":         { senha: "Marc@2024",       nome: "Márcio" },
+  "martins":        { senha: "Mart@2024",       nome: "Martins" },
+  "medeiros":       { senha: "Mede@2024",       nome: "Medeiros" },
+  "neves":          { senha: "Neve@2024",       nome: "Neves" },
+  "nogueira":       { senha: "Nogu@2024",       nome: "Nogueira" },
+  "oliveira":       { senha: "Oliv@2024",       nome: "Oliveira" },
+  "rene":           { senha: "Rene@2024",       nome: "René" },
+  "ricardo":        { senha: "Rica@2024",       nome: "Ricardo" },
+  "rogerio":        { senha: "Roge@2024",       nome: "Rogério" },
+  "rosendo":        { senha: "Rose@2024",       nome: "Rosendo" },
+  "sandro":         { senha: "Sand@2024",       nome: "Sandro" },
+  "sergio":         { senha: "Serg@2024",       nome: "Sérgio" },
+  "sergio.silva":   { senha: "SeSi@2024",       nome: "Sérgio Silva" },
+  "vagner":         { senha: "Vagn@2024",       nome: "Vagner" },
+  "valdir":         { senha: "Vald@2024",       nome: "Valdir" },
+  "walmir":         { senha: "Walm@2024",       nome: "Walmir" },
+  "marcelo.duarte": { senha: "MaDu@2024",       nome: "Marcelo Duarte" },
+  "roberto":        { senha: "Robe@2024",       nome: "Roberto" },
+  "deric":          { senha: "Deri@2024",       nome: "Deric" },
+  "antonio":        { senha: "Anto@2024",       nome: "Antônio" },
+};
+
+// ═══════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════
+let currentUser = null;
+let gpsData = null;
+let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
+const SCRIPT_URL_KEY = 'jornadatrack_script_url';
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load', () => {
+  // Verificar URL configurada
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) {
+    showScreen('setup-screen');
+    return;
+  }
+  // Verificar sessão ativa
+  const saved = sessionStorage.getItem('jt_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    iniciarApp();
+    return;
+  }
+  showScreen('login-screen');
+  initClock();
+});
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════
+function saveSetup() {
+  const url = document.getElementById('setup-url').value.trim();
+  if (!url.startsWith('https://script.google.com/macros/')) {
+    showToast('❌ URL inválida', 'error'); return;
+  }
+  localStorage.setItem(SCRIPT_URL_KEY, url);
+  showScreen('login-screen');
+  initClock();
+}
+
+// ═══════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════
+function doLogin() {
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+
+  if (!USERS[user] || USERS[user].senha !== pass) {
+    err.style.display = 'block';
+    return;
+  }
+  currentUser = { login: user, nome: USERS[user].nome };
+  sessionStorage.setItem('jt_user', JSON.stringify(currentUser));
+  iniciarApp();
+}
+
+function doLogout() {
+  if (!confirm('Confirmar saída?')) return;
+  sessionStorage.removeItem('jt_user');
+  currentUser = null;
+  jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
+  gpsData = null;
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  showScreen('login-screen');
+}
+
+// ═══════════════════════════════════════════
+// APP INIT
+// ═══════════════════════════════════════════
+function iniciarApp() {
+  showScreen('app-screen');
+  document.getElementById('header-user').textContent = currentUser.nome;
+  initClock();
+  iniciarGPS();
+  renderHistory();
+}
+
+// ═══════════════════════════════════════════
+// RELÓGIO
+// ═══════════════════════════════════════════
+function initClock() {
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+function updateClock() {
+  const now = new Date();
+  const gmt3 = new Date(now.getTime() - (now.getTimezoneOffset() + 180) * 60000);
+  // Usa horário local do dispositivo (que deve estar em GMT-3)
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('clock');
+  if (el) el.textContent = `${h}:${m}:${s}`;
+  const dd = document.getElementById('datedisp');
+  if (dd) {
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    dd.textContent = `${dias[now.getDay()]}, ${now.getDate()} ${meses[now.getMonth()]} ${now.getFullYear()} · GMT-3`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// GPS
+// ═══════════════════════════════════════════
+function iniciarGPS() {
+  if (!navigator.geolocation) {
+    setGPSStatus('GPS não suportado', 'err', '—'); return;
+  }
+  setGPSStatus('Obtendo localização...', 'wait', 'aguard.');
+  navigator.geolocation.watchPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      const acc = Math.round(pos.coords.accuracy);
+      gpsData = { lat, lon, acc, timestamp: new Date().toISOString() };
+      setGPSStatus(`${lat}, ${lon} (±${acc}m)`, 'ok', 'ok');
+    },
+    err => {
+      setGPSStatus('Sem permissão de GPS', 'err', 'erro');
+      gpsData = { lat: 'N/D', lon: 'N/D', acc: 'N/D', timestamp: new Date().toISOString() };
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+  );
+}
+
+function setGPSStatus(coords, type, badge) {
+  const c = document.getElementById('gps-coords');
+  const b = document.getElementById('gps-badge');
+  if (c) c.textContent = coords;
+  if (b) { b.textContent = badge; b.className = `gps-status gps-${type}`; }
+}
+
+// ═══════════════════════════════════════════
+// REGISTRAR EVENTO
+// ═══════════════════════════════════════════
+const EVENTOS = {
+  inicio:  { label: 'Início de Jornada', cor: '#22c55e', proximo: 'parada' },
+  parada:  { label: 'Parada Refeição',   cor: '#f59e0b', proximo: 'retorno' },
+  retorno: { label: 'Retorno Refeição',  cor: '#0066ff', proximo: 'fim' },
+  fim:     { label: 'Fim de Jornada',    cor: '#ef4444', proximo: null },
+};
+
+async function registrar(tipo) {
+  if (jornadaState[tipo]) return;
+
+  const now = new Date();
+  const hora = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+  const isoTimestamp = now.toISOString();
+
+  const payload = {
+    usuario:    currentUser.login,
+    nome:       currentUser.nome,
+    evento:     EVENTOS[tipo].label,
+    hora:       hora,
+    data:       data,
+    timestamp:  isoTimestamp,
+    latitude:   gpsData?.lat ?? 'N/D',
+    longitude:  gpsData?.lon ?? 'N/D',
+    precisao:   gpsData?.acc ?? 'N/D',
+    gmt:        'GMT-3',
+    dispositivo: navigator.userAgent.substring(0, 80),
+  };
+
+  jornadaState[tipo] = hora;
+  document.getElementById(`time-${tipo}`).textContent = hora;
+  marcarBotao(tipo);
+
+  // Habilitar próximo
+  const prox = EVENTOS[tipo].proximo;
+  if (prox) {
+    const btnProx = document.getElementById(`btn-${prox}`);
+    btnProx.disabled = false;
+    btnProx.classList.add('available');
+  }
+
+  updateStatusDisplay(tipo);
+  addToHistory(tipo, hora);
+
+  // Enviar para Sheets
+  await enviarParaSheets(payload);
+}
+
+function marcarBotao(tipo) {
+  const btn = document.getElementById(`btn-${tipo}`);
+  btn.classList.remove('available', 'active-btn');
+  btn.classList.add('done');
+  btn.disabled = true;
+
+  // Adicionar badge ✓
+  const badge = document.createElement('div');
+  badge.className = 'btn-badge';
+  badge.textContent = '✓';
+  btn.appendChild(badge);
+}
+
+function updateStatusDisplay(tipo) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  const cores = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
+  dot.style.background = cores[tipo];
+  txt.textContent = EVENTOS[tipo].label + ' registrado';
+  txt.style.color = cores[tipo];
+}
+
+// ═══════════════════════════════════════════
+// HISTÓRICO
+// ═══════════════════════════════════════════
+function addToHistory(tipo, hora) {
+  const list = document.getElementById('history-list');
+  // Limpar placeholder
+  if (list.children.length === 1 && list.children[0].tagName !== 'DIV'.toUpperCase() || list.textContent.includes('Nenhum')) {
+    list.innerHTML = '';
+  }
+
+  const cores = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `
+    <span class="history-dot" style="background:${cores[tipo]}"></span>
+    <span class="history-event">${EVENTOS[tipo].label}</span>
+    <span class="history-time">${hora}</span>
+    <span class="history-sent">✓</span>
+  `;
+  list.insertBefore(item, list.firstChild);
+}
+
+function renderHistory() {
+  // Limpa ao iniciar (dados ficam no Sheets)
+  document.getElementById('history-list').innerHTML =
+    '<div style="font-size:0.78rem; color:var(--muted); text-align:center; padding:1rem;">Nenhum registro ainda</div>';
+}
+
+// ═══════════════════════════════════════════
+// ENVIO PARA GOOGLE SHEETS
+// ═══════════════════════════════════════════
+async function enviarParaSheets(payload) {
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showToast('⚠️ URL não configurada', 'error'); return; }
+
+  showLoading(true);
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    showToast(`✅ ${EVENTOS[payload.evento.toLowerCase().replace(/ .*/,'')] ? payload.evento : 'Registro'} enviado!`, 'success');
+  } catch(e) {
+    showToast('❌ Erro ao enviar. Verifique conexão.', 'error');
+    console.error(e);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ═══════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 3000);
+}
+
+function showLoading(v) {
+  document.getElementById('loading').style.display = v ? 'flex' : 'none';
+}
+</script>
+</body>
+</html>
