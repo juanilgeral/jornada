@@ -608,6 +608,16 @@
       </div>
     </div>
 
+    <!-- Card de Descanso (aparece só quando em período de intrajornada) -->
+    <div class="gps-card" id="descanso-card" style="display:none; border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.05);">
+      <div class="gps-icon" style="background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.3);">😴</div>
+      <div class="gps-info">
+        <p>Período de Descanso (11h)</p>
+        <div class="gps-coords" id="descanso-countdown" style="color:var(--yellow);">Calculando...</div>
+      </div>
+      <span class="gps-status" id="descanso-badge" style="background:rgba(245,158,11,0.15); color:var(--yellow); border:1px solid rgba(245,158,11,0.3);">aguard.</span>
+    </div>
+
     <!-- GPS -->
     <div class="gps-card">
       <div class="gps-icon">📍</div>
@@ -884,6 +894,7 @@ function iniciarApp() {
   carregarEstado();
   renderHistory();
   restaurarBotoes();
+  verificarDescanso();
 }
 
 // ═══════════════════════════════════════════
@@ -943,8 +954,97 @@ function setGPSStatus(coords, type, badge) {
 }
 
 // ═══════════════════════════════════════════
-// EVENTOS
+// DESCANSO INTRAJORNADA (11h)
 // ═══════════════════════════════════════════
+const DESCANSO_MS = 11 * 60 * 60 * 1000; // 11 horas em ms
+let descansoTimer = null;
+
+function fimKey() {
+  return `jt_fim_ts_${currentUser?.login}`;
+}
+
+function salvarFimTimestamp(isoTimestamp) {
+  localStorage.setItem(fimKey(), isoTimestamp);
+}
+
+function verificarDescanso() {
+  const fimTs = localStorage.getItem(fimKey());
+  if (!fimTs) return;
+
+  const fimDate = new Date(fimTs);
+  const liberaEm = new Date(fimDate.getTime() + DESCANSO_MS);
+  const agora = new Date();
+
+  if (agora >= liberaEm) {
+    // Descanso cumprido — limpar estado do dia anterior e liberar
+    limparEstadoDiaAnterior();
+    return;
+  }
+
+  // Ainda em descanso — bloquear início e mostrar contagem
+  bloquearParaDescanso(liberaEm);
+}
+
+function bloquearParaDescanso(liberaEm) {
+  // Bloquear botão início
+  const btnInicio = document.getElementById('btn-inicio');
+  if (btnInicio && !jornadaState.inicio) {
+    btnInicio.disabled = true;
+    btnInicio.classList.remove('available');
+  }
+
+  // Mostrar card de descanso
+  document.getElementById('descanso-card').style.display = 'flex';
+
+  // Iniciar contagem regressiva
+  if (descansoTimer) clearInterval(descansoTimer);
+  descansoTimer = setInterval(() => {
+    const agora = new Date();
+    const restante = liberaEm - agora;
+    if (restante <= 0) {
+      clearInterval(descansoTimer);
+      document.getElementById('descanso-card').style.display = 'none';
+      limparEstadoDiaAnterior();
+      return;
+    }
+    const h = String(Math.floor(restante / 3600000)).padStart(2, '0');
+    const m = String(Math.floor((restante % 3600000) / 60000)).padStart(2, '0');
+    const s = String(Math.floor((restante % 60000) / 1000)).padStart(2, '0');
+    const el = document.getElementById('descanso-countdown');
+    const badge = document.getElementById('descanso-badge');
+    if (el) el.textContent = `Liberação em ${h}:${m}:${s}`;
+    if (badge) badge.textContent = `${h}h${m}m`;
+  }, 1000);
+}
+
+function limparEstadoDiaAnterior() {
+  // Limpar estado do dia anterior e permitir novo início
+  localStorage.removeItem(fimKey());
+  jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
+  salvarEstado();
+  document.getElementById('descanso-card').style.display = 'none';
+  // Reabilitar todos os botões
+  ['inicio','parada','retorno','fim'].forEach(t => {
+    const btn = document.getElementById(`btn-${t}`);
+    const badge = btn?.querySelector('.btn-badge');
+    if (badge) badge.remove();
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.add('available');
+      btn.classList.remove('done');
+    }
+    const te = document.getElementById(`time-${t}`);
+    if (te) te.textContent = '—';
+  });
+  renderHistory();
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  if (dot) dot.style.background = 'var(--muted)';
+  if (txt) { txt.textContent = 'Nenhum registro hoje'; txt.style.color = 'var(--muted)'; }
+  showToast('✅ Descanso cumprido! Nova jornada liberada.', 'success');
+}
+
+
 const EVENTOS = {
   inicio:  { label: 'Início de Jornada', cor: '#22c55e' },
   parada:  { label: 'Parada Refeição',   cor: '#f59e0b' },
@@ -1009,6 +1109,8 @@ async function confirmarRegistro() {
 
   jornadaState[tipo] = hora;
   salvarEstado();
+  // Salvar timestamp real do fim para calcular descanso
+  if (tipo === 'fim') salvarFimTimestamp(isoTimestamp);
   document.getElementById(`time-${tipo}`).textContent = hora;
   marcarBotao(tipo);
   updateStatusDisplay(tipo);
