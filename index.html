@@ -627,17 +627,17 @@
           <span class="btn-label">Início de Jornada</span>
           <span class="btn-time" id="time-inicio">—</span>
         </button>
-        <button class="jornada-btn" id="btn-parada" onclick="registrar('parada')" disabled>
+        <button class="jornada-btn available" id="btn-parada" onclick="registrar('parada')">
           <span class="btn-icon">🍽️</span>
           <span class="btn-label">Parada Refeição</span>
           <span class="btn-time" id="time-parada">—</span>
         </button>
-        <button class="jornada-btn" id="btn-retorno" onclick="registrar('retorno')" disabled>
+        <button class="jornada-btn available" id="btn-retorno" onclick="registrar('retorno')">
           <span class="btn-icon">↩️</span>
           <span class="btn-label">Retorno Refeição</span>
           <span class="btn-time" id="time-retorno">—</span>
         </button>
-        <button class="jornada-btn" id="btn-fim" onclick="registrar('fim')" disabled>
+        <button class="jornada-btn available" id="btn-fim" onclick="registrar('fim')">
           <span class="btn-icon">🔴</span>
           <span class="btn-label">Fim de Jornada</span>
           <span class="btn-time" id="time-fim">—</span>
@@ -655,6 +655,36 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div id="modal-confirm" style="
+  display:none; position:fixed; inset:0; z-index:500;
+  background:rgba(10,15,30,0.85); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center; padding:1.5rem;">
+  <div style="
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:20px; padding:1.75rem; width:100%; max-width:320px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <div id="modal-icon" style="font-size:2.5rem; text-align:center; margin-bottom:0.75rem;">🟢</div>
+    <div style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; text-align:center; margin-bottom:0.4rem;" id="modal-title">Confirmar Registro</div>
+    <div style="font-size:0.8rem; color:var(--muted); text-align:center; margin-bottom:1.25rem; line-height:1.5;" id="modal-desc">Deseja registrar este ponto agora?</div>
+    <div style="display:flex; gap:0.75rem;">
+      <button onclick="cancelarRegistro()" style="
+        flex:1; background:var(--surface2); border:1px solid var(--border);
+        border-radius:10px; padding:0.8rem; color:var(--muted);
+        font-family:'DM Mono',monospace; font-size:0.85rem; cursor:pointer;">
+        Cancelar
+      </button>
+      <button onclick="confirmarRegistro()" id="modal-btn-ok" style="
+        flex:1; background:linear-gradient(135deg,var(--accent),#00a885);
+        border:none; border-radius:10px; padding:0.8rem;
+        color:#001a14; font-family:'Syne',sans-serif;
+        font-weight:700; font-size:0.85rem; cursor:pointer;">
+        Confirmar ✓
+      </button>
+    </div>
   </div>
 </div>
 
@@ -735,14 +765,11 @@ function carregarEstado() {
 }
 function restaurarBotoes() {
   const ordem = ['inicio', 'parada', 'retorno', 'fim'];
-  let proximoIdx = 0;
-  for (let i = 0; i < ordem.length; i++) {
-    if (jornadaState[ordem[i]]) proximoIdx = i + 1;
-  }
-  ordem.forEach((tipo, idx) => {
+  ordem.forEach((tipo) => {
     const btn = document.getElementById(`btn-${tipo}`);
     const timeEl = document.getElementById(`time-${tipo}`);
     if (jornadaState[tipo]) {
+      // Já registrado — marcar como feito
       btn.disabled = true;
       btn.classList.remove('available', 'active-btn');
       btn.classList.add('done');
@@ -755,13 +782,11 @@ function restaurarBotoes() {
       }
       updateStatusDisplay(tipo);
       addToHistoryFromState(tipo, jornadaState[tipo]);
-    } else if (idx <= proximoIdx) {
+    } else {
+      // Não registrado — deixar disponível
       btn.disabled = false;
       btn.classList.add('available');
       btn.classList.remove('done');
-    } else {
-      btn.disabled = true;
-      btn.classList.remove('available', 'done');
     }
   });
 }
@@ -918,17 +943,50 @@ function setGPSStatus(coords, type, badge) {
 }
 
 // ═══════════════════════════════════════════
-// REGISTRAR EVENTO
+// EVENTOS
 // ═══════════════════════════════════════════
 const EVENTOS = {
-  inicio:  { label: 'Início de Jornada', cor: '#22c55e', proximo: 'parada' },
-  parada:  { label: 'Parada Refeição',   cor: '#f59e0b', proximo: 'retorno' },
-  retorno: { label: 'Retorno Refeição',  cor: '#0066ff', proximo: 'fim' },
-  fim:     { label: 'Fim de Jornada',    cor: '#ef4444', proximo: null },
+  inicio:  { label: 'Início de Jornada', cor: '#22c55e' },
+  parada:  { label: 'Parada Refeição',   cor: '#f59e0b' },
+  retorno: { label: 'Retorno Refeição',  cor: '#0066ff' },
+  fim:     { label: 'Fim de Jornada',    cor: '#ef4444' },
 };
 
-async function registrar(tipo) {
+// ═══════════════════════════════════════════
+// CONFIRMAÇÃO + REGISTRO
+// ═══════════════════════════════════════════
+let tipoConfirmando = null;
+
+const ICONES = { inicio: '🟢', parada: '🍽️', retorno: '↩️', fim: '🔴' };
+const CORES_BTN = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
+
+function registrar(tipo) {
   if (jornadaState[tipo]) return;
+  tipoConfirmando = tipo;
+
+  // Preencher modal
+  document.getElementById('modal-icon').textContent = ICONES[tipo];
+  document.getElementById('modal-title').textContent = EVENTOS[tipo].label;
+  const now = new Date();
+  const hora = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  document.getElementById('modal-desc').textContent = `Confirma o registro às ${hora}?`;
+  const btnOk = document.getElementById('modal-btn-ok');
+  btnOk.style.background = `linear-gradient(135deg, ${CORES_BTN[tipo]}, ${CORES_BTN[tipo]}bb)`;
+
+  const modal = document.getElementById('modal-confirm');
+  modal.style.display = 'flex';
+}
+
+function cancelarRegistro() {
+  tipoConfirmando = null;
+  document.getElementById('modal-confirm').style.display = 'none';
+}
+
+async function confirmarRegistro() {
+  document.getElementById('modal-confirm').style.display = 'none';
+  const tipo = tipoConfirmando;
+  tipoConfirmando = null;
+  if (!tipo) return;
 
   const now = new Date();
   const hora = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
@@ -953,19 +1011,9 @@ async function registrar(tipo) {
   salvarEstado();
   document.getElementById(`time-${tipo}`).textContent = hora;
   marcarBotao(tipo);
-
-  // Habilitar próximo
-  const prox = EVENTOS[tipo].proximo;
-  if (prox) {
-    const btnProx = document.getElementById(`btn-${prox}`);
-    btnProx.disabled = false;
-    btnProx.classList.add('available');
-  }
-
   updateStatusDisplay(tipo);
   addToHistory(tipo, hora);
 
-  // Enviar para Sheets
   await enviarParaSheets(payload);
 }
 
