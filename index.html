@@ -897,17 +897,18 @@ function addToHistoryFromState(tipo, hora) {
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
+const SAVED_USER_KEY = 'jt_saved_user';
+
 window.addEventListener('load', () => {
-  // Verificar URL configurada
   const url = localStorage.getItem(SCRIPT_URL_KEY);
   if (!url) {
     showScreen('setup-screen');
     return;
   }
-  // Verificar sessão ativa
-  const saved = sessionStorage.getItem('jt_user');
-  if (saved) {
-    currentUser = JSON.parse(saved);
+  // Verificar login salvo (lembrar acesso)
+  const savedUser = localStorage.getItem(SAVED_USER_KEY);
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
     iniciarApp();
     return;
   }
@@ -947,12 +948,14 @@ function doLogin() {
     return;
   }
   currentUser = { login: user, nome: USERS[user].nome };
-  sessionStorage.setItem('jt_user', JSON.stringify(currentUser));
+  // Salvar login para entrar automaticamente nas próximas vezes
+  localStorage.setItem(SAVED_USER_KEY, JSON.stringify(currentUser));
   iniciarApp();
 }
 
 function doLogout() {
-  if (!confirm('Confirmar saída?')) return;
+  if (!confirm('Confirmar saída? Será necessário digitar o usuário e senha novamente.')) return;
+  localStorage.removeItem(SAVED_USER_KEY);
   sessionStorage.removeItem('jt_user');
   currentUser = null;
   jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
