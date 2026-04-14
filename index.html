@@ -446,6 +446,177 @@
   .history-time { color: var(--muted); font-size: 0.72rem; }
   .history-sent { color: var(--green); font-size: 0.65rem; }
 
+  /* ── ADMIN ── */
+  #admin-screen { background: var(--bg); }
+
+  .admin-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .admin-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--warn);
+  }
+
+  .admin-header p {
+    font-size: 0.72rem;
+    color: #c8a96e;
+    margin-top: 2px;
+  }
+
+  .admin-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  .admin-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.35rem;
+  }
+
+  .admin-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 0.5rem;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .admin-tab.active {
+    background: var(--warn);
+    color: #fff;
+  }
+
+  .admin-date-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .admin-date-row input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  .btn-buscar {
+    background: var(--warn);
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .admin-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 0.5rem;
+    text-align: center;
+  }
+
+  .stat-box .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+
+  .stat-box .stat-label {
+    font-size: 0.6rem;
+    color: #c8a96e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+  }
+
+  .admin-table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+    min-width: 500px;
+  }
+
+  .admin-table th {
+    background: var(--surface2);
+    color: #c8a96e;
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .admin-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .admin-table tr:last-child td { border-bottom: none; }
+  .admin-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .pill {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 500;
+  }
+
+  .pill-green  { background: rgba(34,197,94,0.15);  color: var(--green); }
+  .pill-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .pill-blue   { background: rgba(0,102,255,0.15);  color: #7eb3ff; }
+  .pill-red    { background: rgba(239,68,68,0.15);  color: var(--red); }
+  .pill-muted  { background: rgba(90,106,130,0.15); color: var(--muted); }
+
+  .admin-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
   /* ── TOAST ── */
   #toast {
     position: fixed;
@@ -663,6 +834,103 @@
         <div style="font-size:0.78rem; color:var(--muted); text-align:center; padding:1rem;">
           Nenhum registro ainda
         </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADMIN SCREEN -->
+<div id="admin-screen" class="screen">
+  <div class="admin-header">
+    <div>
+      <h2>⚙️ Painel Admin</h2>
+      <p id="admin-header-user">Administrador</p>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Sair</button>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- Abas -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" id="tab-dia" onclick="mudarAba('dia')">📋 Registros do Dia</button>
+      <button class="admin-tab" id="tab-semana" onclick="mudarAba('semana')">📊 Horas Extras</button>
+    </div>
+
+    <!-- Painel Dia -->
+    <div id="painel-dia">
+      <div class="admin-date-row">
+        <input type="date" id="admin-data" />
+        <button class="btn-buscar" onclick="buscarDia()">Buscar</button>
+      </div>
+
+      <!-- Estatísticas -->
+      <div class="admin-stats">
+        <div class="stat-box">
+          <div class="stat-num" id="stat-total" style="color:var(--text)">—</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-iniciados" style="color:var(--green)">—</div>
+          <div class="stat-label">Iniciaram</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-almoco" style="color:var(--yellow)">—</div>
+          <div class="stat-label">Almoço</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-finalizados" style="color:var(--red)">—</div>
+          <div class="stat-label">Finalizaram</div>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Início</th>
+              <th>Parada</th>
+              <th>Retorno</th>
+              <th>Fim</th>
+              <th>Trabalhado</th>
+              <th>Extra</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody">
+            <tr><td colspan="8" class="admin-empty">Selecione uma data e clique em Buscar</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Painel Semana -->
+    <div id="painel-semana" style="display:none;">
+      <div class="admin-date-row">
+        <input type="date" id="admin-semana-data" />
+        <button class="btn-buscar" onclick="buscarSemana()">Buscar</button>
+      </div>
+      <div style="font-size:0.72rem; color:#c8a96e; margin-top:-0.25rem;">
+        Selecione qualquer dia da semana desejada
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th>
+              <th>Total</th>
+              <th>Extra</th>
+              <th>Faltando</th>
+            </tr>
+          </thead>
+          <tbody id="admin-semana-tbody">
+            <tr><td colspan="10" class="admin-empty">Selecione uma semana e clique em Buscar</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -970,6 +1238,10 @@ function doLogout() {
 // APP INIT
 // ═══════════════════════════════════════════
 function iniciarApp() {
+  if (currentUser.login === 'admin') {
+    iniciarAdmin();
+    return;
+  }
   showScreen('app-screen');
   document.getElementById('header-user').textContent = currentUser.nome;
   initClock();
@@ -978,6 +1250,151 @@ function iniciarApp() {
   renderHistory();
   restaurarBotoes();
   verificarDescanso();
+}
+
+// ═══════════════════════════════════════════
+// PAINEL ADMIN
+// ═══════════════════════════════════════════
+function iniciarAdmin() {
+  showScreen('admin-screen');
+  // Definir data de hoje como padrão
+  const hoje = new Date();
+  const dd = String(hoje.getDate()).padStart(2,'0');
+  const mm = String(hoje.getMonth()+1).padStart(2,'0');
+  const yyyy = hoje.getFullYear();
+  const hojeISO = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('admin-data').value = hojeISO;
+  document.getElementById('admin-semana-data').value = hojeISO;
+  buscarDia();
+}
+
+function mudarAba(aba) {
+  document.getElementById('painel-dia').style.display    = aba === 'dia'    ? 'block' : 'none';
+  document.getElementById('painel-semana').style.display = aba === 'semana' ? 'block' : 'none';
+  document.getElementById('tab-dia').classList.toggle('active',    aba === 'dia');
+  document.getElementById('tab-semana').classList.toggle('active', aba === 'semana');
+}
+
+async function buscarDia() {
+  const inputData = document.getElementById('admin-data').value;
+  if (!inputData) { showToast('Selecione uma data', 'error'); return; }
+
+  // Converter de YYYY-MM-DD para DD/MM/YYYY
+  const [yyyy, mm, dd] = inputData.split('-');
+  const dataBR = `${dd}/${mm}/${yyyy}`;
+
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showToast('URL não configurada', 'error'); return; }
+
+  showLoading(true);
+  try {
+    const resp = await fetch(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`);
+    const json = await resp.json();
+    renderTabelaDia(json.registros || []);
+  } catch(e) {
+    showToast('❌ Erro ao buscar dados', 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+function renderTabelaDia(registros) {
+  const tbody = document.getElementById('admin-tbody');
+
+  if (!registros.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
+    ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => {
+      document.getElementById(id).textContent = '0';
+    });
+    return;
+  }
+
+  // Estatísticas
+  const iniciados   = registros.filter(r => r.inicio).length;
+  const almoco      = registros.filter(r => r.parada && !r.retorno).length;
+  const finalizados = registros.filter(r => r.fim).length;
+
+  document.getElementById('stat-total').textContent      = registros.length;
+  document.getElementById('stat-iniciados').textContent  = iniciados;
+  document.getElementById('stat-almoco').textContent     = almoco;
+  document.getElementById('stat-finalizados').textContent= finalizados;
+
+  // Tabela
+  tbody.innerHTML = registros.map(r => {
+    const status = getStatus(r);
+    return `<tr>
+      <td style="font-family:'Syne',sans-serif; font-weight:600">${r.nome}</td>
+      <td>${r.inicio  ? `<span class="pill pill-green">${r.inicio}</span>`  : '<span class="pill pill-muted">—</span>'}</td>
+      <td>${r.parada  ? `<span class="pill pill-yellow">${r.parada}</span>` : '<span class="pill pill-muted">—</span>'}</td>
+      <td>${r.retorno ? `<span class="pill pill-blue">${r.retorno}</span>`  : '<span class="pill pill-muted">—</span>'}</td>
+      <td>${r.fim     ? `<span class="pill pill-red">${r.fim}</span>`       : '<span class="pill pill-muted">—</span>'}</td>
+      <td>${r.trabalhado || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${r.extra && r.extra !== '—' ? `<span class="pill pill-yellow">${r.extra}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><span class="pill ${status.cls}">${status.label}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function getStatus(r) {
+  if (r.fim)                         return { label: 'Finalizado',  cls: 'pill-red' };
+  if (r.retorno)                     return { label: 'Trabalhando', cls: 'pill-green' };
+  if (r.parada && !r.retorno)        return { label: 'Almoço',      cls: 'pill-yellow' };
+  if (r.inicio && !r.parada)         return { label: 'Em serviço',  cls: 'pill-blue' };
+  return                                    { label: 'Não iniciou', cls: 'pill-muted' };
+}
+
+async function buscarSemana() {
+  const inputData = document.getElementById('admin-semana-data').value;
+  if (!inputData) { showToast('Selecione uma data da semana', 'error'); return; }
+
+  // Encontrar segunda-feira da semana
+  const d = new Date(inputData + 'T12:00:00');
+  const diaSem = d.getDay();
+  const diffSeg = diaSem === 0 ? -6 : 1 - diaSem;
+  const segunda = new Date(d);
+  segunda.setDate(d.getDate() + diffSeg);
+  const dd = String(segunda.getDate()).padStart(2,'0');
+  const mm = String(segunda.getMonth()+1).padStart(2,'0');
+  const yyyy = segunda.getFullYear();
+  const semanaKey = `${dd}/${mm}/${yyyy}`;
+
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showToast('URL não configurada', 'error'); return; }
+
+  showLoading(true);
+  try {
+    const resp = await fetch(`${url}?acao=extras_semana&semana=${encodeURIComponent(semanaKey)}`);
+    const json = await resp.json();
+    renderTabelaSemana(json.semanas || [], semanaKey);
+  } catch(e) {
+    showToast('❌ Erro ao buscar dados', 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+function renderTabelaSemana(semanas, semanaKey) {
+  const tbody = document.getElementById('admin-semana-tbody');
+
+  if (!semanas.length) {
+    tbody.innerHTML = `<tr><td colspan="10" class="admin-empty">Nenhum dado para a semana de ${semanaKey}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = semanas.map(s => `
+    <tr>
+      <td style="font-family:'Syne',sans-serif; font-weight:600">${s.nome}</td>
+      <td>${s.seg || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${s.ter || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${s.qua || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${s.qui || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${s.sex || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${s.sab || '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-weight:600">${s.total || '—'}</td>
+      <td>${s.extra && s.extra !== '—' ? `<span class="pill pill-green">${s.extra}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${s.faltando && s.faltando !== '—' ? `<span class="pill pill-red">${s.faltando}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+    </tr>
+  `).join('');
 }
 
 // ═══════════════════════════════════════════
