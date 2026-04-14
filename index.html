@@ -1619,6 +1619,19 @@ async function confirmarRegistro() {
   // Ao registrar início, iniciar contagem de 4h para parada
   if (tipo === 'inicio') verificarLiberacaoParada();
 
+  // Ao registrar fim, bloquear todos os botões restantes
+  if (tipo === 'fim') {
+    ['inicio', 'parada', 'retorno'].forEach(t => {
+      if (!jornadaState[t]) {
+        const btn = document.getElementById(`btn-${t}`);
+        btn.disabled = true;
+        btn.classList.remove('available', 'active-btn');
+        btn.classList.add('done');
+      }
+    });
+    if (paradaTimer) clearInterval(paradaTimer);
+  }
+
   await enviarParaSheets(payload);
 }
 
