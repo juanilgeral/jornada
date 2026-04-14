@@ -847,7 +847,10 @@
       <h2>⚙️ Painel Admin</h2>
       <p id="admin-header-user">Administrador</p>
     </div>
-    <button class="btn-logout" onclick="doLogout()">Sair</button>
+    <div style="display:flex; gap:0.5rem;">
+      <button class="btn-logout" style="color:var(--red); border-color:var(--red);" onclick="limparTudo()">🗑️ Limpar</button>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
   </div>
 
   <div class="admin-body">
@@ -1722,6 +1725,38 @@ function showToast(msg, type = '') {
 
 function showLoading(v) {
   document.getElementById('loading').style.display = v ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════
+// LIMPAR TUDO (ADMIN)
+// ═══════════════════════════════════════════
+async function limparTudo() {
+  if (!confirm('⚠️ Isso vai limpar TODOS os estados locais dos usuários E apagar todas as abas da planilha. Tem certeza?')) return;
+  if (!confirm('🚨 Última confirmação! Todos os registros serão apagados. Continuar?')) return;
+
+  // Limpar localStorage de todos os usuários
+  const keysParaRemover = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith('jt_state_') || key.startsWith('jt_fim_ts_'))) {
+      keysParaRemover.push(key);
+    }
+  }
+  keysParaRemover.forEach(k => localStorage.removeItem(k));
+
+  // Limpar planilha via Apps Script
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showToast('⚠️ URL não configurada', 'error'); return; }
+
+  showLoading(true);
+  try {
+    await fetch(`${url}?acao=limpar_planilha`, { redirect: 'follow' });
+    showToast('✅ Tudo limpo com sucesso!', 'success');
+  } catch(e) {
+    showToast('❌ Erro ao limpar planilha', 'error');
+  } finally {
+    showLoading(false);
+  }
 }
 </script>
 </body>
