@@ -710,6 +710,242 @@
   @media (max-width: 380px) {
     .jornada-grid { grid-template-columns: 1fr; }
   }
+
+  /* ── HISTÓRICO PESSOAL SCREEN ── */
+  #historico-screen { background: var(--bg); }
+
+  .hist-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .hist-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  .hist-header p { font-size: 0.72rem; color: #c8a96e; margin-top: 2px; }
+
+  .hist-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  .hist-date-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .hist-date-row input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .hist-date-row input:focus { border-color: var(--accent2); }
+
+  .btn-buscar-hist {
+    background: var(--accent2);
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-buscar-hist:active { opacity: 0.75; }
+
+  .hist-day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .hist-day-header {
+    padding: 0.8rem 1rem;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .hist-day-header .hist-day-date {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+
+  .hist-day-header .hist-day-status {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+  }
+
+  .hist-events { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .hist-event-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .hist-event-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .hist-event-label { flex: 1; color: var(--text); }
+
+  .hist-event-time {
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .hist-worked {
+    padding: 0.5rem 1rem 0.8rem;
+    font-size: 0.75rem;
+    color: #c8a96e;
+    border-top: 1px solid var(--border);
+    margin-top: 0.25rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .hist-worked span strong {
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+  }
+
+  .hist-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .hist-nav-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.35rem 0.6rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .hist-nav-btn:hover { color: var(--accent2); border-color: var(--accent2); }
+
+  /* ── MEAL ALERT MODAL ── */
+  #modal-refeicao {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    background: rgba(10,15,30,0.9);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .meal-alert-card {
+    background: var(--surface);
+    border: 1px solid rgba(245,158,11,0.5);
+    border-radius: 20px;
+    padding: 2rem 1.75rem;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(245,158,11,0.2), 0 20px 60px rgba(0,0,0,0.6);
+    animation: alert-pulse 0.5s ease;
+  }
+
+  @keyframes alert-pulse {
+    0% { transform: scale(0.85); opacity: 0; }
+    60% { transform: scale(1.04); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .meal-alert-icon { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
+
+  .meal-alert-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--yellow);
+    margin-bottom: 0.4rem;
+  }
+
+  .meal-alert-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+    line-height: 1.55;
+  }
+
+  .btn-dismiss-meal {
+    width: 100%;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #1a0a00;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.85rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  /* ── NAV BAR (botão de histórico no app) ── */
+  .app-nav {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .nav-pill {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.6rem 0.5rem;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .nav-pill:hover { color: var(--accent2); border-color: var(--accent2); }
+  .nav-pill.active { background: rgba(0,102,255,0.1); color: var(--accent2); border-color: var(--accent2); }
 </style>
 </head>
 <body>
@@ -837,6 +1073,12 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Nav Bar -->
+  <div class="app-nav">
+    <button class="nav-pill active" id="navbtn-ponto" onclick="mostrarPainel('ponto')">📋 Ponto</button>
+    <button class="nav-pill" id="navbtn-historico" onclick="mostrarPainel('historico')">📅 Histórico</button>
   </div>
 </div>
 
@@ -970,6 +1212,40 @@
   </div>
 </div>
 
+<!-- HISTÓRICO PESSOAL SCREEN -->
+<div id="historico-screen" class="screen">
+  <div class="hist-header">
+    <div>
+      <h2>📅 Meu Histórico</h2>
+      <p id="hist-header-user">—</p>
+    </div>
+    <button class="hist-nav-btn" onclick="voltarParaPonto()">← Voltar</button>
+  </div>
+  <div class="hist-body">
+    <div class="hist-date-row">
+      <input type="date" id="hist-data-de" title="De" />
+      <span style="color:var(--muted); font-size:0.75rem; flex-shrink:0;">até</span>
+      <input type="date" id="hist-data-ate" title="Até" />
+      <button class="btn-buscar-hist" onclick="buscarHistorico()">Buscar</button>
+    </div>
+    <div id="hist-results">
+      <div class="hist-empty">Selecione o período e clique em Buscar</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Alerta de Refeição -->
+<div id="modal-refeicao" style="display:none; position:fixed; inset:0; z-index:600;
+  background:rgba(10,15,30,0.9); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center; padding:1.5rem;">
+  <div class="meal-alert-card" id="meal-alert-card">
+    <span class="meal-alert-icon" id="meal-alert-icon">🍽️</span>
+    <div class="meal-alert-title" id="meal-alert-title">Parada Refeição Liberada!</div>
+    <div class="meal-alert-desc" id="meal-alert-desc">Já se passaram 4 horas desde o início da jornada. Você pode registrar sua parada para refeição agora.</div>
+    <button class="btn-dismiss-meal" onclick="fecharAlertaRefeicao()">Entendido ✓</button>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast"></div>
 <!-- Loading -->
@@ -1049,6 +1325,250 @@ let currentUser = null;
 let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
+
+// ═══════════════════════════════════════════
+// ÁUDIO — Web Audio API
+// ═══════════════════════════════════════════
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // Resume se suspenso (política de autoplay)
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function tocarBeep(frequencias, duracoes, volume = 0.4) {
+  try {
+    const ctx = getAudioCtx();
+    let t = ctx.currentTime;
+    frequencias.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(volume, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + duracoes[i]);
+      osc.start(t);
+      osc.stop(t + duracoes[i]);
+      t += duracoes[i] + 0.05;
+    });
+  } catch(e) { console.warn('Áudio não disponível:', e); }
+}
+
+// Alerta de LIBERAÇÃO de refeição: alegre, três tons ascendentes
+function tocarAlertaRefeicaoLiberada() {
+  tocarBeep([523, 659, 784, 1047], [0.18, 0.18, 0.18, 0.35], 0.45);
+}
+
+// Alerta de FIM de refeição: dois tons descendentes + longo
+function tocarAlertaFimRefeicao() {
+  tocarBeep([880, 784, 659, 523, 440], [0.15, 0.15, 0.15, 0.15, 0.4], 0.4);
+}
+
+// ═══════════════════════════════════════════
+// MODAL ALERTA DE REFEIÇÃO
+// ═══════════════════════════════════════════
+let mealAlertRepeat = null;
+
+function mostrarAlertaRefeicao(tipo) {
+  // tipo: 'liberada' | 'fim'
+  const modal = document.getElementById('modal-refeicao');
+  const card = document.getElementById('meal-alert-card');
+  const icon = document.getElementById('meal-alert-icon');
+  const title = document.getElementById('meal-alert-title');
+  const desc = document.getElementById('meal-alert-desc');
+
+  if (tipo === 'liberada') {
+    card.style.borderColor = 'rgba(245,158,11,0.5)';
+    card.style.boxShadow = '0 0 60px rgba(245,158,11,0.2), 0 20px 60px rgba(0,0,0,0.6)';
+    icon.textContent = '🍽️';
+    title.textContent = 'Parada Refeição Liberada!';
+    title.style.color = 'var(--yellow)';
+    desc.textContent = 'Já se passaram 4 horas desde o início da jornada. Você pode registrar sua parada para refeição agora.';
+    document.querySelector('.btn-dismiss-meal').style.background = 'linear-gradient(135deg,#f59e0b,#d97706)';
+    document.querySelector('.btn-dismiss-meal').style.color = '#1a0a00';
+    tocarAlertaRefeicaoLiberada();
+    // Repetir som a cada 8s até fechar
+    mealAlertRepeat = setInterval(() => tocarAlertaRefeicaoLiberada(), 8000);
+  } else {
+    card.style.borderColor = 'rgba(0,102,255,0.5)';
+    card.style.boxShadow = '0 0 60px rgba(0,102,255,0.2), 0 20px 60px rgba(0,0,0,0.6)';
+    icon.textContent = '↩️';
+    title.textContent = 'Intervalo Encerrado!';
+    title.style.color = '#7eb3ff';
+    desc.textContent = 'O período mínimo de 30 minutos de refeição foi cumprido. Registre seu Retorno quando estiver pronto.';
+    document.querySelector('.btn-dismiss-meal').style.background = 'linear-gradient(135deg,#0066ff,#0044cc)';
+    document.querySelector('.btn-dismiss-meal').style.color = '#fff';
+    tocarAlertaFimRefeicao();
+    mealAlertRepeat = setInterval(() => tocarAlertaFimRefeicao(), 8000);
+  }
+
+  modal.style.display = 'flex';
+  // Vibração (mobile)
+  if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
+}
+
+function fecharAlertaRefeicao() {
+  document.getElementById('modal-refeicao').style.display = 'none';
+  if (mealAlertRepeat) { clearInterval(mealAlertRepeat); mealAlertRepeat = null; }
+}
+
+// ═══════════════════════════════════════════
+// NAVEGAÇÃO ENTRE PAINÉIS (app-screen / historico-screen)
+// ═══════════════════════════════════════════
+function mostrarPainel(painel) {
+  if (painel === 'historico') {
+    showScreen('historico-screen');
+    document.getElementById('hist-header-user').textContent = currentUser?.nome || '—';
+    // Definir datas padrão: últimos 7 dias
+    const hoje = new Date();
+    const seteAtras = new Date(hoje);
+    seteAtras.setDate(hoje.getDate() - 6);
+    document.getElementById('hist-data-ate').value = toISO(hoje);
+    document.getElementById('hist-data-de').value = toISO(seteAtras);
+  } else {
+    showScreen('app-screen');
+  }
+}
+
+function voltarParaPonto() {
+  showScreen('app-screen');
+}
+
+function toISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ═══════════════════════════════════════════
+// HISTÓRICO PESSOAL — busca no Sheets
+// ═══════════════════════════════════════════
+async function buscarHistorico() {
+  const de  = document.getElementById('hist-data-de').value;
+  const ate = document.getElementById('hist-data-ate').value;
+  if (!de || !ate) { showToast('Preencha o período', 'error'); return; }
+  if (de > ate) { showToast('Data inicial maior que final', 'error'); return; }
+
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showToast('URL não configurada', 'error'); return; }
+
+  // Converter para BR
+  const deBR  = de.split('-').reverse().join('/');
+  const ateBR = ate.split('-').reverse().join('/');
+
+  showLoading(true);
+  try {
+    const resp = await fetch(`${url}?acao=historico_usuario&usuario=${encodeURIComponent(currentUser.login)}&de=${encodeURIComponent(deBR)}&ate=${encodeURIComponent(ateBR)}`);
+    const json = await resp.json();
+    renderHistoricoUsuario(json.dias || []);
+  } catch(e) {
+    // Fallback: montar do localStorage
+    renderHistoricoLocal(de, ate);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function renderHistoricoLocal(de, ate) {
+  // Lê o localStorage para o período — fallback offline
+  const dias = [];
+  const deDate  = new Date(de + 'T00:00:00');
+  const ateDate = new Date(ate + 'T23:59:59');
+  for (let d = new Date(deDate); d <= ateDate; d.setDate(d.getDate()+1)) {
+    const key = `jt_state_${currentUser.login}_${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const st = JSON.parse(saved);
+      if (st.inicio || st.parada || st.retorno || st.fim) {
+        const dd = String(d.getDate()).padStart(2,'0');
+        const mm = String(d.getMonth()+1).padStart(2,'0');
+        dias.push({ data: `${dd}/${mm}/${d.getFullYear()}`, ...st });
+      }
+    }
+  }
+  renderHistoricoUsuario(dias, true);
+}
+
+function renderHistoricoUsuario(dias, isLocal = false) {
+  const container = document.getElementById('hist-results');
+
+  if (!dias.length) {
+    container.innerHTML = `<div class="hist-empty">Nenhum registro encontrado no período${isLocal ? '<br><small style="font-size:0.72rem;margin-top:0.5rem;display:block;">Dados locais apenas</small>' : ''}</div>`;
+    return;
+  }
+
+  const CORES = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
+  const NOMES = { inicio: 'Início de Jornada', parada: 'Parada Refeição', retorno: 'Retorno Refeição', fim: 'Fim de Jornada' };
+
+  container.innerHTML = dias.map(dia => {
+    const eventos = ['inicio','parada','retorno','fim'].filter(k => dia[k]);
+    const completo = dia.fim;
+
+    // Calcular trabalhado
+    let trabalhado = '—';
+    let refeicao = '—';
+    if (dia.inicio && dia.fim) {
+      const minutos = calcMinutos(dia.inicio, dia.fim);
+      const refMin  = dia.parada && dia.retorno ? calcMinutos(dia.parada, dia.retorno) : 0;
+      const liq     = minutos - refMin;
+      trabalhado = formatMinutos(liq);
+      if (refMin > 0) refeicao = formatMinutos(refMin);
+    }
+
+    const statusCls   = completo ? 'pill pill-red' : eventos.length ? 'pill pill-green' : 'pill pill-muted';
+    const statusLabel = completo ? 'Finalizado' : eventos.length ? 'Em andamento' : 'Sem dados';
+
+    return `<div class="hist-day-card">
+      <div class="hist-day-header">
+        <span class="hist-day-date">${formatarDataBR(dia.data)}</span>
+        <span class="${statusCls}" style="font-size:0.68rem;">${statusLabel}</span>
+      </div>
+      <div class="hist-events">
+        ${['inicio','parada','retorno','fim'].map(k => dia[k] ? `
+          <div class="hist-event-row">
+            <span class="hist-event-dot" style="background:${CORES[k]}"></span>
+            <span class="hist-event-label">${NOMES[k]}</span>
+            <span class="hist-event-time">${dia[k]}</span>
+          </div>` : '').join('')}
+      </div>
+      ${trabalhado !== '—' ? `
+      <div class="hist-worked">
+        <span>Trabalhado: <strong>${trabalhado}</strong></span>
+        ${refeicao !== '—' ? `<span>Refeição: <strong>${refeicao}</strong></span>` : ''}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  if (isLocal) {
+    container.innerHTML += `<div style="font-size:0.7rem; color:var(--muted); text-align:center; margin-top:0.5rem;">⚠️ Dados carregados do armazenamento local do dispositivo</div>`;
+  }
+}
+
+function calcMinutos(h1, h2) {
+  const [a,b,c] = h1.split(':').map(Number);
+  const [d,e,f] = h2.split(':').map(Number);
+  return (d*60+e) - (a*60+b);
+}
+
+function formatMinutos(m) {
+  if (m <= 0) return '—';
+  const h = Math.floor(m/60);
+  const min = m % 60;
+  return h > 0 ? `${h}h${String(min).padStart(2,'0')}m` : `${min}m`;
+}
+
+function formatarDataBR(dataBR) {
+  // "DD/MM/YYYY" → "Seg, 16 Abr 2025"
+  try {
+    const [dd,mm,yyyy] = dataBR.split('/');
+    const d = new Date(Number(yyyy), Number(mm)-1, Number(dd));
+    const dias  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return `${dias[d.getDay()]}, ${dd} ${meses[d.getMonth()]} ${yyyy}`;
+  } catch(e) { return dataBR; }
+}
 
 // Chave do estado salvo por usuário + data
 function stateKey() {
@@ -1134,6 +1654,7 @@ function verificarLiberacaoParada() {
       btn.classList.add('available');
       atualizarLabelParada(null);
       showToast('🍽️ Parada Refeição liberada!', 'success');
+      mostrarAlertaRefeicao('liberada');
       return;
     }
     const rh = String(Math.floor(restante / 3600000)).padStart(2,'0');
@@ -1253,11 +1774,15 @@ function iniciarApp() {
   }
   showScreen('app-screen');
   document.getElementById('header-user').textContent = currentUser.nome;
+  // Desbloquear contexto de áudio no primeiro toque do usuário
+  document.body.addEventListener('touchstart', () => getAudioCtx(), { once: true });
+  document.body.addEventListener('click', () => getAudioCtx(), { once: true });
   initClock();
   iniciarGPS();
   carregarEstado();
   renderHistory();
   restaurarBotoes();
+  restaurarTimerFimRefeicao();
   verificarDescanso();
 }
 
@@ -1628,6 +2153,9 @@ async function confirmarRegistro() {
   // Ao registrar início, iniciar contagem de 4h para parada
   if (tipo === 'inicio') verificarLiberacaoParada();
 
+  // Ao registrar parada de refeição, iniciar contagem de 30min para sinalizar fim
+  if (tipo === 'parada') iniciarTimerFimRefeicao();
+
   // Ao registrar fim, bloquear todos os botões restantes
   if (tipo === 'fim') {
     ['inicio', 'parada', 'retorno'].forEach(t => {
@@ -1639,9 +2167,71 @@ async function confirmarRegistro() {
       }
     });
     if (paradaTimer) clearInterval(paradaTimer);
+    if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
+  }
+
+  // Ao registrar retorno, limpar timer de fim de refeição
+  if (tipo === 'retorno') {
+    if (fimRefeicaoTimer) { clearInterval(fimRefeicaoTimer); fimRefeicaoTimer = null; }
+    const timeRetorno = document.getElementById('time-retorno');
+    if (timeRetorno) timeRetorno.style.color = '';
   }
 
   await enviarParaSheets(payload);
+}
+
+// ── Timer de 30min para sinalizar fim do intervalo de refeição ──
+let fimRefeicaoTimer = null;
+const REFEICAO_MIN_MS = 30 * 60 * 1000; // 30 minutos
+
+function iniciarTimerFimRefeicao() {
+  if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
+
+  const horaParada = jornadaState.parada; // "HH:MM:SS"
+  const hoje = new Date();
+  const [h, m, s] = horaParada.split(':').map(Number);
+  const paradaMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
+  const fimMs = paradaMs + REFEICAO_MIN_MS;
+
+  const agora = Date.now();
+  if (agora >= fimMs) {
+    // Já passou — não disparar
+    return;
+  }
+
+  // Mostrar contagem no botão de retorno
+  const btnRetorno = document.getElementById('btn-retorno');
+  const timeRetorno = document.getElementById('time-retorno');
+
+  fimRefeicaoTimer = setInterval(() => {
+    if (jornadaState.retorno) { clearInterval(fimRefeicaoTimer); return; }
+    const restante = fimMs - Date.now();
+    if (restante <= 0) {
+      clearInterval(fimRefeicaoTimer);
+      if (timeRetorno && !jornadaState.retorno) {
+        timeRetorno.textContent = 'Libera agora';
+        timeRetorno.style.color = 'var(--green)';
+      }
+      if (!jornadaState.retorno) {
+        showToast('↩️ Intervalo de refeição encerrado!', 'success');
+        mostrarAlertaRefeicao('fim');
+      }
+      return;
+    }
+    const rm = String(Math.floor(restante / 60000)).padStart(2,'0');
+    const rs = String(Math.floor((restante % 60000) / 1000)).padStart(2,'0');
+    if (timeRetorno && !jornadaState.retorno) {
+      timeRetorno.textContent = `Retorno em ${rm}:${rs}`;
+      timeRetorno.style.color = 'var(--yellow)';
+    }
+  }, 1000);
+}
+
+function restaurarTimerFimRefeicao() {
+  // Chamado no restaurarBotoes se parada já foi registrada mas retorno não
+  if (jornadaState.parada && !jornadaState.retorno) {
+    iniciarTimerFimRefeicao();
+  }
 }
 
 function marcarBotao(tipo) {
