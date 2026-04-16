@@ -1134,6 +1134,7 @@ function verificarLiberacaoParada() {
       btn.classList.add('available');
       atualizarLabelParada(null);
       showToast('🍽️ Parada Refeição liberada!', 'success');
+      tocarAlertaRefeicao();
       return;
     }
     const rh = String(Math.floor(restante / 3600000)).padStart(2,'0');
@@ -1714,6 +1715,47 @@ async function enviarParaSheets(payload) {
     console.error(e);
   } finally {
     showLoading(false);
+  }
+}
+
+// ═══════════════════════════════════════════
+// ALERTA SONORO — REFEIÇÃO LIBERADA
+// ═══════════════════════════════════════════
+function tocarAlertaRefeicao() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Sequência de notas: alegre e chamativa (estilo sino/notificação)
+    const notas = [
+      { freq: 880, inicio: 0.0,  dur: 0.18 },
+      { freq: 988, inicio: 0.18, dur: 0.18 },
+      { freq: 1175,inicio: 0.36, dur: 0.28 },
+      { freq: 880, inicio: 0.70, dur: 0.18 },
+      { freq: 988, inicio: 0.88, dur: 0.18 },
+      { freq: 1175,inicio: 1.06, dur: 0.45 },
+    ];
+
+    notas.forEach(({ freq, inicio, dur }) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type      = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + inicio);
+
+      gain.gain.setValueAtTime(0, ctx.currentTime + inicio);
+      gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + inicio + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + inicio + dur);
+
+      osc.start(ctx.currentTime + inicio);
+      osc.stop(ctx.currentTime + inicio + dur + 0.05);
+    });
+
+    // Fechar contexto após o som terminar
+    setTimeout(() => ctx.close(), 2000);
+  } catch (e) {
+    console.warn('Áudio não disponível:', e);
   }
 }
 
