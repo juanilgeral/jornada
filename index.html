@@ -36,7 +36,6 @@
     overflow-x: hidden;
   }
 
-  /* ── SCREENS ── */
   .screen { display: none; min-height: 100vh; min-height: 100dvh; flex-direction: column; }
   .screen.active { display: flex; }
 
@@ -172,9 +171,7 @@
   }
 
   /* ── MAIN APP ── */
-  #app-screen {
-    background: var(--bg);
-  }
+  #app-screen { background: var(--bg); }
 
   .app-header {
     background: var(--surface);
@@ -223,7 +220,6 @@
     gap: 1rem;
   }
 
-  /* ── STATUS CARD ── */
   .status-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -285,7 +281,6 @@
     margin-top: 0.2rem;
   }
 
-  /* ── GPS CARD ── */
   .gps-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -331,7 +326,6 @@
   .gps-wait { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
   .gps-err { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
 
-  /* ── JORNADA BUTTONS ── */
   .jornada-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -351,60 +345,15 @@
   }
 
   .jornada-btn:active { transform: scale(0.96); }
+  .jornada-btn.available:hover { border-color: var(--accent); background: rgba(0,212,170,0.05); }
+  .jornada-btn.done { opacity: 0.45; cursor: not-allowed; }
+  .jornada-btn.active-btn { border-color: var(--accent); background: rgba(0,212,170,0.08); box-shadow: 0 0 20px rgba(0,212,170,0.15); }
 
-  .jornada-btn.available:hover {
-    border-color: var(--accent);
-    background: rgba(0,212,170,0.05);
-  }
+  .jornada-btn .btn-icon { font-size: 1.6rem; margin-bottom: 0.4rem; display: block; }
+  .jornada-btn .btn-label { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.78rem; color: var(--text); display: block; line-height: 1.2; }
+  .jornada-btn .btn-time { font-size: 0.68rem; color: var(--accent); margin-top: 0.3rem; display: block; font-variant-numeric: tabular-nums; }
+  .jornada-btn .btn-badge { position: absolute; top: 6px; right: 6px; width: 16px; height: 16px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: white; }
 
-  .jornada-btn.done {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-
-  .jornada-btn.active-btn {
-    border-color: var(--accent);
-    background: rgba(0,212,170,0.08);
-    box-shadow: 0 0 20px rgba(0,212,170,0.15);
-  }
-
-  .jornada-btn .btn-icon {
-    font-size: 1.6rem;
-    margin-bottom: 0.4rem;
-    display: block;
-  }
-
-  .jornada-btn .btn-label {
-    font-family: 'Syne', sans-serif;
-    font-weight: 600;
-    font-size: 0.78rem;
-    color: var(--text);
-    display: block;
-    line-height: 1.2;
-  }
-
-  .jornada-btn .btn-time {
-    font-size: 0.68rem;
-    color: var(--accent);
-    margin-top: 0.3rem;
-    display: block;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .jornada-btn .btn-badge {
-    position: absolute;
-    top: 6px; right: 6px;
-    width: 16px; height: 16px;
-    background: var(--green);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.55rem;
-    color: white;
-  }
-
-  /* ── HISTORY ── */
   .section-title {
     font-size: 0.78rem;
     color: #c8a96e;
@@ -436,17 +385,137 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .history-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
+  .history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .history-event { flex: 1; color: var(--text); }
   .history-time { color: var(--muted); font-size: 0.72rem; }
   .history-sent { color: var(--green); font-size: 0.65rem; }
 
-  /* ── ADMIN ── */
+  /* ── HISTÓRICO PESSOAL (UMA DATA) ── */
+  #historico-screen { background: var(--bg); }
+
+  .hist-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .hist-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  .hist-header p { font-size: 0.72rem; color: #c8a96e; margin-top: 2px; }
+
+  .hist-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  /* ⬇️ CORREÇÃO PRINCIPAL: UM ÚNICO CAMPO DE DATA ⬇️ */
+  .hist-date-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .hist-date-row input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .hist-date-row input:focus { border-color: var(--accent2); }
+
+  .btn-buscar-hist {
+    background: var(--accent2);
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .btn-buscar-hist:active { opacity: 0.75; }
+
+  .hist-day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .hist-day-header {
+    padding: 0.8rem 1rem;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .hist-day-header .hist-day-date {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+
+  .hist-day-header .hist-day-status {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+  }
+
+  .hist-events { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .hist-event-row { display: flex; align-items: center; gap: 0.75rem; font-size: 0.8rem; }
+  .hist-event-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .hist-event-label { flex: 1; color: var(--text); }
+  .hist-event-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.78rem; }
+
+  .hist-worked {
+    padding: 0.5rem 1rem 0.8rem;
+    font-size: 0.75rem;
+    color: #c8a96e;
+    border-top: 1px solid var(--border);
+    margin-top: 0.25rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .hist-worked span strong { color: var(--text); font-family: 'Syne', sans-serif; font-weight: 700; }
+  .hist-empty { text-align: center; padding: 3rem 1rem; color: var(--muted); font-size: 0.82rem; }
+
+  .hist-nav-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.35rem 0.6rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .hist-nav-btn:hover { color: var(--accent2); border-color: var(--accent2); }
+
+  /* ADMIN */
   #admin-screen { background: var(--bg); }
 
   .admin-header {
@@ -461,19 +530,8 @@
     z-index: 10;
   }
 
-  .admin-header h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--warn);
-  }
-
-  .admin-header p {
-    font-size: 0.72rem;
-    color: #c8a96e;
-    margin-top: 2px;
-  }
-
+  .admin-header h2 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--warn); }
+  .admin-header p { font-size: 0.72rem; color: #c8a96e; margin-top: 2px; }
   .admin-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
 
   .admin-tabs {
@@ -499,10 +557,7 @@
     transition: all 0.2s;
   }
 
-  .admin-tab.active {
-    background: var(--warn);
-    color: #fff;
-  }
+  .admin-tab.active { background: var(--warn); color: #fff; }
 
   .admin-date-row {
     display: flex;
@@ -548,320 +603,25 @@
     text-align: center;
   }
 
-  .stat-box .stat-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 800;
-  }
+  .stat-box .stat-num { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; }
+  .stat-box .stat-label { font-size: 0.6rem; color: #c8a96e; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
 
-  .stat-box .stat-label {
-    font-size: 0.6rem;
-    color: #c8a96e;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 2px;
-  }
-
-  .admin-table-wrap {
-    overflow-x: auto;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-  }
-
-  .admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.75rem;
-    min-width: 500px;
-  }
-
-  .admin-table th {
-    background: var(--surface2);
-    color: #c8a96e;
-    padding: 0.55rem 0.75rem;
-    text-align: left;
-    font-size: 0.65rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .admin-table td {
-    padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-    white-space: nowrap;
-  }
-
+  .admin-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  .admin-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 500px; }
+  .admin-table th { background: var(--surface2); color: #c8a96e; padding: 0.55rem 0.75rem; text-align: left; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .admin-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
   .admin-table tr:last-child td { border-bottom: none; }
   .admin-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .admin-empty { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.8rem; }
 
-  .pill {
-    display: inline-block;
-    padding: 0.15rem 0.5rem;
-    border-radius: 20px;
-    font-size: 0.68rem;
-    font-weight: 500;
-  }
-
-  .pill-green  { background: rgba(34,197,94,0.15);  color: var(--green); }
+  .pill { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.68rem; font-weight: 500; }
+  .pill-green  { background: rgba(34,197,94,0.15); color: var(--green); }
   .pill-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
-  .pill-blue   { background: rgba(0,102,255,0.15);  color: #7eb3ff; }
-  .pill-red    { background: rgba(239,68,68,0.15);  color: var(--red); }
+  .pill-blue   { background: rgba(0,102,255,0.15); color: #7eb3ff; }
+  .pill-red    { background: rgba(239,68,68,0.15); color: var(--red); }
   .pill-muted  { background: rgba(90,106,130,0.15); color: var(--muted); }
 
-  .admin-empty {
-    text-align: center;
-    padding: 2rem;
-    color: var(--muted);
-    font-size: 0.8rem;
-  }
-
-  /* ── TOAST ── */
-  #toast {
-    position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.7rem 1.2rem;
-    font-size: 0.82rem;
-    color: var(--text);
-    z-index: 999;
-    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-    white-space: nowrap;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  }
-
-  #toast.show { transform: translateX(-50%) translateY(0); }
-  #toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
-  #toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
-
-  /* ── LOADING OVERLAY ── */
-  #loading {
-    position: fixed;
-    inset: 0;
-    background: rgba(10,15,30,0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    display: none;
-  }
-
-  .spinner {
-    width: 40px; height: 40px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── SETUP SCREEN ── */
-  #setup-screen {
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    background: radial-gradient(ellipse at 70% 30%, #001a3a 0%, var(--bg) 60%);
-  }
-
-  .setup-card {
-    width: 100%;
-    max-width: 400px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 2rem;
-  }
-
-  .setup-card h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 800;
-    margin-bottom: 0.4rem;
-    color: var(--accent);
-  }
-
-  .setup-card p {
-    font-size: 0.78rem;
-    color: var(--muted);
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
-  }
-
-  .setup-card .info-box {
-    background: rgba(0,102,255,0.08);
-    border: 1px solid rgba(0,102,255,0.2);
-    border-radius: 10px;
-    padding: 0.9rem;
-    font-size: 0.75rem;
-    color: #7eb3ff;
-    line-height: 1.6;
-    margin-bottom: 1.25rem;
-  }
-
-  .setup-card .info-box strong { color: var(--text); }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 380px) {
-    .jornada-grid { grid-template-columns: 1fr; }
-  }
-
-  /* ── HISTÓRICO PESSOAL SCREEN ── */
-  #historico-screen { background: var(--bg); }
-
-  .hist-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  .hist-header h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--accent2);
-  }
-
-  .hist-header p { font-size: 0.72rem; color: #c8a96e; margin-top: 2px; }
-
-  .hist-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-
-  .hist-date-row {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  .hist-date-row input {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.65rem 1rem;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.85rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .hist-date-row input:focus { border-color: var(--accent2); }
-
-  .btn-buscar-hist {
-    background: var(--accent2);
-    border: none;
-    border-radius: 10px;
-    padding: 0.65rem 1rem;
-    color: #fff;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .btn-buscar-hist:active { opacity: 0.75; }
-
-  .hist-day-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  .hist-day-header {
-    padding: 0.8rem 1rem;
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .hist-day-header .hist-day-date {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--accent);
-  }
-
-  .hist-day-header .hist-day-status {
-    font-size: 0.68rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 20px;
-  }
-
-  .hist-events { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
-
-  .hist-event-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.8rem;
-  }
-
-  .hist-event-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .hist-event-label { flex: 1; color: var(--text); }
-
-  .hist-event-time {
-    font-variant-numeric: tabular-nums;
-    color: var(--muted);
-    font-size: 0.78rem;
-  }
-
-  .hist-worked {
-    padding: 0.5rem 1rem 0.8rem;
-    font-size: 0.75rem;
-    color: #c8a96e;
-    border-top: 1px solid var(--border);
-    margin-top: 0.25rem;
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .hist-worked span strong {
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-  }
-
-  .hist-empty {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--muted);
-    font-size: 0.82rem;
-  }
-
-  .hist-nav-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.35rem 0.6rem;
-    color: var(--muted);
-    font-size: 0.75rem;
-    cursor: pointer;
-    font-family: 'DM Mono', monospace;
-    transition: color 0.2s, border-color 0.2s;
-  }
-  .hist-nav-btn:hover { color: var(--accent2); border-color: var(--accent2); }
-
-  /* ── MEAL ALERT MODAL ── */
+  /* MODAIS */
   #modal-refeicao {
     display: none;
     position: fixed;
@@ -893,64 +653,89 @@
   }
 
   .meal-alert-icon { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
+  .meal-alert-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--yellow); margin-bottom: 0.4rem; }
+  .meal-alert-desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.55; }
+  .btn-dismiss-meal { width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); color: #1a0a00; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; padding: 0.85rem; border: none; border-radius: 10px; cursor: pointer; }
 
-  .meal-alert-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--yellow);
-    margin-bottom: 0.4rem;
+  #modal-confirm {
+    display:none; position:fixed; inset:0; z-index:500;
+    background:rgba(10,15,30,0.85); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center; padding:1.5rem;
   }
 
-  .meal-alert-desc {
-    font-size: 0.82rem;
-    color: var(--muted);
-    margin-bottom: 1.25rem;
-    line-height: 1.55;
+  #modal-confirm > div {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:20px; padding:1.75rem; width:100%; max-width:320px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
   }
 
-  .btn-dismiss-meal {
-    width: 100%;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: #1a0a00;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
-    padding: 0.85rem;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-  }
-
-  /* ── NAV BAR (botão de histórico no app) ── */
-  .app-nav {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0 1.25rem 1.25rem;
-  }
-
-  .nav-pill {
-    flex: 1;
-    background: var(--surface);
+  #toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 0.6rem 0.5rem;
-    font-family: 'Syne', sans-serif;
-    font-weight: 600;
-    font-size: 0.75rem;
-    color: var(--muted);
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.2s;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.82rem;
+    color: var(--text);
+    z-index: 999;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   }
 
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+  #toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,15,30,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    display: none;
+  }
+
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #setup-screen {
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at 70% 30%, #001a3a 0%, var(--bg) 60%);
+  }
+
+  .setup-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+  }
+
+  .setup-card h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; margin-bottom: 0.4rem; color: var(--accent); }
+  .setup-card p { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.5; }
+  .setup-card .info-box { background: rgba(0,102,255,0.08); border: 1px solid rgba(0,102,255,0.2); border-radius: 10px; padding: 0.9rem; font-size: 0.75rem; color: #7eb3ff; line-height: 1.6; margin-bottom: 1.25rem; }
+  .setup-card .info-box strong { color: var(--text); }
+
+  .app-nav { display: flex; gap: 0.5rem; padding: 0 1.25rem 1.25rem; }
+  .nav-pill { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.6rem 0.5rem; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.75rem; color: var(--muted); cursor: pointer; text-align: center; transition: all 0.2s; }
   .nav-pill:hover { color: var(--accent2); border-color: var(--accent2); }
   .nav-pill.active { background: rgba(0,102,255,0.1); color: var(--accent2); border-color: var(--accent2); }
+
+  @media (max-width: 380px) { .jornada-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
-<!-- SETUP SCREEN (primeira vez) -->
+<!-- SETUP SCREEN -->
 <div id="setup-screen" class="screen">
   <div class="setup-card">
     <h2>⚙️ Configuração Inicial</h2>
@@ -972,7 +757,7 @@
 </div>
 
 <!-- LOGIN SCREEN -->
-<div id="login-screen" class="screen active">
+<div id="login-screen" class="screen">
   <div class="login-card">
     <div class="brand">
       <div class="brand-icon">🚌</div>
@@ -1005,8 +790,6 @@
   </div>
 
   <div class="app-body">
-
-    <!-- Status + Relógio -->
     <div class="status-card">
       <div class="clock-display" id="clock">00:00:00</div>
       <div class="date-display" id="datedisp">—</div>
@@ -1016,7 +799,6 @@
       </div>
     </div>
 
-    <!-- Card de Descanso (aparece só quando em período de intrajornada) -->
     <div class="gps-card" id="descanso-card" style="display:none; border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.05);">
       <div class="gps-icon" style="background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.3);">😴</div>
       <div class="gps-info">
@@ -1026,7 +808,6 @@
       <span class="gps-status" id="descanso-badge" style="background:rgba(245,158,11,0.15); color:var(--yellow); border:1px solid rgba(245,158,11,0.3);">aguard.</span>
     </div>
 
-    <!-- GPS -->
     <div class="gps-card">
       <div class="gps-icon">📍</div>
       <div class="gps-info">
@@ -1036,7 +817,6 @@
       <span class="gps-status gps-wait" id="gps-badge">aguard.</span>
     </div>
 
-    <!-- Botões Jornada -->
     <div>
       <div class="section-title">Registrar Ponto</div>
       <div class="jornada-grid">
@@ -1063,22 +843,37 @@
       </div>
     </div>
 
-    <!-- Histórico do dia -->
     <div>
       <div class="section-title">Registros de Hoje</div>
       <div class="history-list" id="history-list">
-        <div style="font-size:0.78rem; color:var(--muted); text-align:center; padding:1rem;">
-          Nenhum registro ainda
-        </div>
+        <div style="font-size:0.78rem; color:var(--muted); text-align:center; padding:1rem;">Nenhum registro ainda</div>
       </div>
     </div>
-
   </div>
 
-  <!-- Nav Bar -->
   <div class="app-nav">
     <button class="nav-pill active" id="navbtn-ponto" onclick="mostrarPainel('ponto')">📋 Ponto</button>
     <button class="nav-pill" id="navbtn-historico" onclick="mostrarPainel('historico')">📅 Histórico</button>
+  </div>
+</div>
+
+<!-- HISTÓRICO PESSOAL SCREEN — CORRIGIDO: APENAS UMA DATA -->
+<div id="historico-screen" class="screen">
+  <div class="hist-header">
+    <div>
+      <h2>📅 Meu Histórico</h2>
+      <p id="hist-header-user">—</p>
+    </div>
+    <button class="hist-nav-btn" onclick="voltarParaPonto()">← Voltar</button>
+  </div>
+  <div class="hist-body">
+    <div class="hist-date-row">
+      <input type="date" id="hist-data-unica" title="Data da pesquisa" />
+      <button class="btn-buscar-hist" onclick="buscarHistorico()">Buscar</button>
+    </div>
+    <div id="hist-results">
+      <div class="hist-empty">Selecione uma data e clique em Buscar</div>
+    </div>
   </div>
 </div>
 
@@ -1096,148 +891,61 @@
   </div>
 
   <div class="admin-body">
-
-    <!-- Abas -->
     <div class="admin-tabs">
       <button class="admin-tab active" id="tab-dia" onclick="mudarAba('dia')">📋 Registros do Dia</button>
       <button class="admin-tab" id="tab-semana" onclick="mudarAba('semana')">📊 Horas Extras</button>
     </div>
 
-    <!-- Painel Dia -->
     <div id="painel-dia">
       <div class="admin-date-row">
         <input type="date" id="admin-data" />
         <button class="btn-buscar" onclick="buscarDia()">Buscar</button>
       </div>
-
-      <!-- Estatísticas -->
       <div class="admin-stats">
-        <div class="stat-box">
-          <div class="stat-num" id="stat-total" style="color:var(--text)">—</div>
-          <div class="stat-label">Total</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num" id="stat-iniciados" style="color:var(--green)">—</div>
-          <div class="stat-label">Iniciaram</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num" id="stat-almoco" style="color:var(--yellow)">—</div>
-          <div class="stat-label">Almoço</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num" id="stat-finalizados" style="color:var(--red)">—</div>
-          <div class="stat-label">Finalizaram</div>
-        </div>
+        <div class="stat-box"><div class="stat-num" id="stat-total" style="color:var(--text)">—</div><div class="stat-label">Total</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-iniciados" style="color:var(--green)">—</div><div class="stat-label">Iniciaram</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-almoco" style="color:var(--yellow)">—</div><div class="stat-label">Almoço</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-finalizados" style="color:var(--red)">—</div><div class="stat-label">Finalizaram</div></div>
       </div>
-
-      <!-- Tabela -->
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Início</th>
-              <th>Parada</th>
-              <th>Retorno</th>
-              <th>Fim</th>
-              <th>Trabalhado</th>
-              <th>Extra</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="admin-tbody">
-            <tr><td colspan="8" class="admin-empty">Selecione uma data e clique em Buscar</td></tr>
-          </tbody>
+          <thead><tr><th>Nome</th><th>Início</th><th>Parada</th><th>Retorno</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
+          <tbody id="admin-tbody"><tr><td colspan="8" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- Painel Semana -->
     <div id="painel-semana" style="display:none;">
       <div class="admin-date-row">
         <input type="date" id="admin-semana-data" />
         <button class="btn-buscar" onclick="buscarSemana()">Buscar</button>
       </div>
-      <div style="font-size:0.72rem; color:#c8a96e; margin-top:-0.25rem;">
-        Selecione qualquer dia da semana desejada
-      </div>
+      <div style="font-size:0.72rem; color:#c8a96e; margin-top:-0.25rem;">Selecione qualquer dia da semana desejada</div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th>
-              <th>Total</th>
-              <th>Extra</th>
-              <th>Faltando</th>
-            </tr>
-          </thead>
-          <tbody id="admin-semana-tbody">
-            <tr><td colspan="10" class="admin-empty">Selecione uma semana e clique em Buscar</td></tr>
-          </tbody>
+          <thead><tr><th>Nome</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th><th>Total</th><th>Extra</th><th>Faltando</th></tr></thead>
+          <tbody id="admin-semana-tbody"><tr><td colspan="10" class="admin-empty">Selecione uma semana e clique em Buscar</td></tr></tbody>
         </table>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- Modal de Confirmação -->
-<div id="modal-confirm" style="
-  display:none; position:fixed; inset:0; z-index:500;
-  background:rgba(10,15,30,0.85); backdrop-filter:blur(4px);
-  align-items:center; justify-content:center; padding:1.5rem;">
-  <div style="
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:20px; padding:1.75rem; width:100%; max-width:320px;
-    box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+<!-- MODAL CONFIRMAÇÃO -->
+<div id="modal-confirm">
+  <div>
     <div id="modal-icon" style="font-size:2.5rem; text-align:center; margin-bottom:0.75rem;">🟢</div>
     <div style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; text-align:center; margin-bottom:0.4rem;" id="modal-title">Confirmar Registro</div>
     <div style="font-size:0.8rem; color:var(--muted); text-align:center; margin-bottom:1.25rem; line-height:1.5;" id="modal-desc">Deseja registrar este ponto agora?</div>
     <div style="display:flex; gap:0.75rem;">
-      <button onclick="cancelarRegistro()" style="
-        flex:1; background:var(--surface2); border:1px solid var(--border);
-        border-radius:10px; padding:0.8rem; color:var(--muted);
-        font-family:'DM Mono',monospace; font-size:0.85rem; cursor:pointer;">
-        Cancelar
-      </button>
-      <button onclick="confirmarRegistro()" id="modal-btn-ok" style="
-        flex:1; background:linear-gradient(135deg,var(--accent),#00a885);
-        border:none; border-radius:10px; padding:0.8rem;
-        color:#001a14; font-family:'Syne',sans-serif;
-        font-weight:700; font-size:0.85rem; cursor:pointer;">
-        Confirmar ✓
-      </button>
+      <button onclick="cancelarRegistro()" style="flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:0.8rem; color:var(--muted); font-family:'DM Mono',monospace; font-size:0.85rem; cursor:pointer;">Cancelar</button>
+      <button onclick="confirmarRegistro()" id="modal-btn-ok" style="flex:1; background:linear-gradient(135deg,var(--accent),#00a885); border:none; border-radius:10px; padding:0.8rem; color:#001a14; font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; cursor:pointer;">Confirmar ✓</button>
     </div>
   </div>
 </div>
 
-<!-- HISTÓRICO PESSOAL SCREEN -->
-<div id="historico-screen" class="screen">
-  <div class="hist-header">
-    <div>
-      <h2>📅 Meu Histórico</h2>
-      <p id="hist-header-user">—</p>
-    </div>
-    <button class="hist-nav-btn" onclick="voltarParaPonto()">← Voltar</button>
-  </div>
-  <div class="hist-body">
-    <div class="hist-date-row">
-      <input type="date" id="hist-data-de" title="De" />
-      <span style="color:var(--muted); font-size:0.75rem; flex-shrink:0;">até</span>
-      <input type="date" id="hist-data-ate" title="Até" />
-      <button class="btn-buscar-hist" onclick="buscarHistorico()">Buscar</button>
-    </div>
-    <div id="hist-results">
-      <div class="hist-empty">Selecione o período e clique em Buscar</div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: Alerta de Refeição -->
-<div id="modal-refeicao" style="display:none; position:fixed; inset:0; z-index:600;
-  background:rgba(10,15,30,0.9); backdrop-filter:blur(6px);
-  align-items:center; justify-content:center; padding:1.5rem;">
+<!-- MODAL REFEIÇÃO -->
+<div id="modal-refeicao">
   <div class="meal-alert-card" id="meal-alert-card">
     <span class="meal-alert-icon" id="meal-alert-icon">🍽️</span>
     <div class="meal-alert-title" id="meal-alert-title">Parada Refeição Liberada!</div>
@@ -1246,98 +954,78 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
-<!-- Loading -->
 <div id="loading"><div class="spinner"></div></div>
 
 <script>
 // ═══════════════════════════════════════════
-// CONFIG — USUÁRIOS (adicione aqui)
-// Em produção, isso fica no Apps Script
+// USUÁRIOS
 // ═══════════════════════════════════════════
 const USERS = {
-  // ── GESTOR ──
-  "admin":          { senha: "7391",   nome: "Administrador" },
-
-  // ── FUNCIONÁRIOS ──
-  "adriano":        { senha: "4827",   nome: "Adriano" },
-  "alexandre":      { senha: "9153",   nome: "Alexandre" },
-  "anderson":       { senha: "6042",   nome: "Anderson" },
-  "andre":          { senha: "3718",   nome: "André" },
-  "camara":         { senha: "5296",   nome: "Camara" },
-  "celio":          { senha: "8134",   nome: "Célio" },
-  "claudinei":      { senha: "2975",   nome: "Claudinei" },
-  "claudio":        { senha: "7460",   nome: "Cláudio" },
-  "devanilso":      { senha: "1583",   nome: "Devanilso" },
-  "edilson":        { senha: "9247",   nome: "Edilson" },
-  "eduardo":        { senha: "3861",   nome: "Eduardo" },
-  "gilmar":         { senha: "6529",   nome: "Gilmar" },
-  "heriberto":      { senha: "4073",   nome: "Heriberto" },
-  "isaias":         { senha: "8316",   nome: "Isaias" },
-  "joel":           { senha: "5742",   nome: "Joel" },
-  "luiz":           { senha: "2198",   nome: "Luíz" },
-  "marcio":         { senha: "7635",   nome: "Márcio" },
-  "martins":        { senha: "9081",   nome: "Martins" },
-  "medeiros":       { senha: "4362",   nome: "Medeiros" },
-  "neves":          { senha: "1794",   nome: "Neves" },
-  "nogueira":       { senha: "8520",   nome: "Nogueira" },
-  "oliveira":       { senha: "3647",   nome: "Oliveira" },
-  "rene":           { senha: "6913",   nome: "René" },
-  "ricardo":        { senha: "2458",   nome: "Ricardo" },
-  "rogerio":        { senha: "5184",   nome: "Rogério" },
-  "rosendo":        { senha: "9736",   nome: "Rosendo" },
-  "sandro":         { senha: "1329",   nome: "Sandro" },
-  "sergio":         { senha: "8067",   nome: "Sérgio" },
-  "sergio.silva":   { senha: "4591",   nome: "Sérgio Silva" },
-  "vagner":         { senha: "7248",   nome: "Vagner" },
-  "valdir":         { senha: "3905",   nome: "Valdir" },
-  "walmir":         { senha: "6173",   nome: "Walmir" },
-  "marcelo.duarte": { senha: "2846",   nome: "Marcelo Duarte" },
-  "roberto":        { senha: "9412",   nome: "Roberto" },
-  "deric":          { senha: "5067",   nome: "Deric" },
-  "antonio":        { senha: "1738",   nome: "Antônio" },
-  "irineu":         { senha: "8293",   nome: "Irineu" },
-  "ekland":         { senha: "4650",   nome: "Ekland" },
-  "tavares":        { senha: "7814",   nome: "Tavares" },
-  "pamela":         { senha: "3027",   nome: "Pâmela" },
-  "wania":          { senha: "6581",   nome: "Wânia" },
-  "agata":          { senha: "9364",   nome: "Agata" },
-  "giulia":         { senha: "2709",   nome: "Giulia" },
-  "ferreira":       { senha: "5943",   nome: "Ferreira" },
-  "alex":           { senha: "1476",   nome: "Alex" },
-  "wilson":         { senha: "8032",   nome: "Wilson" },
-  "braz":           { senha: "4715",   nome: "Braz" },
-  "jose":           { senha: "6398",   nome: "José" },
-  "nubia":          { senha: "3261",   nome: "Núbia" },
-  "lucas":          { senha: "3847",   nome: "Lucas" },
-  "vasconcellos":   { senha: "6120",   nome: "Vasconcellos" },
-  "daniel":         { senha: "9453",   nome: "Daniel" },
-  "felipe":         { senha: "2786",   nome: "Felipe" },
-  "jonni":          { senha: "5039",   nome: "Jonni" },
-  "souza":          { senha: "8314",   nome: "Souza" },
+  "admin": { senha: "7391", nome: "Administrador" },
+  "adriano": { senha: "4827", nome: "Adriano" }, "alexandre": { senha: "9153", nome: "Alexandre" },
+  "anderson": { senha: "6042", nome: "Anderson" }, "andre": { senha: "3718", nome: "André" },
+  "camara": { senha: "5296", nome: "Camara" }, "celio": { senha: "8134", nome: "Célio" },
+  "claudinei": { senha: "2975", nome: "Claudinei" }, "claudio": { senha: "7460", nome: "Cláudio" },
+  "devanilso": { senha: "1583", nome: "Devanilso" }, "edilson": { senha: "9247", nome: "Edilson" },
+  "eduardo": { senha: "3861", nome: "Eduardo" }, "gilmar": { senha: "6529", nome: "Gilmar" },
+  "heriberto": { senha: "4073", nome: "Heriberto" }, "isaias": { senha: "8316", nome: "Isaias" },
+  "joel": { senha: "5742", nome: "Joel" }, "luiz": { senha: "2198", nome: "Luíz" },
+  "marcio": { senha: "7635", nome: "Márcio" }, "martins": { senha: "9081", nome: "Martins" },
+  "medeiros": { senha: "4362", nome: "Medeiros" }, "neves": { senha: "1794", nome: "Neves" },
+  "nogueira": { senha: "8520", nome: "Nogueira" }, "oliveira": { senha: "3647", nome: "Oliveira" },
+  "rene": { senha: "6913", nome: "René" }, "ricardo": { senha: "2458", nome: "Ricardo" },
+  "rogerio": { senha: "5184", nome: "Rogério" }, "rosendo": { senha: "9736", nome: "Rosendo" },
+  "sandro": { senha: "1329", nome: "Sandro" }, "sergio": { senha: "8067", nome: "Sérgio" },
+  "sergio.silva": { senha: "4591", nome: "Sérgio Silva" }, "vagner": { senha: "7248", nome: "Vagner" },
+  "valdir": { senha: "3905", nome: "Valdir" }, "walmir": { senha: "6173", nome: "Walmir" },
+  "marcelo.duarte": { senha: "2846", nome: "Marcelo Duarte" }, "roberto": { senha: "9412", nome: "Roberto" },
+  "deric": { senha: "5067", nome: "Deric" }, "antonio": { senha: "1738", nome: "Antônio" },
+  "irineu": { senha: "8293", nome: "Irineu" }, "ekland": { senha: "4650", nome: "Ekland" },
+  "tavares": { senha: "7814", nome: "Tavares" }, "pamela": { senha: "3027", nome: "Pâmela" },
+  "wania": { senha: "6581", nome: "Wânia" }, "agata": { senha: "9364", nome: "Agata" },
+  "giulia": { senha: "2709", nome: "Giulia" }, "ferreira": { senha: "5943", nome: "Ferreira" },
+  "alex": { senha: "1476", nome: "Alex" }, "wilson": { senha: "8032", nome: "Wilson" },
+  "braz": { senha: "4715", nome: "Braz" }, "jose": { senha: "6398", nome: "José" },
+  "nubia": { senha: "3261", nome: "Núbia" }, "lucas": { senha: "3847", nome: "Lucas" },
+  "vasconcellos": { senha: "6120", nome: "Vasconcellos" }, "daniel": { senha: "9453", nome: "Daniel" },
+  "felipe": { senha: "2786", nome: "Felipe" }, "jonni": { senha: "5039", nome: "Jonni" },
+  "souza": { senha: "8314", nome: "Souza" }
 };
 
 // ═══════════════════════════════════════════
-// ESTADO
+// ESTADO GLOBAL
 // ═══════════════════════════════════════════
 let currentUser = null;
 let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
+let paradaTimer = null;
+let fimRefeicaoTimer = null;
+const DESCANSO_MS = 11 * 60 * 60 * 1000;
+let descansoTimer = null;
+let mealAlertRepeat = null;
+
+const EVENTOS = {
+  inicio:  { label: 'Início de Jornada', cor: '#22c55e' },
+  parada:  { label: 'Parada Refeição',   cor: '#f59e0b' },
+  retorno: { label: 'Retorno Refeição',  cor: '#0066ff' },
+  fim:     { label: 'Fim de Jornada',    cor: '#ef4444' },
+};
+
+const ICONES = { inicio: '🟢', parada: '🍽️', retorno: '↩️', fim: '🔴' };
+const CORES_BTN = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
+let tipoConfirmando = null;
 
 // ═══════════════════════════════════════════
-// ÁUDIO — Web Audio API
+// ÁUDIO
 // ═══════════════════════════════════════════
 let audioCtx = null;
-
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  // Resume se suspenso (política de autoplay)
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
-
 function tocarBeep(frequencias, duracoes, volume = 0.4) {
   try {
     const ctx = getAudioCtx();
@@ -1355,35 +1043,19 @@ function tocarBeep(frequencias, duracoes, volume = 0.4) {
       osc.stop(t + duracoes[i]);
       t += duracoes[i] + 0.05;
     });
-  } catch(e) { console.warn('Áudio não disponível:', e); }
+  } catch(e) { console.warn(e); }
 }
-
-// Alerta de LIBERAÇÃO de refeição: alegre, três tons ascendentes
-function tocarAlertaRefeicaoLiberada() {
-  tocarBeep([523, 659, 784, 1047], [0.18, 0.18, 0.18, 0.35], 0.45);
-}
-
-// Alerta de FIM de refeição: dois tons descendentes + longo
-function tocarAlertaFimRefeicao() {
-  tocarBeep([880, 784, 659, 523, 440], [0.15, 0.15, 0.15, 0.15, 0.4], 0.4);
-}
-
-// ═══════════════════════════════════════════
-// MODAL ALERTA DE REFEIÇÃO
-// ═══════════════════════════════════════════
-let mealAlertRepeat = null;
+function tocarAlertaRefeicaoLiberada() { tocarBeep([523, 659, 784, 1047], [0.18, 0.18, 0.18, 0.35], 0.45); }
+function tocarAlertaFimRefeicao() { tocarBeep([880, 784, 659, 523, 440], [0.15, 0.15, 0.15, 0.15, 0.4], 0.4); }
 
 function mostrarAlertaRefeicao(tipo) {
-  // tipo: 'liberada' | 'fim'
   const modal = document.getElementById('modal-refeicao');
   const card = document.getElementById('meal-alert-card');
   const icon = document.getElementById('meal-alert-icon');
   const title = document.getElementById('meal-alert-title');
   const desc = document.getElementById('meal-alert-desc');
-
   if (tipo === 'liberada') {
     card.style.borderColor = 'rgba(245,158,11,0.5)';
-    card.style.boxShadow = '0 0 60px rgba(245,158,11,0.2), 0 20px 60px rgba(0,0,0,0.6)';
     icon.textContent = '🍽️';
     title.textContent = 'Parada Refeição Liberada!';
     title.style.color = 'var(--yellow)';
@@ -1391,11 +1063,10 @@ function mostrarAlertaRefeicao(tipo) {
     document.querySelector('.btn-dismiss-meal').style.background = 'linear-gradient(135deg,#f59e0b,#d97706)';
     document.querySelector('.btn-dismiss-meal').style.color = '#1a0a00';
     tocarAlertaRefeicaoLiberada();
-    // Repetir som a cada 8s até fechar
+    if (mealAlertRepeat) clearInterval(mealAlertRepeat);
     mealAlertRepeat = setInterval(() => tocarAlertaRefeicaoLiberada(), 8000);
   } else {
     card.style.borderColor = 'rgba(0,102,255,0.5)';
-    card.style.boxShadow = '0 0 60px rgba(0,102,255,0.2), 0 20px 60px rgba(0,0,0,0.6)';
     icon.textContent = '↩️';
     title.textContent = 'Intervalo Encerrado!';
     title.style.color = '#7eb3ff';
@@ -1403,122 +1074,97 @@ function mostrarAlertaRefeicao(tipo) {
     document.querySelector('.btn-dismiss-meal').style.background = 'linear-gradient(135deg,#0066ff,#0044cc)';
     document.querySelector('.btn-dismiss-meal').style.color = '#fff';
     tocarAlertaFimRefeicao();
+    if (mealAlertRepeat) clearInterval(mealAlertRepeat);
     mealAlertRepeat = setInterval(() => tocarAlertaFimRefeicao(), 8000);
   }
-
   modal.style.display = 'flex';
-  // Vibração (mobile)
   if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
 }
-
 function fecharAlertaRefeicao() {
   document.getElementById('modal-refeicao').style.display = 'none';
   if (mealAlertRepeat) { clearInterval(mealAlertRepeat); mealAlertRepeat = null; }
 }
 
 // ═══════════════════════════════════════════
-// NAVEGAÇÃO ENTRE PAINÉIS (app-screen / historico-screen)
+// NAVEGAÇÃO
 // ═══════════════════════════════════════════
 function mostrarPainel(painel) {
   if (painel === 'historico') {
     showScreen('historico-screen');
     document.getElementById('hist-header-user').textContent = currentUser?.nome || '—';
-    // Definir datas padrão: últimos 7 dias
     const hoje = new Date();
-    const seteAtras = new Date(hoje);
-    seteAtras.setDate(hoje.getDate() - 6);
-    document.getElementById('hist-data-ate').value = toISO(hoje);
-    document.getElementById('hist-data-de').value = toISO(seteAtras);
+    document.getElementById('hist-data-unica').value = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
   } else {
     showScreen('app-screen');
   }
 }
-
-function voltarParaPonto() {
-  showScreen('app-screen');
-}
-
-function toISO(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function voltarParaPonto() { showScreen('app-screen'); }
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
 // ═══════════════════════════════════════════
-// HISTÓRICO PESSOAL — busca no Sheets
+// HISTÓRICO PESSOAL — CORRIGIDO: UMA ÚNICA DATA
 // ═══════════════════════════════════════════
 async function buscarHistorico() {
-  const de  = document.getElementById('hist-data-de').value;
-  const ate = document.getElementById('hist-data-ate').value;
-  if (!de || !ate) { showToast('Preencha o período', 'error'); return; }
-  if (de > ate) { showToast('Data inicial maior que final', 'error'); return; }
+  const dataUnica = document.getElementById('hist-data-unica').value;
+  if (!dataUnica) { showToast('Selecione uma data', 'error'); return; }
 
   const url = localStorage.getItem(SCRIPT_URL_KEY);
   if (!url) { showToast('URL não configurada', 'error'); return; }
 
-  // Converter para BR
-  const deBR  = de.split('-').reverse().join('/');
-  const ateBR = ate.split('-').reverse().join('/');
+  const dataBR = dataUnica.split('-').reverse().join('/');
 
   showLoading(true);
   try {
-    const resp = await fetch(`${url}?acao=historico_usuario&usuario=${encodeURIComponent(currentUser.login)}&de=${encodeURIComponent(deBR)}&ate=${encodeURIComponent(ateBR)}`);
+    const resp = await fetch(`${url}?acao=historico_usuario&usuario=${encodeURIComponent(currentUser.login)}&data=${encodeURIComponent(dataBR)}`);
     const json = await resp.json();
-    renderHistoricoUsuario(json.dias || []);
+    renderHistoricoUsuario(json.registros || [], dataBR);
   } catch(e) {
-    // Fallback: montar do localStorage
-    renderHistoricoLocal(de, ate);
+    console.error(e);
+    renderHistoricoLocal(dataUnica);
   } finally {
     showLoading(false);
   }
 }
 
-function renderHistoricoLocal(de, ate) {
-  // Lê o localStorage para o período — fallback offline
-  const dias = [];
-  const deDate  = new Date(de + 'T00:00:00');
-  const ateDate = new Date(ate + 'T23:59:59');
-  for (let d = new Date(deDate); d <= ateDate; d.setDate(d.getDate()+1)) {
-    const key = `jt_state_${currentUser.login}_${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      const st = JSON.parse(saved);
-      if (st.inicio || st.parada || st.retorno || st.fim) {
-        const dd = String(d.getDate()).padStart(2,'0');
-        const mm = String(d.getMonth()+1).padStart(2,'0');
-        dias.push({ data: `${dd}/${mm}/${d.getFullYear()}`, ...st });
-      }
-    }
+function renderHistoricoLocal(dataISO) {
+  const [yyyy, mm, dd] = dataISO.split('-');
+  const dataBR = `${dd}/${mm}/${yyyy}`;
+  const key = `jt_state_${currentUser.login}_${yyyy}-${mm}-${dd}`;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    const st = JSON.parse(saved);
+    renderHistoricoUsuario([{ data: dataBR, ...st }], dataBR);
+  } else {
+    document.getElementById('hist-results').innerHTML = `<div class="hist-empty">Nenhum registro encontrado para ${dataBR}</div>`;
   }
-  renderHistoricoUsuario(dias, true);
 }
 
-function renderHistoricoUsuario(dias, isLocal = false) {
+function renderHistoricoUsuario(registros, dataBusca) {
   const container = document.getElementById('hist-results');
-
-  if (!dias.length) {
-    container.innerHTML = `<div class="hist-empty">Nenhum registro encontrado no período${isLocal ? '<br><small style="font-size:0.72rem;margin-top:0.5rem;display:block;">Dados locais apenas</small>' : ''}</div>`;
+  if (!registros || registros.length === 0) {
+    container.innerHTML = `<div class="hist-empty">Nenhum registro encontrado para ${dataBusca}</div>`;
     return;
   }
 
   const CORES = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
   const NOMES = { inicio: 'Início de Jornada', parada: 'Parada Refeição', retorno: 'Retorno Refeição', fim: 'Fim de Jornada' };
 
-  container.innerHTML = dias.map(dia => {
+  container.innerHTML = registros.map(dia => {
     const eventos = ['inicio','parada','retorno','fim'].filter(k => dia[k]);
-    const completo = dia.fim;
-
-    // Calcular trabalhado
     let trabalhado = '—';
     let refeicao = '—';
     if (dia.inicio && dia.fim) {
-      const minutos = calcMinutos(dia.inicio, dia.fim);
-      const refMin  = dia.parada && dia.retorno ? calcMinutos(dia.parada, dia.retorno) : 0;
-      const liq     = minutos - refMin;
+      const minutos = calcMinutosDiff(dia.inicio, dia.fim);
+      const refMin = dia.parada && dia.retorno ? calcMinutosDiff(dia.parada, dia.retorno) : 0;
+      const liq = minutos - refMin;
       trabalhado = formatMinutos(liq);
       if (refMin > 0) refeicao = formatMinutos(refMin);
     }
-
-    const statusCls   = completo ? 'pill pill-red' : eventos.length ? 'pill pill-green' : 'pill pill-muted';
-    const statusLabel = completo ? 'Finalizado' : eventos.length ? 'Em andamento' : 'Sem dados';
+    const statusLabel = dia.fim ? 'Finalizado' : eventos.length ? 'Em andamento' : 'Sem dados';
+    const statusCls = dia.fim ? 'pill pill-red' : eventos.length ? 'pill pill-green' : 'pill pill-muted';
 
     return `<div class="hist-day-card">
       <div class="hist-day-header">
@@ -1533,118 +1179,145 @@ function renderHistoricoUsuario(dias, isLocal = false) {
             <span class="hist-event-time">${dia[k]}</span>
           </div>` : '').join('')}
       </div>
-      ${trabalhado !== '—' ? `
-      <div class="hist-worked">
-        <span>Trabalhado: <strong>${trabalhado}</strong></span>
-        ${refeicao !== '—' ? `<span>Refeição: <strong>${refeicao}</strong></span>` : ''}
-      </div>` : ''}
+      ${trabalhado !== '—' ? `<div class="hist-worked"><span>Trabalhado: <strong>${trabalhado}</strong></span>${refeicao !== '—' ? `<span>Refeição: <strong>${refeicao}</strong></span>` : ''}</div>` : ''}
     </div>`;
   }).join('');
-
-  if (isLocal) {
-    container.innerHTML += `<div style="font-size:0.7rem; color:var(--muted); text-align:center; margin-top:0.5rem;">⚠️ Dados carregados do armazenamento local do dispositivo</div>`;
-  }
 }
 
-function calcMinutos(h1, h2) {
-  const [a,b,c] = h1.split(':').map(Number);
-  const [d,e,f] = h2.split(':').map(Number);
-  return (d*60+e) - (a*60+b);
+function calcMinutosDiff(h1, h2) {
+  const [a,b] = h1.split(':').map(Number);
+  const [c,d] = h2.split(':').map(Number);
+  return (c*60+d) - (a*60+b);
 }
-
 function formatMinutos(m) {
   if (m <= 0) return '—';
   const h = Math.floor(m/60);
   const min = m % 60;
   return h > 0 ? `${h}h${String(min).padStart(2,'0')}m` : `${min}m`;
 }
-
 function formatarDataBR(dataBR) {
-  // "DD/MM/YYYY" → "Seg, 16 Abr 2025"
   try {
     const [dd,mm,yyyy] = dataBR.split('/');
     const d = new Date(Number(yyyy), Number(mm)-1, Number(dd));
-    const dias  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
     return `${dias[d.getDay()]}, ${dd} ${meses[d.getMonth()]} ${yyyy}`;
   } catch(e) { return dataBR; }
 }
 
-// Chave do estado salvo por usuário + data
+// ═══════════════════════════════════════════
+// FUNÇÕES AUXILIARES
+// ═══════════════════════════════════════════
 function stateKey() {
   const hoje = new Date();
-  const d = `${hoje.getFullYear()}-${hoje.getMonth()+1}-${hoje.getDate()}`;
-  return `jt_state_${currentUser?.login}_${d}`;
+  return `jt_state_${currentUser?.login}_${hoje.getFullYear()}-${hoje.getMonth()+1}-${hoje.getDate()}`;
 }
-function salvarEstado() {
-  localStorage.setItem(stateKey(), JSON.stringify(jornadaState));
-}
+function salvarEstado() { localStorage.setItem(stateKey(), JSON.stringify(jornadaState)); }
 function carregarEstado() {
   const saved = localStorage.getItem(stateKey());
   if (saved) jornadaState = JSON.parse(saved);
   else jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 }
-function restaurarBotoes() {
-  const ordem = ['inicio', 'parada', 'retorno', 'fim'];
-  ordem.forEach((tipo) => {
-    const btn = document.getElementById(`btn-${tipo}`);
-    const timeEl = document.getElementById(`time-${tipo}`);
-    if (jornadaState[tipo]) {
-      // Já registrado — marcar como feito
-      btn.disabled = true;
-      btn.classList.remove('available', 'active-btn');
-      btn.classList.add('done');
-      timeEl.textContent = jornadaState[tipo];
-      if (!btn.querySelector('.btn-badge')) {
-        const badge = document.createElement('div');
-        badge.className = 'btn-badge';
-        badge.textContent = '✓';
-        btn.appendChild(badge);
-      }
-      updateStatusDisplay(tipo);
-      addToHistoryFromState(tipo, jornadaState[tipo]);
-    } else {
-      // Não registrado
-      if (tipo === 'parada' && jornadaState.inicio) {
-        // Parada só libera após 4h do início
-        verificarLiberacaoParada();
-      } else {
-        btn.disabled = false;
-        btn.classList.add('available');
-        btn.classList.remove('done');
-      }
-    }
-  });
+function fimKey() { return `jt_fim_ts_${currentUser?.login}`; }
+function salvarFimTimestamp(iso) { localStorage.setItem(fimKey(), iso); }
+
+function initClock() {
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+function updateClock() {
+  const now = new Date();
+  const el = document.getElementById('clock');
+  if (el) el.textContent = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const dd = document.getElementById('datedisp');
+  if (dd) {
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    dd.textContent = `${dias[now.getDay()]}, ${now.getDate()} ${meses[now.getMonth()]} ${now.getFullYear()} · GMT-3`;
+  }
 }
 
-// ── Controle do timer de 4h para Parada Refeição ──
-let paradaTimer = null;
+function iniciarGPS() {
+  if (!navigator.geolocation) { setGPSStatus('GPS não suportado', 'err', '—'); return; }
+  setGPSStatus('Obtendo localização...', 'wait', 'aguard.');
+  navigator.geolocation.watchPosition(
+    pos => {
+      gpsData = { lat: pos.coords.latitude.toFixed(6), lon: pos.coords.longitude.toFixed(6), acc: Math.round(pos.coords.accuracy), timestamp: new Date().toISOString() };
+      setGPSStatus(`${gpsData.lat}, ${gpsData.lon} (±${gpsData.acc}m)`, 'ok', 'ok');
+    },
+    () => { setGPSStatus('Sem permissão de GPS', 'err', 'erro'); gpsData = { lat: 'N/D', lon: 'N/D', acc: 'N/D', timestamp: new Date().toISOString() }; },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+  );
+}
+function setGPSStatus(coords, type, badge) {
+  const c = document.getElementById('gps-coords');
+  const b = document.getElementById('gps-badge');
+  if (c) c.textContent = coords;
+  if (b) { b.textContent = badge; b.className = `gps-status gps-${type}`; }
+}
+
+function verificarDescanso() {
+  const fimTs = localStorage.getItem(fimKey());
+  if (!fimTs) return;
+  const liberaEm = new Date(new Date(fimTs).getTime() + DESCANSO_MS);
+  if (new Date() >= liberaEm) { limparEstadoDiaAnterior(); return; }
+  bloquearParaDescanso(liberaEm);
+}
+function bloquearParaDescanso(liberaEm) {
+  const btnInicio = document.getElementById('btn-inicio');
+  if (btnInicio && !jornadaState.inicio) { btnInicio.disabled = true; btnInicio.classList.remove('available'); }
+  document.getElementById('descanso-card').style.display = 'flex';
+  if (descansoTimer) clearInterval(descansoTimer);
+  descansoTimer = setInterval(() => {
+    const restante = liberaEm - new Date();
+    if (restante <= 0) { clearInterval(descansoTimer); document.getElementById('descanso-card').style.display = 'none'; limparEstadoDiaAnterior(); return; }
+    const h = String(Math.floor(restante / 3600000)).padStart(2,'0');
+    const m = String(Math.floor((restante % 3600000) / 60000)).padStart(2,'0');
+    const s = String(Math.floor((restante % 60000) / 1000)).padStart(2,'0');
+    const el = document.getElementById('descanso-countdown');
+    const badge = document.getElementById('descanso-badge');
+    if (el) el.textContent = `Liberação em ${h}:${m}:${s}`;
+    if (badge) badge.textContent = `${h}h${m}m`;
+  }, 1000);
+}
+function limparEstadoDiaAnterior() {
+  localStorage.removeItem(fimKey());
+  jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
+  salvarEstado();
+  document.getElementById('descanso-card').style.display = 'none';
+  ['inicio','parada','retorno','fim'].forEach(t => {
+    const btn = document.getElementById(`btn-${t}`);
+    const badge = btn?.querySelector('.btn-badge');
+    if (badge) badge.remove();
+    if (btn) { btn.disabled = false; btn.classList.add('available'); btn.classList.remove('done'); }
+    const te = document.getElementById(`time-${t}`);
+    if (te) te.textContent = '—';
+  });
+  document.getElementById('history-list').innerHTML = '<div style="font-size:0.78rem; color:var(--muted); text-align:center; padding:1rem;">Nenhum registro ainda</div>';
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  if (dot) dot.style.background = 'var(--muted)';
+  if (txt) { txt.textContent = 'Nenhum registro hoje'; txt.style.color = 'var(--muted)'; }
+  showToast('✅ Descanso cumprido! Nova jornada liberada.', 'success');
+}
 
 function verificarLiberacaoParada() {
   if (jornadaState.parada || !jornadaState.inicio) return;
-
-  const horaInicio = jornadaState.inicio; // "HH:MM:SS"
+  const [h,m,s] = jornadaState.inicio.split(':').map(Number);
   const hoje = new Date();
-  const [h, m, s] = horaInicio.split(':').map(Number);
   const inicioMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
-  const liberaMs = inicioMs + (4 * 60 * 60 * 1000); // +4h
-  const agora = Date.now();
-
+  const liberaMs = inicioMs + (4 * 60 * 60 * 1000);
   const btn = document.getElementById('btn-parada');
-
-  if (agora >= liberaMs) {
-    // Já passou das 4h — liberar
+  if (Date.now() >= liberaMs) {
     btn.disabled = false;
     btn.classList.add('available');
     btn.classList.remove('done');
+    if (paradaTimer) clearInterval(paradaTimer);
     atualizarLabelParada(null);
     return;
   }
-
-  // Ainda bloqueado — mostrar contagem no botão
   btn.disabled = true;
   btn.classList.remove('available');
-
   if (paradaTimer) clearInterval(paradaTimer);
   paradaTimer = setInterval(() => {
     const restante = liberaMs - Date.now();
@@ -1663,590 +1336,49 @@ function verificarLiberacaoParada() {
     atualizarLabelParada(`${rh}:${rm}:${rs}`);
   }, 1000);
 }
-
 function atualizarLabelParada(countdown) {
   const timeEl = document.getElementById('time-parada');
-  const btn = document.getElementById('btn-parada');
-  if (countdown) {
-    timeEl.textContent = `Libera em ${countdown}`;
-    timeEl.style.color = 'var(--yellow)';
-    btn.title = 'Aguarde 4h após o início';
-  } else {
-    if (!jornadaState.parada) {
-      timeEl.textContent = '—';
-      timeEl.style.color = '';
-    }
-  }
+  if (countdown) { timeEl.textContent = `Libera em ${countdown}`; timeEl.style.color = 'var(--yellow)'; }
+  else if (!jornadaState.parada) { timeEl.textContent = '—'; timeEl.style.color = ''; }
 }
-function addToHistoryFromState(tipo, hora) {
-  const list = document.getElementById('history-list');
-  if (list.querySelector('[style*="text-align:center"]') || list.textContent.includes('Nenhum')) list.innerHTML = '';
-  const cores = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
-  const item = document.createElement('div');
-  item.className = 'history-item';
-  item.innerHTML = `
-    <span class="history-dot" style="background:${cores[tipo]}"></span>
-    <span class="history-event">${EVENTOS[tipo].label}</span>
-    <span class="history-time">${hora}</span>
-    <span class="history-sent">✓</span>
-  `;
-  list.appendChild(item);
-}
-
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
-const SAVED_USER_KEY = 'jt_saved_user';
-
-window.addEventListener('load', () => {
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
-  if (!url) {
-    showScreen('setup-screen');
-    return;
-  }
-  // Verificar login salvo (lembrar acesso)
-  const savedUser = localStorage.getItem(SAVED_USER_KEY);
-  if (savedUser) {
-    currentUser = JSON.parse(savedUser);
-    iniciarApp();
-    return;
-  }
-  showScreen('login-screen');
-  initClock();
-});
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-// ═══════════════════════════════════════════
-// SETUP
-// ═══════════════════════════════════════════
-function saveSetup() {
-  const url = document.getElementById('setup-url').value.trim();
-  if (!url.startsWith('https://script.google.com/macros/')) {
-    showToast('❌ URL inválida', 'error'); return;
-  }
-  localStorage.setItem(SCRIPT_URL_KEY, url);
-  showScreen('login-screen');
-  initClock();
-}
-
-// ═══════════════════════════════════════════
-// LOGIN
-// ═══════════════════════════════════════════
-function doLogin() {
-  const user = document.getElementById('login-user').value.trim().toLowerCase();
-  const pass = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-error');
-  err.style.display = 'none';
-
-  if (!USERS[user] || USERS[user].senha !== pass) {
-    err.style.display = 'block';
-    return;
-  }
-  currentUser = { login: user, nome: USERS[user].nome };
-  // Salvar login para entrar automaticamente nas próximas vezes
-  localStorage.setItem(SAVED_USER_KEY, JSON.stringify(currentUser));
-  iniciarApp();
-}
-
-function doLogout() {
-  if (!confirm('Confirmar saída? Será necessário digitar o usuário e senha novamente.')) return;
-  localStorage.removeItem(SAVED_USER_KEY);
-  sessionStorage.removeItem('jt_user');
-  currentUser = null;
-  jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
-  gpsData = null;
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
-  showScreen('login-screen');
-}
-
-// ═══════════════════════════════════════════
-// APP INIT
-// ═══════════════════════════════════════════
-function iniciarApp() {
-  if (currentUser.login === 'admin') {
-    iniciarAdmin();
-    return;
-  }
-  showScreen('app-screen');
-  document.getElementById('header-user').textContent = currentUser.nome;
-  // Desbloquear contexto de áudio no primeiro toque do usuário
-  document.body.addEventListener('touchstart', () => getAudioCtx(), { once: true });
-  document.body.addEventListener('click', () => getAudioCtx(), { once: true });
-  initClock();
-  iniciarGPS();
-  carregarEstado();
-  renderHistory();
-  restaurarBotoes();
-  restaurarTimerFimRefeicao();
-  verificarDescanso();
-}
-
-// ═══════════════════════════════════════════
-// PAINEL ADMIN
-// ═══════════════════════════════════════════
-function iniciarAdmin() {
-  showScreen('admin-screen');
-  // Definir data de hoje como padrão
-  const hoje = new Date();
-  const dd = String(hoje.getDate()).padStart(2,'0');
-  const mm = String(hoje.getMonth()+1).padStart(2,'0');
-  const yyyy = hoje.getFullYear();
-  const hojeISO = `${yyyy}-${mm}-${dd}`;
-  document.getElementById('admin-data').value = hojeISO;
-  document.getElementById('admin-semana-data').value = hojeISO;
-  buscarDia();
-}
-
-function mudarAba(aba) {
-  document.getElementById('painel-dia').style.display    = aba === 'dia'    ? 'block' : 'none';
-  document.getElementById('painel-semana').style.display = aba === 'semana' ? 'block' : 'none';
-  document.getElementById('tab-dia').classList.toggle('active',    aba === 'dia');
-  document.getElementById('tab-semana').classList.toggle('active', aba === 'semana');
-}
-
-async function buscarDia() {
-  const inputData = document.getElementById('admin-data').value;
-  if (!inputData) { showToast('Selecione uma data', 'error'); return; }
-
-  // Converter de YYYY-MM-DD para DD/MM/YYYY
-  const [yyyy, mm, dd] = inputData.split('-');
-  const dataBR = `${dd}/${mm}/${yyyy}`;
-
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
-  if (!url) { showToast('URL não configurada', 'error'); return; }
-
-  showLoading(true);
-  try {
-    const resp = await fetch(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`);
-    const json = await resp.json();
-    renderTabelaDia(json.registros || []);
-  } catch(e) {
-    showToast('❌ Erro ao buscar dados', 'error');
-  } finally {
-    showLoading(false);
-  }
-}
-
-function renderTabelaDia(registros) {
-  const tbody = document.getElementById('admin-tbody');
-
-  if (!registros.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
-    ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => {
-      document.getElementById(id).textContent = '0';
-    });
-    return;
-  }
-
-  // Estatísticas
-  const iniciados   = registros.filter(r => r.inicio).length;
-  const almoco      = registros.filter(r => r.parada && !r.retorno).length;
-  const finalizados = registros.filter(r => r.fim).length;
-
-  document.getElementById('stat-total').textContent      = registros.length;
-  document.getElementById('stat-iniciados').textContent  = iniciados;
-  document.getElementById('stat-almoco').textContent     = almoco;
-  document.getElementById('stat-finalizados').textContent= finalizados;
-
-  // Tabela
-  tbody.innerHTML = registros.map(r => {
-    const status = getStatus(r);
-    return `<tr>
-      <td style="font-family:'Syne',sans-serif; font-weight:600">${r.nome}</td>
-      <td>${r.inicio  ? `<span class="pill pill-green">${r.inicio}</span>`  : '<span class="pill pill-muted">—</span>'}</td>
-      <td>${r.parada  ? `<span class="pill pill-yellow">${r.parada}</span>` : '<span class="pill pill-muted">—</span>'}</td>
-      <td>${r.retorno ? `<span class="pill pill-blue">${r.retorno}</span>`  : '<span class="pill pill-muted">—</span>'}</td>
-      <td>${r.fim     ? `<span class="pill pill-red">${r.fim}</span>`       : '<span class="pill pill-muted">—</span>'}</td>
-      <td>${r.trabalhado || '<span style="color:var(--muted)">—</span>'}</td>
-      <td>${r.extra && r.extra !== '—' ? `<span class="pill pill-yellow">${r.extra}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
-      <td><span class="pill ${status.cls}">${status.label}</span></td>
-    </tr>`;
-  }).join('');
-}
-
-function getStatus(r) {
-  if (r.fim)                         return { label: 'Finalizado',  cls: 'pill-red' };
-  if (r.retorno)                     return { label: 'Trabalhando', cls: 'pill-green' };
-  if (r.parada && !r.retorno)        return { label: 'Almoço',      cls: 'pill-yellow' };
-  if (r.inicio && !r.parada)         return { label: 'Em serviço',  cls: 'pill-blue' };
-  return                                    { label: 'Não iniciou', cls: 'pill-muted' };
-}
-
-async function buscarSemana() {
-  const inputData = document.getElementById('admin-semana-data').value;
-  if (!inputData) { showToast('Selecione uma data da semana', 'error'); return; }
-
-  // Encontrar segunda-feira da semana
-  const d = new Date(inputData + 'T12:00:00');
-  const diaSem = d.getDay();
-  const diffSeg = diaSem === 0 ? -6 : 1 - diaSem;
-  const segunda = new Date(d);
-  segunda.setDate(d.getDate() + diffSeg);
-  const dd = String(segunda.getDate()).padStart(2,'0');
-  const mm = String(segunda.getMonth()+1).padStart(2,'0');
-  const yyyy = segunda.getFullYear();
-  const semanaKey = `${dd}/${mm}/${yyyy}`;
-
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
-  if (!url) { showToast('URL não configurada', 'error'); return; }
-
-  showLoading(true);
-  try {
-    const resp = await fetch(`${url}?acao=extras_semana&semana=${encodeURIComponent(semanaKey)}`);
-    const json = await resp.json();
-    renderTabelaSemana(json.semanas || [], semanaKey);
-  } catch(e) {
-    showToast('❌ Erro ao buscar dados', 'error');
-  } finally {
-    showLoading(false);
-  }
-}
-
-function renderTabelaSemana(semanas, semanaKey) {
-  const tbody = document.getElementById('admin-semana-tbody');
-
-  if (!semanas.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="admin-empty">Nenhum dado para a semana de ${semanaKey}</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = semanas.map(s => `
-    <tr>
-      <td style="font-family:'Syne',sans-serif; font-weight:600">${s.nome}</td>
-      <td>${s.seg || '<span style="color:var(--muted)">—</span>'}</td>
-      <td>${s.ter || '<span style="color:var(--muted)">—</span>'}</td>
-      <td>${s.qua || '<span style="color:var(--muted)">—</span>'}</td>
-      <td>${s.qui || '<span style="color:var(--muted)">—</span>'}</td>
-      <td>${s.sex || '<span style="color:var(--muted)">—</span>'}</td>
-      <td>${s.sab || '<span style="color:var(--muted)">—</span>'}</td>
-      <td style="font-weight:600">${s.total || '—'}</td>
-      <td>${s.extra && s.extra !== '—' ? `<span class="pill pill-green">${s.extra}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
-      <td>${s.faltando && s.faltando !== '—' ? `<span class="pill pill-red">${s.faltando}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
-    </tr>
-  `).join('');
-}
-
-// ═══════════════════════════════════════════
-// RELÓGIO
-// ═══════════════════════════════════════════
-function initClock() {
-  updateClock();
-  setInterval(updateClock, 1000);
-}
-
-function updateClock() {
-  const now = new Date();
-  const gmt3 = new Date(now.getTime() - (now.getTimezoneOffset() + 180) * 60000);
-  // Usa horário local do dispositivo (que deve estar em GMT-3)
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  const s = String(now.getSeconds()).padStart(2,'0');
-  const el = document.getElementById('clock');
-  if (el) el.textContent = `${h}:${m}:${s}`;
-  const dd = document.getElementById('datedisp');
-  if (dd) {
-    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    dd.textContent = `${dias[now.getDay()]}, ${now.getDate()} ${meses[now.getMonth()]} ${now.getFullYear()} · GMT-3`;
-  }
-}
-
-// ═══════════════════════════════════════════
-// GPS
-// ═══════════════════════════════════════════
-function iniciarGPS() {
-  if (!navigator.geolocation) {
-    setGPSStatus('GPS não suportado', 'err', '—'); return;
-  }
-  setGPSStatus('Obtendo localização...', 'wait', 'aguard.');
-  navigator.geolocation.watchPosition(
-    pos => {
-      const lat = pos.coords.latitude.toFixed(6);
-      const lon = pos.coords.longitude.toFixed(6);
-      const acc = Math.round(pos.coords.accuracy);
-      gpsData = { lat, lon, acc, timestamp: new Date().toISOString() };
-      setGPSStatus(`${lat}, ${lon} (±${acc}m)`, 'ok', 'ok');
-    },
-    err => {
-      setGPSStatus('Sem permissão de GPS', 'err', 'erro');
-      gpsData = { lat: 'N/D', lon: 'N/D', acc: 'N/D', timestamp: new Date().toISOString() };
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-  );
-}
-
-function setGPSStatus(coords, type, badge) {
-  const c = document.getElementById('gps-coords');
-  const b = document.getElementById('gps-badge');
-  if (c) c.textContent = coords;
-  if (b) { b.textContent = badge; b.className = `gps-status gps-${type}`; }
-}
-
-// ═══════════════════════════════════════════
-// DESCANSO INTRAJORNADA (11h)
-// ═══════════════════════════════════════════
-const DESCANSO_MS = 11 * 60 * 60 * 1000; // 11 horas em ms
-let descansoTimer = null;
-
-function fimKey() {
-  return `jt_fim_ts_${currentUser?.login}`;
-}
-
-function salvarFimTimestamp(isoTimestamp) {
-  localStorage.setItem(fimKey(), isoTimestamp);
-}
-
-function verificarDescanso() {
-  const fimTs = localStorage.getItem(fimKey());
-  if (!fimTs) return;
-
-  const fimDate = new Date(fimTs);
-  const liberaEm = new Date(fimDate.getTime() + DESCANSO_MS);
-  const agora = new Date();
-
-  if (agora >= liberaEm) {
-    // Descanso cumprido — limpar estado do dia anterior e liberar
-    limparEstadoDiaAnterior();
-    return;
-  }
-
-  // Ainda em descanso — bloquear início e mostrar contagem
-  bloquearParaDescanso(liberaEm);
-}
-
-function bloquearParaDescanso(liberaEm) {
-  // Bloquear botão início
-  const btnInicio = document.getElementById('btn-inicio');
-  if (btnInicio && !jornadaState.inicio) {
-    btnInicio.disabled = true;
-    btnInicio.classList.remove('available');
-  }
-
-  // Mostrar card de descanso
-  document.getElementById('descanso-card').style.display = 'flex';
-
-  // Iniciar contagem regressiva
-  if (descansoTimer) clearInterval(descansoTimer);
-  descansoTimer = setInterval(() => {
-    const agora = new Date();
-    const restante = liberaEm - agora;
-    if (restante <= 0) {
-      clearInterval(descansoTimer);
-      document.getElementById('descanso-card').style.display = 'none';
-      limparEstadoDiaAnterior();
-      return;
-    }
-    const h = String(Math.floor(restante / 3600000)).padStart(2, '0');
-    const m = String(Math.floor((restante % 3600000) / 60000)).padStart(2, '0');
-    const s = String(Math.floor((restante % 60000) / 1000)).padStart(2, '0');
-    const el = document.getElementById('descanso-countdown');
-    const badge = document.getElementById('descanso-badge');
-    if (el) el.textContent = `Liberação em ${h}:${m}:${s}`;
-    if (badge) badge.textContent = `${h}h${m}m`;
-  }, 1000);
-}
-
-function limparEstadoDiaAnterior() {
-  // Limpar estado do dia anterior e permitir novo início
-  localStorage.removeItem(fimKey());
-  jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
-  salvarEstado();
-  document.getElementById('descanso-card').style.display = 'none';
-  // Reabilitar todos os botões
-  ['inicio','parada','retorno','fim'].forEach(t => {
-    const btn = document.getElementById(`btn-${t}`);
-    const badge = btn?.querySelector('.btn-badge');
-    if (badge) badge.remove();
-    if (btn) {
-      btn.disabled = false;
-      btn.classList.add('available');
-      btn.classList.remove('done');
-    }
-    const te = document.getElementById(`time-${t}`);
-    if (te) te.textContent = '—';
-  });
-  renderHistory();
-  const dot = document.getElementById('status-dot');
-  const txt = document.getElementById('status-text');
-  if (dot) dot.style.background = 'var(--muted)';
-  if (txt) { txt.textContent = 'Nenhum registro hoje'; txt.style.color = 'var(--muted)'; }
-  showToast('✅ Descanso cumprido! Nova jornada liberada.', 'success');
-}
-
-
-const EVENTOS = {
-  inicio:  { label: 'Início de Jornada', cor: '#22c55e' },
-  parada:  { label: 'Parada Refeição',   cor: '#f59e0b' },
-  retorno: { label: 'Retorno Refeição',  cor: '#0066ff' },
-  fim:     { label: 'Fim de Jornada',    cor: '#ef4444' },
-};
-
-// ═══════════════════════════════════════════
-// CONFIRMAÇÃO + REGISTRO
-// ═══════════════════════════════════════════
-let tipoConfirmando = null;
-
-const ICONES = { inicio: '🟢', parada: '🍽️', retorno: '↩️', fim: '🔴' };
-const CORES_BTN = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
-
-function registrar(tipo) {
-  if (jornadaState[tipo]) return;
-  tipoConfirmando = tipo;
-
-  // Preencher modal
-  document.getElementById('modal-icon').textContent = ICONES[tipo];
-  document.getElementById('modal-title').textContent = EVENTOS[tipo].label;
-  const now = new Date();
-  const hora = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-  document.getElementById('modal-desc').textContent = `Confirma o registro às ${hora}?`;
-  const btnOk = document.getElementById('modal-btn-ok');
-  btnOk.style.background = `linear-gradient(135deg, ${CORES_BTN[tipo]}, ${CORES_BTN[tipo]}bb)`;
-
-  const modal = document.getElementById('modal-confirm');
-  modal.style.display = 'flex';
-}
-
-function cancelarRegistro() {
-  tipoConfirmando = null;
-  document.getElementById('modal-confirm').style.display = 'none';
-}
-
-async function confirmarRegistro() {
-  document.getElementById('modal-confirm').style.display = 'none';
-  const tipo = tipoConfirmando;
-  tipoConfirmando = null;
-  if (!tipo) return;
-
-  const now = new Date();
-  const hora = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-  const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-  const isoTimestamp = now.toISOString();
-
-  const payload = {
-    usuario:    currentUser.login,
-    nome:       currentUser.nome,
-    evento:     EVENTOS[tipo].label,
-    hora:       hora,
-    data:       data,
-    timestamp:  isoTimestamp,
-    latitude:   gpsData?.lat ?? 'N/D',
-    longitude:  gpsData?.lon ?? 'N/D',
-    precisao:   gpsData?.acc ?? 'N/D',
-    gmt:        'GMT-3',
-    dispositivo: navigator.userAgent.substring(0, 80),
-  };
-
-  jornadaState[tipo] = hora;
-  salvarEstado();
-  // Salvar timestamp real do fim para calcular descanso
-  if (tipo === 'fim') salvarFimTimestamp(isoTimestamp);
-  document.getElementById(`time-${tipo}`).textContent = hora;
-  marcarBotao(tipo);
-  updateStatusDisplay(tipo);
-  addToHistory(tipo, hora);
-
-  // Ao registrar início, iniciar contagem de 4h para parada
-  if (tipo === 'inicio') verificarLiberacaoParada();
-
-  // Ao registrar parada de refeição, iniciar contagem de 30min para sinalizar fim
-  if (tipo === 'parada') iniciarTimerFimRefeicao();
-
-  // Ao registrar fim, bloquear todos os botões restantes
-  if (tipo === 'fim') {
-    ['inicio', 'parada', 'retorno'].forEach(t => {
-      if (!jornadaState[t]) {
-        const btn = document.getElementById(`btn-${t}`);
-        btn.disabled = true;
-        btn.classList.remove('available', 'active-btn');
-        btn.classList.add('done');
-      }
-    });
-    if (paradaTimer) clearInterval(paradaTimer);
-    if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
-  }
-
-  // Ao registrar retorno, limpar timer de fim de refeição
-  if (tipo === 'retorno') {
-    if (fimRefeicaoTimer) { clearInterval(fimRefeicaoTimer); fimRefeicaoTimer = null; }
-    const timeRetorno = document.getElementById('time-retorno');
-    if (timeRetorno) timeRetorno.style.color = '';
-  }
-
-  await enviarParaSheets(payload);
-}
-
-// ── Timer de 30min para sinalizar fim do intervalo de refeição ──
-let fimRefeicaoTimer = null;
-const REFEICAO_MIN_MS = 30 * 60 * 1000; // 30 minutos
 
 function iniciarTimerFimRefeicao() {
   if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
-
-  const horaParada = jornadaState.parada; // "HH:MM:SS"
+  if (!jornadaState.parada || jornadaState.retorno) return;
+  const [h,m,s] = jornadaState.parada.split(':').map(Number);
   const hoje = new Date();
-  const [h, m, s] = horaParada.split(':').map(Number);
   const paradaMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
-  const fimMs = paradaMs + REFEICAO_MIN_MS;
-
-  const agora = Date.now();
-  if (agora >= fimMs) {
-    // Já passou — não disparar
-    return;
-  }
-
-  // Mostrar contagem no botão de retorno
+  const fimMs = paradaMs + 30 * 60 * 1000;
   const btnRetorno = document.getElementById('btn-retorno');
   const timeRetorno = document.getElementById('time-retorno');
-
+  if (Date.now() >= fimMs) return;
   fimRefeicaoTimer = setInterval(() => {
     if (jornadaState.retorno) { clearInterval(fimRefeicaoTimer); return; }
     const restante = fimMs - Date.now();
     if (restante <= 0) {
       clearInterval(fimRefeicaoTimer);
-      if (timeRetorno && !jornadaState.retorno) {
-        timeRetorno.textContent = 'Libera agora';
-        timeRetorno.style.color = 'var(--green)';
-      }
-      if (!jornadaState.retorno) {
-        showToast('↩️ Intervalo de refeição encerrado!', 'success');
-        mostrarAlertaRefeicao('fim');
-      }
+      if (timeRetorno && !jornadaState.retorno) { timeRetorno.textContent = 'Libera agora'; timeRetorno.style.color = 'var(--green)'; }
+      if (!jornadaState.retorno) { showToast('↩️ Intervalo de refeição encerrado!', 'success'); mostrarAlertaRefeicao('fim'); }
       return;
     }
     const rm = String(Math.floor(restante / 60000)).padStart(2,'0');
     const rs = String(Math.floor((restante % 60000) / 1000)).padStart(2,'0');
-    if (timeRetorno && !jornadaState.retorno) {
-      timeRetorno.textContent = `Retorno em ${rm}:${rs}`;
-      timeRetorno.style.color = 'var(--yellow)';
-    }
+    if (timeRetorno && !jornadaState.retorno) { timeRetorno.textContent = `Retorno em ${rm}:${rs}`; timeRetorno.style.color = 'var(--yellow)'; }
   }, 1000);
 }
-
 function restaurarTimerFimRefeicao() {
-  // Chamado no restaurarBotoes se parada já foi registrada mas retorno não
-  if (jornadaState.parada && !jornadaState.retorno) {
-    iniciarTimerFimRefeicao();
-  }
+  if (jornadaState.parada && !jornadaState.retorno) iniciarTimerFimRefeicao();
 }
 
-function marcarBotao(tipo) {
-  const btn = document.getElementById(`btn-${tipo}`);
-  btn.classList.remove('available', 'active-btn');
-  btn.classList.add('done');
-  btn.disabled = true;
-
-  // Adicionar badge ✓
-  const badge = document.createElement('div');
-  badge.className = 'btn-badge';
-  badge.textContent = '✓';
-  btn.appendChild(badge);
+function addToHistory(tipo, hora) {
+  const list = document.getElementById('history-list');
+  if (list.children.length === 1 && (list.children[0].tagName !== 'DIV' || list.textContent.includes('Nenhum'))) list.innerHTML = '';
+  const cores = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `<span class="history-dot" style="background:${cores[tipo]}"></span><span class="history-event">${EVENTOS[tipo].label}</span><span class="history-time">${hora}</span><span class="history-sent">✓</span>`;
+  list.insertBefore(item, list.firstChild);
 }
-
 function updateStatusDisplay(tipo) {
   const dot = document.getElementById('status-dot');
   const txt = document.getElementById('status-text');
@@ -2255,105 +1387,233 @@ function updateStatusDisplay(tipo) {
   txt.textContent = EVENTOS[tipo].label + ' registrado';
   txt.style.color = cores[tipo];
 }
-
-// ═══════════════════════════════════════════
-// HISTÓRICO
-// ═══════════════════════════════════════════
-function addToHistory(tipo, hora) {
-  const list = document.getElementById('history-list');
-  // Limpar placeholder
-  if (list.children.length === 1 && list.children[0].tagName !== 'DIV'.toUpperCase() || list.textContent.includes('Nenhum')) {
-    list.innerHTML = '';
+function marcarBotao(tipo) {
+  const btn = document.getElementById(`btn-${tipo}`);
+  btn.classList.remove('available', 'active-btn');
+  btn.classList.add('done');
+  btn.disabled = true;
+  const badge = document.createElement('div');
+  badge.className = 'btn-badge';
+  badge.textContent = '✓';
+  btn.appendChild(badge);
+}
+function restaurarBotoes() {
+  const ordem = ['inicio', 'parada', 'retorno', 'fim'];
+  ordem.forEach(tipo => {
+    const btn = document.getElementById(`btn-${tipo}`);
+    const timeEl = document.getElementById(`time-${tipo}`);
+    if (jornadaState[tipo]) {
+      btn.disabled = true;
+      btn.classList.remove('available', 'active-btn');
+      btn.classList.add('done');
+      timeEl.textContent = jornadaState[tipo];
+      if (!btn.querySelector('.btn-badge')) { const badge = document.createElement('div'); badge.className = 'btn-badge'; badge.textContent = '✓'; btn.appendChild(badge); }
+      updateStatusDisplay(tipo);
+      addToHistory(tipo, jornadaState[tipo]);
+    } else {
+      if (tipo === 'parada' && jornadaState.inicio) verificarLiberacaoParada();
+      else { btn.disabled = false; btn.classList.add('available'); btn.classList.remove('done'); }
+    }
+  });
+  if (jornadaState.fim) {
+    ['inicio', 'parada', 'retorno'].forEach(t => {
+      if (!jornadaState[t]) { const btn = document.getElementById(`btn-${t}`); btn.disabled = true; btn.classList.remove('available'); btn.classList.add('done'); }
+    });
   }
-
-  const cores = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
-  const item = document.createElement('div');
-  item.className = 'history-item';
-  item.innerHTML = `
-    <span class="history-dot" style="background:${cores[tipo]}"></span>
-    <span class="history-event">${EVENTOS[tipo].label}</span>
-    <span class="history-time">${hora}</span>
-    <span class="history-sent">✓</span>
-  `;
-  list.insertBefore(item, list.firstChild);
-}
-
-function renderHistory() {
-  document.getElementById('history-list').innerHTML =
-    '<div style="font-size:0.78rem; color:var(--muted); text-align:center; padding:1rem;">Nenhum registro ainda</div>';
 }
 
 // ═══════════════════════════════════════════
-// ENVIO PARA GOOGLE SHEETS
+// REGISTRO
 // ═══════════════════════════════════════════
+function registrar(tipo) {
+  if (jornadaState[tipo]) return;
+  tipoConfirmando = tipo;
+  document.getElementById('modal-icon').textContent = ICONES[tipo];
+  document.getElementById('modal-title').textContent = EVENTOS[tipo].label;
+  const now = new Date();
+  const hora = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  document.getElementById('modal-desc').textContent = `Confirma o registro às ${hora}?`;
+  const btnOk = document.getElementById('modal-btn-ok');
+  btnOk.style.background = `linear-gradient(135deg, ${CORES_BTN[tipo]}, ${CORES_BTN[tipo]}bb)`;
+  document.getElementById('modal-confirm').style.display = 'flex';
+}
+function cancelarRegistro() { tipoConfirmando = null; document.getElementById('modal-confirm').style.display = 'none'; }
+async function confirmarRegistro() {
+  document.getElementById('modal-confirm').style.display = 'none';
+  const tipo = tipoConfirmando;
+  tipoConfirmando = null;
+  if (!tipo) return;
+  const now = new Date();
+  const hora = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const data = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+  const isoTimestamp = now.toISOString();
+  const payload = {
+    usuario: currentUser.login, nome: currentUser.nome, evento: EVENTOS[tipo].label,
+    hora: hora, data: data, timestamp: isoTimestamp,
+    latitude: gpsData?.lat ?? 'N/D', longitude: gpsData?.lon ?? 'N/D',
+    precisao: gpsData?.acc ?? 'N/D', gmt: 'GMT-3', dispositivo: navigator.userAgent.substring(0,80)
+  };
+  jornadaState[tipo] = hora;
+  salvarEstado();
+  if (tipo === 'fim') salvarFimTimestamp(isoTimestamp);
+  document.getElementById(`time-${tipo}`).textContent = hora;
+  marcarBotao(tipo);
+  updateStatusDisplay(tipo);
+  addToHistory(tipo, hora);
+  if (tipo === 'inicio') verificarLiberacaoParada();
+  if (tipo === 'parada') iniciarTimerFimRefeicao();
+  if (tipo === 'fim') {
+    ['inicio', 'parada', 'retorno'].forEach(t => { if (!jornadaState[t]) { const btn = document.getElementById(`btn-${t}`); btn.disabled = true; btn.classList.remove('available'); btn.classList.add('done'); } });
+    if (paradaTimer) clearInterval(paradaTimer);
+    if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
+  }
+  if (tipo === 'retorno') { if (fimRefeicaoTimer) { clearInterval(fimRefeicaoTimer); fimRefeicaoTimer = null; } const timeRetorno = document.getElementById('time-retorno'); if (timeRetorno) timeRetorno.style.color = ''; }
+  await enviarParaSheets(payload);
+}
 async function enviarParaSheets(payload) {
   const url = localStorage.getItem(SCRIPT_URL_KEY);
   if (!url) { showToast('⚠️ URL não configurada', 'error'); return; }
-
   showLoading(true);
   try {
-    const resp = await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     showToast(`✅ ${EVENTOS[payload.evento.toLowerCase().replace(/ .*/,'')] ? payload.evento : 'Registro'} enviado!`, 'success');
-  } catch(e) {
-    showToast('❌ Erro ao enviar. Verifique conexão.', 'error');
-    console.error(e);
-  } finally {
-    showLoading(false);
-  }
+  } catch(e) { showToast('❌ Erro ao enviar. Verifique conexão.', 'error'); console.error(e); }
+  finally { showLoading(false); }
 }
 
 // ═══════════════════════════════════════════
-// UI HELPERS
+// ADMIN
 // ═══════════════════════════════════════════
-let toastTimer;
+function iniciarAdmin() {
+  showScreen('admin-screen');
+  const hoje = new Date();
+  const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+  document.getElementById('admin-data').value = hojeISO;
+  document.getElementById('admin-semana-data').value = hojeISO;
+  buscarDia();
+}
+function mudarAba(aba) {
+  document.getElementById('painel-dia').style.display = aba === 'dia' ? 'block' : 'none';
+  document.getElementById('painel-semana').style.display = aba === 'semana' ? 'block' : 'none';
+  document.getElementById('tab-dia').classList.toggle('active', aba === 'dia');
+  document.getElementById('tab-semana').classList.toggle('active', aba === 'semana');
+}
+async function buscarDia() {
+  const inputData = document.getElementById('admin-data').value;
+  if (!inputData) { showToast('Selecione uma data', 'error'); return; }
+  const [yyyy, mm, dd] = inputData.split('-');
+  const dataBR = `${dd}/${mm}/${yyyy}`;
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showToast('URL não configurada', 'error'); return; }
+  showLoading(true);
+  try {
+    const resp = await fetch(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`);
+    const json = await resp.json();
+    renderTabelaDia(json.registros || []);
+  } catch(e) { showToast('❌ Erro ao buscar dados', 'error'); } finally { showLoading(false); }
+}
+function renderTabelaDia(registros) {
+  const tbody = document.getElementById('admin-tbody');
+  if (!registros.length) { tbody.innerHTML = '<tr><td colspan="8" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
+    ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => document.getElementById(id).textContent = '0'); return; }
+  document.getElementById('stat-total').textContent = registros.length;
+  document.getElementById('stat-iniciados').textContent = registros.filter(r => r.inicio).length;
+  document.getElementById('stat-almoco').textContent = registros.filter(r => r.parada && !r.retorno).length;
+  document.getElementById('stat-finalizados').textContent = registros.filter(r => r.fim).length;
+  tbody.innerHTML = registros.map(r => {
+    const status = (() => { if (r.fim) return { label: 'Finalizado', cls: 'pill-red' }; if (r.retorno) return { label: 'Trabalhando', cls: 'pill-green' }; if (r.parada && !r.retorno) return { label: 'Almoço', cls: 'pill-yellow' }; if (r.inicio && !r.parada) return { label: 'Em serviço', cls: 'pill-blue' }; return { label: 'Não iniciou', cls: 'pill-muted' }; })();
+    return `<tr><td style="font-weight:600">${r.nome}</td><td>${r.inicio ? `<span class="pill pill-green">${r.inicio}</span>` : '<span class="pill pill-muted">—</span>'}</td><td>${r.parada ? `<span class="pill pill-yellow">${r.parada}</span>` : '<span class="pill pill-muted">—</span>'}</td><td>${r.retorno ? `<span class="pill pill-blue">${r.retorno}</span>` : '<span class="pill pill-muted">—</span>'}</td><td>${r.fim ? `<span class="pill pill-red">${r.fim}</span>` : '<span class="pill pill-muted">—</span>'}</td><td>${r.trabalhado || '<span style="color:var(--muted)">—</span>'}</td><td>${r.extra && r.extra !== '—' ? `<span class="pill pill-yellow">${r.extra}</span>` : '<span style="color:var(--muted)">—</span>'}</td><td><span class="pill ${status.cls}">${status.label}</span></td></tr>`;
+  }).join('');
+}
+async function buscarSemana() {
+  const inputData = document.getElementById('admin-semana-data').value;
+  if (!inputData) { showToast('Selecione uma data da semana', 'error'); return; }
+  const d = new Date(inputData + 'T12:00:00');
+  const diaSem = d.getDay();
+  const diffSeg = diaSem === 0 ? -6 : 1 - diaSem;
+  const segunda = new Date(d);
+  segunda.setDate(d.getDate() + diffSeg);
+  const semanaKey = `${String(segunda.getDate()).padStart(2,'0')}/${String(segunda.getMonth()+1).padStart(2,'0')}/${segunda.getFullYear()}`;
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showToast('URL não configurada', 'error'); return; }
+  showLoading(true);
+  try {
+    const resp = await fetch(`${url}?acao=extras_semana&semana=${encodeURIComponent(semanaKey)}`);
+    const json = await resp.json();
+    const tbody = document.getElementById('admin-semana-tbody');
+    const semanas = json.semanas || [];
+    if (!semanas.length) { tbody.innerHTML = `<tr><td colspan="10" class="admin-empty">Nenhum dado para a semana de ${semanaKey}</td></tr>`; return; }
+    tbody.innerHTML = semanas.map(s => `<tr><td style="font-weight:600">${s.nome}</td><td>${s.seg || '—'}</td><td>${s.ter || '—'}</td><td>${s.qua || '—'}</td><td>${s.qui || '—'}</td><td>${s.sex || '—'}</td><td>${s.sab || '—'}</td><td style="font-weight:600">${s.total || '—'}</td><td>${s.extra && s.extra !== '—' ? `<span class="pill pill-green">${s.extra}</span>` : '—'}</td><td>${s.faltando && s.faltando !== '—' ? `<span class="pill pill-red">${s.faltando}</span>` : '—'}</td></tr>`).join('');
+  } catch(e) { showToast('❌ Erro ao buscar dados', 'error'); } finally { showLoading(false); }
+}
+async function limparTudo() {
+  if (!confirm('⚠️ Isso vai limpar TODOS os estados locais dos usuários E apagar todas as abas da planilha. Tem certeza?')) return;
+  if (!confirm('🚨 Última confirmação! Todos os registros serão apagados. Continuar?')) return;
+  for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && (key.startsWith('jt_state_') || key.startsWith('jt_fim_ts_'))) localStorage.removeItem(key); }
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showToast('⚠️ URL não configurada', 'error'); return; }
+  showLoading(true);
+  try { await fetch(`${url}?acao=limpar_planilha`, { redirect: 'follow' }); showToast('✅ Tudo limpo com sucesso!', 'success'); } catch(e) { showToast('❌ Erro ao limpar planilha', 'error'); } finally { showLoading(false); }
+}
+
+// ═══════════════════════════════════════════
+// LOGIN E INICIALIZAÇÃO
+// ═══════════════════════════════════════════
+function saveSetup() {
+  const url = document.getElementById('setup-url').value.trim();
+  if (!url.startsWith('https://script.google.com/macros/')) { showToast('❌ URL inválida', 'error'); return; }
+  localStorage.setItem(SCRIPT_URL_KEY, url);
+  showScreen('login-screen');
+  initClock();
+}
+function doLogin() {
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  if (!USERS[user] || USERS[user].senha !== pass) { err.style.display = 'block'; return; }
+  currentUser = { login: user, nome: USERS[user].nome };
+  localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
+  iniciarApp();
+}
+function doLogout() {
+  if (!confirm('Confirmar saída?')) return;
+  localStorage.removeItem('jt_saved_user');
+  currentUser = null;
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  showScreen('login-screen');
+}
+function iniciarApp() {
+  if (currentUser.login === 'admin') { iniciarAdmin(); return; }
+  showScreen('app-screen');
+  document.getElementById('header-user').textContent = currentUser.nome;
+  document.body.addEventListener('touchstart', () => getAudioCtx(), { once: true });
+  document.body.addEventListener('click', () => getAudioCtx(), { once: true });
+  initClock();
+  iniciarGPS();
+  carregarEstado();
+  restaurarBotoes();
+  restaurarTimerFimRefeicao();
+  verificarDescanso();
+}
+window.addEventListener('load', () => {
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if (!url) { showScreen('setup-screen'); return; }
+  const savedUser = localStorage.getItem('jt_saved_user');
+  if (savedUser) { currentUser = JSON.parse(savedUser); iniciarApp(); return; }
+  showScreen('login-screen');
+  initClock();
+});
+
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = `show ${type}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.className = '', 3000);
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => t.className = '', 3000);
 }
-
-function showLoading(v) {
-  document.getElementById('loading').style.display = v ? 'flex' : 'none';
-}
-
-// ═══════════════════════════════════════════
-// LIMPAR TUDO (ADMIN)
-// ═══════════════════════════════════════════
-async function limparTudo() {
-  if (!confirm('⚠️ Isso vai limpar TODOS os estados locais dos usuários E apagar todas as abas da planilha. Tem certeza?')) return;
-  if (!confirm('🚨 Última confirmação! Todos os registros serão apagados. Continuar?')) return;
-
-  // Limpar localStorage de todos os usuários
-  const keysParaRemover = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && (key.startsWith('jt_state_') || key.startsWith('jt_fim_ts_'))) {
-      keysParaRemover.push(key);
-    }
-  }
-  keysParaRemover.forEach(k => localStorage.removeItem(k));
-
-  // Limpar planilha via Apps Script
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
-  if (!url) { showToast('⚠️ URL não configurada', 'error'); return; }
-
-  showLoading(true);
-  try {
-    await fetch(`${url}?acao=limpar_planilha`, { redirect: 'follow' });
-    showToast('✅ Tudo limpo com sucesso!', 'success');
-  } catch(e) {
-    showToast('❌ Erro ao limpar planilha', 'error');
-  } finally {
-    showLoading(false);
-  }
-}
+function showLoading(v) { document.getElementById('loading').style.display = v ? 'flex' : 'none'; }
 </script>
 </body>
 </html>
