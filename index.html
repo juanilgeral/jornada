@@ -1715,6 +1715,7 @@ function iniciarAutoRefresh() {
   refreshInterval = setTimeout(doAutoRefresh, AUTO_REFRESH_MS);
 }
 
+function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = `show ${type}`;
