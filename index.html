@@ -731,6 +731,55 @@
   .nav-pill.active { background: rgba(0,102,255,0.1); color: var(--accent2); border-color: var(--accent2); }
 
   @media (max-width: 380px) { .jornada-grid { grid-template-columns: 1fr; } }
+
+  /* ── SYNC BUTTON & AUTO-REFRESH ── */
+  .btn-sync {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.65rem;
+    color: var(--accent);
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: color 0.2s, border-color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .btn-sync:hover { border-color: var(--accent); background: rgba(0,212,170,0.08); }
+  .btn-sync:active { transform: scale(0.93); }
+  .btn-sync.syncing .sync-icon { animation: spin 0.7s linear infinite; display: inline-block; }
+
+  .refresh-badge {
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    min-width: 80px;
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .header-right-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* Admin sync button */
+  .admin-sync-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
 </style>
 </head>
 <body>
@@ -786,7 +835,15 @@
       <h2>Jornada Juanil</h2>
       <p id="header-user">—</p>
     </div>
-    <button class="btn-logout" onclick="doLogout()">Sair</button>
+    <div class="header-right">
+      <div class="header-right-row">
+        <button class="btn-sync" id="btn-sync-app" onclick="syncNow('app')" title="Sincronizar agora">
+          <span class="sync-icon">🔄</span> Sync
+        </button>
+        <button class="btn-logout" onclick="doLogout()">Sair</button>
+      </div>
+      <div class="refresh-badge" id="refresh-badge-app">atualiza em 3:00</div>
+    </div>
   </div>
 
   <div class="app-body">
@@ -884,9 +941,15 @@
       <h2>⚙️ Painel Admin</h2>
       <p id="admin-header-user">Administrador</p>
     </div>
-    <div style="display:flex; gap:0.5rem;">
-      <button class="btn-logout" style="color:var(--red); border-color:var(--red);" onclick="limparTudo()">🗑️ Limpar</button>
-      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    <div class="admin-sync-wrap">
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn-sync" id="btn-sync-admin" onclick="syncNow('admin')" title="Sincronizar agora">
+          <span class="sync-icon">🔄</span> Sync
+        </button>
+        <button class="btn-logout" style="color:var(--red); border-color:var(--red);" onclick="limparTudo()">🗑️ Limpar</button>
+        <button class="btn-logout" onclick="doLogout()">Sair</button>
+      </div>
+      <div class="refresh-badge" id="refresh-badge-admin">atualiza em 3:00</div>
     </div>
   </div>
 
@@ -1105,6 +1168,9 @@ function voltarParaPonto() { showScreen('app-screen'); }
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 'app-screen' || id === 'admin-screen') {
+    iniciarAutoRefresh();
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1584,7 +1650,71 @@ window.addEventListener('load', () => {
   initClock();
 });
 
-function showToast(msg, type = '') {
+
+// ═══════════════════════════════════════════
+// AUTO-REFRESH & SYNC
+// ═══════════════════════════════════════════
+const AUTO_REFRESH_MS = 3 * 60 * 1000; // 3 minutos
+let refreshCountdown = AUTO_REFRESH_MS;
+let refreshInterval = null;
+let countdownInterval = null;
+
+function formatCountdown(ms) {
+  const totalSec = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `atualiza em ${m}:${String(s).padStart(2, '0')}`;
+}
+
+function updateBadges(ms) {
+  const txt = formatCountdown(ms);
+  const bApp = document.getElementById('refresh-badge-app');
+  const bAdm = document.getElementById('refresh-badge-admin');
+  if (bApp) bApp.textContent = txt;
+  if (bAdm) bAdm.textContent = txt;
+}
+
+function doAutoRefresh() {
+  // Só recarrega se não houver modal aberto nem loading visível
+  const loading = document.getElementById('loading');
+  const modal = document.getElementById('modal-confirm');
+  if ((loading && loading.style.display === 'flex') ||
+      (modal && modal.style.display === 'flex')) {
+    // Adia 10s para não interromper ação do usuário
+    refreshCountdown = 10000;
+    return;
+  }
+  location.reload();
+}
+
+function syncNow(origem) {
+  const btnId = origem === 'admin' ? 'btn-sync-admin' : 'btn-sync-app';
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.add('syncing');
+  clearInterval(countdownInterval);
+  clearInterval(refreshInterval);
+  setTimeout(() => location.reload(), 300);
+}
+
+function iniciarAutoRefresh() {
+  clearInterval(refreshInterval);
+  clearInterval(countdownInterval);
+  refreshCountdown = AUTO_REFRESH_MS;
+  updateBadges(refreshCountdown);
+
+  countdownInterval = setInterval(() => {
+    refreshCountdown -= 1000;
+    if (refreshCountdown <= 0) {
+      refreshCountdown = 0;
+      updateBadges(refreshCountdown);
+    } else {
+      updateBadges(refreshCountdown);
+    }
+  }, 1000);
+
+  refreshInterval = setTimeout(doAutoRefresh, AUTO_REFRESH_MS);
+}
+
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = `show ${type}`;
