@@ -780,6 +780,284 @@
     align-items: flex-end;
     gap: 2px;
   }
+
+  /* ── ESCALAÇÃO CARD ── */
+  .escal-card {
+    background: linear-gradient(135deg, #0d1f35 0%, #0f2a1a 100%);
+    border: 1px solid rgba(0,212,170,0.25);
+    border-radius: 18px;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 32px rgba(0,212,170,0.08), 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  .escal-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .escal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.1rem 0.6rem;
+  }
+
+  .escal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .escal-icon-wrap {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, rgba(0,212,170,0.2), rgba(0,102,255,0.2));
+    border: 1px solid rgba(0,212,170,0.35);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .escal-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .escal-sub {
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .escal-reload-btn {
+    background: rgba(0,212,170,0.08);
+    border: 1px solid rgba(0,212,170,0.2);
+    border-radius: 7px;
+    padding: 0.3rem 0.55rem;
+    color: var(--accent);
+    font-size: 0.68rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .escal-reload-btn:active { transform: scale(0.93); }
+  .escal-reload-btn.spinning .escal-spin { display: inline-block; animation: spin 0.7s linear infinite; }
+
+  .escal-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,212,170,0.15), transparent);
+    margin: 0 1.1rem;
+  }
+
+  .escal-days {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .escal-day {
+    padding: 0.85rem 1.1rem 1rem;
+    position: relative;
+  }
+
+  .escal-day:first-child {
+    border-right: 1px solid rgba(0,212,170,0.1);
+  }
+
+  .escal-day-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c8a96e;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .escal-day-label .dot-hoje {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse-dot 2s infinite;
+    flex-shrink: 0;
+  }
+
+  .escal-day-label .dot-amanha {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    flex-shrink: 0;
+  }
+
+  /* Veiculo */
+  .escal-veiculo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    line-height: 1.15;
+  }
+
+  .escal-veiculo-num {
+    color: var(--accent);
+  }
+
+  .escal-veiculo-placa {
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1rem 0.35rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* Hora */
+  .escal-hora-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .escal-hora-icon { font-size: 0.7rem; }
+
+  .escal-hora {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
+  }
+
+  .escal-hora-amanha {
+    color: #7eb3ff;
+  }
+
+  /* Destino */
+  .escal-destino {
+    font-size: 0.72rem;
+    color: var(--text);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .escal-destino-label {
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.2rem;
+  }
+
+  /* Estado sem escalação */
+  .escal-pending {
+    padding: 0.75rem 1.1rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .escal-pending-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .escal-pending-text {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .escal-pending-text strong {
+    display: block;
+    color: var(--yellow);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .escal-updated {
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-align: right;
+    padding: 0.35rem 1.1rem 0.55rem;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .escal-updated span {
+    color: var(--green);
+  }
+
+  /* Loading state */
+  .escal-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1.2rem 1.1rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  .escal-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* Lancamento time chip */
+  .escal-lancamento {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.25);
+    border-radius: 20px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.6rem;
+    color: var(--green);
+    margin-top: 0.35rem;
+    letter-spacing: 0.02em;
+  }
 </style>
 </head>
 <body>
@@ -847,6 +1125,30 @@
   </div>
 
   <div class="app-body">
+
+    <!-- CARD ESCALAÇÃO DO DIA -->
+    <div class="escal-card" id="escal-card">
+      <div class="escal-header">
+        <div class="escal-header-left">
+          <div class="escal-icon-wrap">🚌</div>
+          <div>
+            <div class="escal-title">Minha Escalação</div>
+            <div class="escal-sub" id="escal-sub-date">Carregando...</div>
+          </div>
+        </div>
+        <button class="escal-reload-btn" id="escal-reload-btn" onclick="carregarEscalacao(true)">
+          <span class="escal-spin">🔄</span> Atualizar
+        </button>
+      </div>
+      <div class="escal-divider"></div>
+      <div id="escal-body">
+        <div class="escal-loading">
+          <div class="escal-spinner"></div>
+          Buscando escalação...
+        </div>
+      </div>
+    </div>
+
     <div class="status-card">
       <div class="clock-display" id="clock">00:00:00</div>
       <div class="date-display" id="datedisp">—</div>
@@ -1021,6 +1323,178 @@
 <div id="loading"><div class="spinner"></div></div>
 
 <script>
+// ═══════════════════════════════════════════
+// ESCALAÇÃO DE VEÍCULOS — GOOGLE SHEETS (CSV)
+// ═══════════════════════════════════════════
+const ESCAL_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd77MkT5hd6gzTkMfzX2BVWY5Hqqfo3NluQY58mnOklN8--hPVIoe2CfzkbttnucJKbnJFiaPEWSmR/pub?gid=1559964021&single=true&output=csv';
+
+function formatDateBR(d) {
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd}/${mm}/${yy}`;
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return [];
+  const header = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    // handle commas inside quoted fields
+    const vals = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQ = !inQ; }
+      else if (line[i] === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else { cur += line[i]; }
+    }
+    vals.push(cur.trim());
+    const obj = {};
+    header.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/^"|"$/g,'').trim(); });
+    return obj;
+  });
+}
+
+function normalizeName(n) {
+  return (n || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+}
+
+function escalarParaDia(rows, nomeUser, dataBR) {
+  // data no formato dd/mm/yy ou dd/mm/yyyy
+  const norm = normalizeName(nomeUser);
+  return rows.filter(r => {
+    const d = (r['DATA'] || '').trim();
+    // match both yy and yyyy variants
+    const dShort = d.replace(/\/(\d{4})$/, (m, y) => '/' + y.slice(-2));
+    const dtShort = dataBR.replace(/\/(\d{4})$/, (m, y) => '/' + y.slice(-2));
+    const dateMatch = d === dataBR || dShort === dtShort || d === dtShort;
+    const motNorm = normalizeName(r['MOTORISTA']);
+    return dateMatch && motNorm === norm;
+  });
+}
+
+function renderEscalDia(rows, label, dotClass, isHoje) {
+  if (!rows || rows.length === 0) {
+    return `<div class="escal-day" style="grid-column: ${isHoje ? '1' : '2'}">
+      <div class="escal-day-label">
+        <span class="${dotClass}"></span> ${label}
+      </div>
+      <div class="escal-pending-text">
+        <strong>⏳ Aguardando atualização</strong>
+        Não selecionado até o momento
+      </div>
+    </div>`;
+  }
+
+  const r = rows[0]; // primeiro turno do dia
+  const veiculo = r['VEICULO'] || '—';
+  // split veiculo: "064 LUV 9296" → num=064, placa=LUV 9296
+  const vParts = veiculo.match(/^(\d+)\s+(.+)$/);
+  const vNum = vParts ? vParts[1] : veiculo;
+  const vPlaca = vParts ? vParts[2] : '';
+  const hora = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(':00','').slice(0,5);
+  const destino = r['DESTINO'] || '—';
+
+  // Horário de lançamento: usamos SAÍDA_VEÍCULO_CD como proxy de quando foi lançado na planilha
+  const lancado = r['SAÍDA_VEÍCULO_CD'] || '';
+
+  const horaClass = isHoje ? 'escal-hora' : 'escal-hora escal-hora-amanha';
+  const dotCls = isHoje ? 'dot-hoje' : 'dot-amanha';
+
+  return `<div class="escal-day">
+    <div class="escal-day-label">
+      <span class="${dotCls}"></span> ${label}
+    </div>
+    <div class="escal-veiculo">
+      <span class="escal-veiculo-num">#${vNum}</span>
+      ${vPlaca ? `<span class="escal-veiculo-placa">${vPlaca}</span>` : ''}
+    </div>
+    <div class="escal-hora-row">
+      <span class="escal-hora-icon">🕐</span>
+      <span class="${horaClass}">${hora}</span>
+    </div>
+    <div class="escal-destino-label">Destino</div>
+    <div class="escal-destino">${destino}</div>
+    ${lancado ? `<div class="escal-lancamento">✅ lançado às ${lancado.slice(0,5)}</div>` : ''}
+  </div>`;
+}
+
+async function carregarEscalacao(manual = false) {
+  if (!currentUser || currentUser.login === 'admin') return;
+
+  const btn = document.getElementById('escal-reload-btn');
+  if (btn) btn.classList.add('spinning');
+
+  const body = document.getElementById('escal-body');
+  if (!body) return;
+
+  if (!manual) {
+    body.innerHTML = '<div class="escal-loading"><div class="escal-spinner"></div>Buscando escalação...</div>';
+  }
+
+  const hoje = new Date();
+  const amanha = new Date(hoje);
+  amanha.setDate(hoje.getDate() + 1);
+
+  const hojeBR   = formatDateBR(hoje);
+  const amanhaBR = formatDateBR(amanha);
+
+  // Sub-header date
+  const subEl = document.getElementById('escal-sub-date');
+  if (subEl) {
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    subEl.textContent = `${dias[hoje.getDay()]}, ${hoje.getDate()} ${meses[hoje.getMonth()]}`;
+  }
+
+  try {
+    const resp = await fetch(ESCAL_CSV_URL + '&t=' + Date.now());
+    const text = await resp.text();
+    const rows = parseCSV(text);
+
+    const nomeUser = currentUser.nome;
+    const hojeRows   = escalarParaDia(rows, nomeUser, hojeBR);
+    const amanhaRows = escalarParaDia(rows, nomeUser, amanhaBR);
+
+    const nenhum = hojeRows.length === 0 && amanhaRows.length === 0;
+
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm2 = String(now.getMinutes()).padStart(2,'0');
+
+    if (nenhum) {
+      body.innerHTML = `
+        <div class="escal-pending">
+          <span class="escal-pending-icon">🔍</span>
+          <div class="escal-pending-text">
+            <strong>⏳ Aguardando atualização</strong>
+            Você não está selecionado para hoje nem para amanhã. Verifique mais tarde.
+          </div>
+        </div>
+        <div class="escal-updated">Verificado às <span>${hh}:${mm2}</span></div>`;
+    } else {
+      body.innerHTML = `
+        <div class="escal-days">
+          ${renderEscalDia(hojeRows,   'HOJE',   'dot-hoje',   true)}
+          ${renderEscalDia(amanhaRows, 'AMANHÃ', 'dot-amanha', false)}
+        </div>
+        <div class="escal-updated">Atualizado às <span>${hh}:${mm2}</span></div>`;
+    }
+  } catch(e) {
+    body.innerHTML = `
+      <div class="escal-pending">
+        <span class="escal-pending-icon">❌</span>
+        <div class="escal-pending-text">
+          <strong>Erro ao carregar</strong>
+          Sem conexão ou planilha indisponível. Tente novamente.
+        </div>
+      </div>`;
+    console.error('Escalação error:', e);
+  } finally {
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+
 // ═══════════════════════════════════════════
 // USUÁRIOS
 // ═══════════════════════════════════════════
@@ -1640,6 +2114,7 @@ function iniciarApp() {
   restaurarBotoes();
   restaurarTimerFimRefeicao();
   verificarDescanso();
+  carregarEscalacao();
 }
 window.addEventListener('load', () => {
   const url = localStorage.getItem(SCRIPT_URL_KEY);
