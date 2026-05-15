@@ -918,29 +918,34 @@
   .escal-veiculo {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     color: var(--text);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.4rem;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
     line-height: 1.15;
+    flex-wrap: wrap;
   }
 
   .escal-veiculo-num {
-    color: var(--accent);
+    color: #00ffcc;
+    text-shadow: 0 0 12px rgba(0,255,204,0.5);
+    font-size: 1.35rem;
+    letter-spacing: -0.5px;
   }
 
   .escal-veiculo-placa {
-    font-size: 0.68rem;
-    color: var(--muted);
+    font-size: 1rem;
+    color: #ffffff;
     font-family: 'DM Mono', monospace;
-    font-weight: 400;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 0.1rem 0.35rem;
-    letter-spacing: 0.05em;
+    font-weight: 500;
+    background: rgba(0,102,255,0.25);
+    border: 1.5px solid rgba(0,150,255,0.6);
+    border-radius: 6px;
+    padding: 0.15rem 0.5rem;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 8px rgba(100,180,255,0.6);
   }
 
   /* Hora */
@@ -948,38 +953,40 @@
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
   }
 
-  .escal-hora-icon { font-size: 0.7rem; }
+  .escal-hora-icon { font-size: 0.8rem; }
 
   .escal-hora {
     font-family: 'DM Mono', monospace;
-    font-size: 1.2rem;
+    font-size: 1.35rem;
     font-weight: 500;
-    color: var(--accent);
+    color: #00ffcc;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.5px;
+    text-shadow: 0 0 10px rgba(0,255,204,0.4);
   }
 
   .escal-hora-amanha {
-    color: #7eb3ff;
+    color: #60b4ff;
+    text-shadow: 0 0 10px rgba(96,180,255,0.4);
   }
 
   /* Destino */
   .escal-destino {
-    font-size: 0.72rem;
-    color: var(--text);
-    line-height: 1.45;
+    font-size: 0.78rem;
+    color: #d0dce8;
+    line-height: 1.5;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
   .escal-destino-label {
     font-size: 0.62rem;
-    color: var(--muted);
+    color: #c8a96e;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.2rem;
@@ -1057,6 +1064,26 @@
     color: var(--green);
     margin-top: 0.35rem;
     letter-spacing: 0.02em;
+  }
+
+  /* Banner de jornada finalizada (KM fechado) */
+  .escal-finalizado-banner {
+    background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(0,212,170,0.06));
+    border: 1px solid rgba(34,197,94,0.28);
+    border-radius: 9px;
+    padding: 0.45rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.45rem;
+  }
+  .escal-finalizado-banner .fi-icon { font-size: 1rem; flex-shrink: 0; }
+  .escal-finalizado-banner .fi-text { font-size: 0.7rem; color: var(--green); line-height: 1.4; }
+  .escal-finalizado-banner .fi-text strong {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    margin-bottom: 0.1rem;
   }
 </style>
 </head>
@@ -1373,12 +1400,18 @@ function escalarParaDia(rows, nomeUser, dataBR) {
   });
 }
 
-function renderEscalDia(rows, label, dotClass, isHoje) {
+function kmFechado(r) {
+  // Considera finalizado quando KM_CHEGADA estiver preenchido com um número
+  const km = (r['KM_CHEGADA'] || '').toString().trim();
+  return km !== '' && km !== '—' && !isNaN(Number(km.replace(/\./g,'').replace(',','.')));
+}
+
+function renderEscalDia(rows, label, isHoje) {
+  const dotCls = isHoje ? 'dot-hoje' : 'dot-amanha';
+
   if (!rows || rows.length === 0) {
-    return `<div class="escal-day" style="grid-column: ${isHoje ? '1' : '2'}">
-      <div class="escal-day-label">
-        <span class="${dotClass}"></span> ${label}
-      </div>
+    return `<div class="escal-day">
+      <div class="escal-day-label"><span class="${dotCls}"></span> ${label}</div>
       <div class="escal-pending-text">
         <strong>⏳ Aguardando atualização</strong>
         Não selecionado até o momento
@@ -1386,24 +1419,43 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
     </div>`;
   }
 
-  const r = rows[0]; // primeiro turno do dia
+  const r = rows[0];
   const veiculo = r['VEICULO'] || '—';
-  // split veiculo: "064 LUV 9296" → num=064, placa=LUV 9296
   const vParts = veiculo.match(/^(\d+)\s+(.+)$/);
-  const vNum = vParts ? vParts[1] : veiculo;
+  const vNum   = vParts ? vParts[1] : veiculo;
   const vPlaca = vParts ? vParts[2] : '';
-  const hora = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(':00','').slice(0,5);
-  const destino = r['DESTINO'] || '—';
-
-  // Horário de lançamento: usamos SAÍDA_VEÍCULO_CD como proxy de quando foi lançado na planilha
-  const lancado = r['SAÍDA_VEÍCULO_CD'] || '';
+  const hora   = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(/:00$/, '').slice(0,5);
+  const destino  = r['DESTINO'] || '—';
+  const lancado  = (r['SAÍDA_VEÍCULO_CD'] || '').slice(0,5);
+  const chegada  = (r['CHEGADA_VEÍCULO_CD'] || '').slice(0,5);
+  const finalizado = kmFechado(r);
 
   const horaClass = isHoje ? 'escal-hora' : 'escal-hora escal-hora-amanha';
-  const dotCls = isHoje ? 'dot-hoje' : 'dot-amanha';
+  const opacidade = finalizado ? 'opacity:0.55;' : '';
 
-  return `<div class="escal-day">
+  const concluido = finalizado
+    ? `<span style="font-size:0.58rem;background:rgba(34,197,94,0.15);color:var(--green);
+         border:1px solid rgba(34,197,94,0.35);border-radius:20px;
+         padding:0.1rem 0.45rem;margin-left:0.4rem;vertical-align:middle;">✓ CONCLUÍDO</span>`
+    : '';
+
+  const finalizadoBanner = finalizado
+    ? `<div class="escal-finalizado-banner">
+         <span class="fi-icon">🏁</span>
+         <div class="fi-text">
+           <strong>KM Fechado — Jornada Encerrada</strong>
+           ${chegada ? `Chegada ao CD: ${chegada}` : 'KM de chegada registrado na planilha'}
+         </div>
+       </div>`
+    : '';
+
+  const lancadoChip = lancado && !finalizado
+    ? `<div class="escal-lancamento">✅ lançado às ${lancado}</div>`
+    : '';
+
+  return `<div class="escal-day" style="${opacidade}">
     <div class="escal-day-label">
-      <span class="${dotCls}"></span> ${label}
+      <span class="${dotCls}"></span> ${label}${concluido}
     </div>
     <div class="escal-veiculo">
       <span class="escal-veiculo-num">#${vNum}</span>
@@ -1415,7 +1467,8 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
     </div>
     <div class="escal-destino-label">Destino</div>
     <div class="escal-destino">${destino}</div>
-    ${lancado ? `<div class="escal-lancamento">✅ lançado às ${lancado.slice(0,5)}</div>` : ''}
+    ${lancadoChip}
+    ${finalizadoBanner}
   </div>`;
 }
 
@@ -1432,17 +1485,16 @@ async function carregarEscalacao(manual = false) {
     body.innerHTML = '<div class="escal-loading"><div class="escal-spinner"></div>Buscando escalação...</div>';
   }
 
-  const hoje = new Date();
+  const hoje  = new Date();
   const amanha = new Date(hoje);
   amanha.setDate(hoje.getDate() + 1);
 
   const hojeBR   = formatDateBR(hoje);
   const amanhaBR = formatDateBR(amanha);
 
-  // Sub-header date
   const subEl = document.getElementById('escal-sub-date');
   if (subEl) {
-    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const dias  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
     subEl.textContent = `${dias[hoje.getDay()]}, ${hoje.getDate()} ${meses[hoje.getMonth()]}`;
   }
@@ -1452,15 +1504,18 @@ async function carregarEscalacao(manual = false) {
     const text = await resp.text();
     const rows = parseCSV(text);
 
-    const nomeUser = currentUser.nome;
+    const nomeUser  = currentUser.nome;
     const hojeRows   = escalarParaDia(rows, nomeUser, hojeBR);
     const amanhaRows = escalarParaDia(rows, nomeUser, amanhaBR);
 
-    const nenhum = hojeRows.length === 0 && amanhaRows.length === 0;
-
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2,'0');
+    const hh  = String(now.getHours()).padStart(2,'0');
     const mm2 = String(now.getMinutes()).padStart(2,'0');
+
+    // Se hoje está com KM fechado, exibir só amanhã (tela limpa de escalação futura)
+    const hojeKmFechado = hojeRows.length > 0 && kmFechado(hojeRows[0]);
+
+    const nenhum = hojeRows.length === 0 && amanhaRows.length === 0;
 
     if (nenhum) {
       body.innerHTML = `
@@ -1472,14 +1527,41 @@ async function carregarEscalacao(manual = false) {
           </div>
         </div>
         <div class="escal-updated">Verificado às <span>${hh}:${mm2}</span></div>`;
-    } else {
+
+    } else if (hojeKmFechado && amanhaRows.length > 0) {
+      // Hoje encerrado + amanhã disponível: mostra hoje resumido + amanhã em destaque
       body.innerHTML = `
         <div class="escal-days">
-          ${renderEscalDia(hojeRows,   'HOJE',   'dot-hoje',   true)}
-          ${renderEscalDia(amanhaRows, 'AMANHÃ', 'dot-amanha', false)}
+          ${renderEscalDia(hojeRows,   'HOJE',   true)}
+          ${renderEscalDia(amanhaRows, 'AMANHÃ', false)}
+        </div>
+        <div class="escal-updated">Atualizado às <span>${hh}:${mm2}</span></div>`;
+
+    } else if (hojeKmFechado && amanhaRows.length === 0) {
+      // Hoje encerrado + amanhã sem escala: mostra hoje finalizado + aviso
+      body.innerHTML = `
+        <div class="escal-days">
+          ${renderEscalDia(hojeRows, 'HOJE', true)}
+          <div class="escal-day">
+            <div class="escal-day-label"><span class="dot-amanha"></span> AMANHÃ</div>
+            <div class="escal-pending-text">
+              <strong>⏳ Aguardando atualização</strong>
+              Não selecionado até o momento
+            </div>
+          </div>
+        </div>
+        <div class="escal-updated">Atualizado às <span>${hh}:${mm2}</span></div>`;
+
+    } else {
+      // Estado normal: hoje ativo + amanhã
+      body.innerHTML = `
+        <div class="escal-days">
+          ${renderEscalDia(hojeRows,   'HOJE',   true)}
+          ${renderEscalDia(amanhaRows, 'AMANHÃ', false)}
         </div>
         <div class="escal-updated">Atualizado às <span>${hh}:${mm2}</span></div>`;
     }
+
   } catch(e) {
     body.innerHTML = `
       <div class="escal-pending">
