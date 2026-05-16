@@ -916,36 +916,31 @@
 
   /* Veiculo */
   .escal-veiculo {
-    font-family: 'DM Mono', monospace;
-    font-weight: 600;
-    font-size: 0.78rem;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
     color: var(--text);
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.25rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    line-height: 1.45;
-    flex-wrap: wrap;
+    gap: 0.4rem;
+    line-height: 1.15;
   }
 
   .escal-veiculo-num {
-    color: #00ffcc;
-    text-shadow: 0 0 8px rgba(0,255,204,0.45);
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
+    color: var(--accent);
   }
 
   .escal-veiculo-placa {
-    font-size: 0.78rem;
-    color: #ffffff;
+    font-size: 0.68rem;
+    color: var(--muted);
     font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    background: rgba(0,102,255,0.25);
-    border: 1.5px solid rgba(0,150,255,0.6);
-    border-radius: 6px;
-    padding: 0.1rem 0.45rem;
-    letter-spacing: 0.06em;
-    text-shadow: 0 0 6px rgba(100,180,255,0.5);
+    font-weight: 400;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1rem 0.35rem;
+    letter-spacing: 0.05em;
   }
 
   /* Hora */
@@ -953,40 +948,38 @@
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.35rem;
   }
 
-  .escal-hora-icon { font-size: 0.75rem; }
+  .escal-hora-icon { font-size: 0.7rem; }
 
   .escal-hora {
     font-family: 'DM Mono', monospace;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #00ffcc;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--accent);
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-    text-shadow: 0 0 8px rgba(0,255,204,0.35);
+    letter-spacing: -0.5px;
   }
 
   .escal-hora-amanha {
-    color: #60b4ff;
-    text-shadow: 0 0 8px rgba(96,180,255,0.35);
+    color: #7eb3ff;
   }
 
   /* Destino */
   .escal-destino {
-    font-size: 0.78rem;
-    color: #d0dce8;
-    line-height: 1.5;
+    font-size: 0.72rem;
+    color: var(--text);
+    line-height: 1.45;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
   .escal-destino-label {
     font-size: 0.62rem;
-    color: #c8a96e;
+    color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.2rem;
@@ -1065,26 +1058,6 @@
     margin-top: 0.35rem;
     letter-spacing: 0.02em;
   }
-
-  /* Banner de jornada finalizada (KM fechado) */
-  .escal-finalizado-banner {
-    background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(0,212,170,0.06));
-    border: 1px solid rgba(34,197,94,0.28);
-    border-radius: 9px;
-    padding: 0.45rem 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.45rem;
-  }
-  .escal-finalizado-banner .fi-icon { font-size: 1rem; flex-shrink: 0; }
-  .escal-finalizado-banner .fi-text { font-size: 0.7rem; color: var(--green); line-height: 1.4; }
-  .escal-finalizado-banner .fi-text strong {
-    display: block;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.75rem;
-    margin-bottom: 0.1rem;
-  }
 </style>
 </head>
 <body>
@@ -1130,6 +1103,12 @@
     </div>
     <button class="btn-primary" onclick="doLogin()" id="btn-login">Entrar</button>
     <div class="error-msg" id="login-error">Usuário ou senha incorretos.</div>
+
+    <!-- Status de sincronização RCM -->
+    <div id="rcm-sync-status" style="margin-top:1rem;font-size:0.72rem;text-align:center;color:var(--muted);min-height:1.2em;">
+      ⏳ Aguardando sync com planilha RCM...
+    </div>
+
   </div>
 </div>
 
@@ -1400,18 +1379,12 @@ function escalarParaDia(rows, nomeUser, dataBR) {
   });
 }
 
-function kmFechado(r) {
-  // Considera finalizado quando KM_CHEGADA estiver preenchido com um número
-  const km = (r['KM_CHEGADA'] || '').toString().trim();
-  return km !== '' && km !== '—' && !isNaN(Number(km.replace(/\./g,'').replace(',','.')));
-}
-
-function renderEscalDia(rows, label, isHoje) {
-  const dotCls = isHoje ? 'dot-hoje' : 'dot-amanha';
-
+function renderEscalDia(rows, label, dotClass, isHoje) {
   if (!rows || rows.length === 0) {
-    return `<div class="escal-day">
-      <div class="escal-day-label"><span class="${dotCls}"></span> ${label}</div>
+    return `<div class="escal-day" style="grid-column: ${isHoje ? '1' : '2'}">
+      <div class="escal-day-label">
+        <span class="${dotClass}"></span> ${label}
+      </div>
       <div class="escal-pending-text">
         <strong>⏳ Aguardando atualização</strong>
         Não selecionado até o momento
@@ -1419,40 +1392,24 @@ function renderEscalDia(rows, label, isHoje) {
     </div>`;
   }
 
-  const r = rows[0];
+  const r = rows[0]; // primeiro turno do dia
   const veiculo = r['VEICULO'] || '—';
+  // split veiculo: "064 LUV 9296" → num=064, placa=LUV 9296
   const vParts = veiculo.match(/^(\d+)\s+(.+)$/);
-  const vNum   = vParts ? vParts[1] : veiculo;
+  const vNum = vParts ? vParts[1] : veiculo;
   const vPlaca = vParts ? vParts[2] : '';
-  const hora   = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(/:00$/, '').slice(0,5);
-  const destino  = r['DESTINO'] || '—';
-  const lancado  = (r['SAÍDA_VEÍCULO_CD'] || '').slice(0,5);
-  const chegada  = (r['CHEGADA_VEÍCULO_CD'] || '').slice(0,5);
-  const finalizado = kmFechado(r);
+  const hora = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(':00','').slice(0,5);
+  const destino = r['DESTINO'] || '—';
+
+  // Horário de lançamento: usamos SAÍDA_VEÍCULO_CD como proxy de quando foi lançado na planilha
+  const lancado = r['SAÍDA_VEÍCULO_CD'] || '';
 
   const horaClass = isHoje ? 'escal-hora' : 'escal-hora escal-hora-amanha';
-  const opacidade = finalizado ? 'opacity:0.55;' : '';
+  const dotCls = isHoje ? 'dot-hoje' : 'dot-amanha';
 
-  const concluido = finalizado
-    ? `<span style="font-size:0.58rem;background:rgba(34,197,94,0.15);color:var(--green);
-         border:1px solid rgba(34,197,94,0.35);border-radius:20px;
-         padding:0.1rem 0.45rem;margin-left:0.4rem;vertical-align:middle;">✓ CONCLUÍDO</span>`
-    : '';
-
-  const finalizadoBanner = finalizado
-    ? `<div class="escal-finalizado-banner">
-         <span class="fi-icon">🏁</span>
-         <div class="fi-text"><strong>Jornada Encerrada</strong></div>
-       </div>`
-    : '';
-
-  const lancadoChip = lancado && !finalizado
-    ? `<div class="escal-lancamento">✅ lançado às ${lancado}</div>`
-    : '';
-
-  return `<div class="escal-day" style="${opacidade}">
+  return `<div class="escal-day">
     <div class="escal-day-label">
-      <span class="${dotCls}"></span> ${label}${concluido}
+      <span class="${dotCls}"></span> ${label}
     </div>
     <div class="escal-veiculo">
       <span class="escal-veiculo-num">#${vNum}</span>
@@ -1464,8 +1421,7 @@ function renderEscalDia(rows, label, isHoje) {
     </div>
     <div class="escal-destino-label">Destino</div>
     <div class="escal-destino">${destino}</div>
-    ${lancadoChip}
-    ${finalizadoBanner}
+    ${lancado ? `<div class="escal-lancamento">✅ lançado às ${lancado.slice(0,5)}</div>` : ''}
   </div>`;
 }
 
@@ -1482,16 +1438,17 @@ async function carregarEscalacao(manual = false) {
     body.innerHTML = '<div class="escal-loading"><div class="escal-spinner"></div>Buscando escalação...</div>';
   }
 
-  const hoje  = new Date();
+  const hoje = new Date();
   const amanha = new Date(hoje);
   amanha.setDate(hoje.getDate() + 1);
 
   const hojeBR   = formatDateBR(hoje);
   const amanhaBR = formatDateBR(amanha);
 
+  // Sub-header date
   const subEl = document.getElementById('escal-sub-date');
   if (subEl) {
-    const dias  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
     subEl.textContent = `${dias[hoje.getDay()]}, ${hoje.getDate()} ${meses[hoje.getMonth()]}`;
   }
@@ -1501,18 +1458,15 @@ async function carregarEscalacao(manual = false) {
     const text = await resp.text();
     const rows = parseCSV(text);
 
-    const nomeUser  = currentUser.nome;
+    const nomeUser = currentUser.nome;
     const hojeRows   = escalarParaDia(rows, nomeUser, hojeBR);
     const amanhaRows = escalarParaDia(rows, nomeUser, amanhaBR);
 
-    const now = new Date();
-    const hh  = String(now.getHours()).padStart(2,'0');
-    const mm2 = String(now.getMinutes()).padStart(2,'0');
-
-    // Se hoje está com KM fechado, exibir só amanhã (tela limpa de escalação futura)
-    const hojeKmFechado = hojeRows.length > 0 && kmFechado(hojeRows[0]);
-
     const nenhum = hojeRows.length === 0 && amanhaRows.length === 0;
+
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm2 = String(now.getMinutes()).padStart(2,'0');
 
     if (nenhum) {
       body.innerHTML = `
@@ -1524,41 +1478,14 @@ async function carregarEscalacao(manual = false) {
           </div>
         </div>
         <div class="escal-updated">Verificado às <span>${hh}:${mm2}</span></div>`;
-
-    } else if (hojeKmFechado && amanhaRows.length > 0) {
-      // Hoje encerrado + amanhã disponível: mostra hoje resumido + amanhã em destaque
-      body.innerHTML = `
-        <div class="escal-days">
-          ${renderEscalDia(hojeRows,   'HOJE',   true)}
-          ${renderEscalDia(amanhaRows, 'AMANHÃ', false)}
-        </div>
-        <div class="escal-updated">Atualizado às <span>${hh}:${mm2}</span></div>`;
-
-    } else if (hojeKmFechado && amanhaRows.length === 0) {
-      // Hoje encerrado + amanhã sem escala: mostra hoje finalizado + aviso
-      body.innerHTML = `
-        <div class="escal-days">
-          ${renderEscalDia(hojeRows, 'HOJE', true)}
-          <div class="escal-day">
-            <div class="escal-day-label"><span class="dot-amanha"></span> AMANHÃ</div>
-            <div class="escal-pending-text">
-              <strong>⏳ Aguardando atualização</strong>
-              Não selecionado até o momento
-            </div>
-          </div>
-        </div>
-        <div class="escal-updated">Atualizado às <span>${hh}:${mm2}</span></div>`;
-
     } else {
-      // Estado normal: hoje ativo + amanhã
       body.innerHTML = `
         <div class="escal-days">
-          ${renderEscalDia(hojeRows,   'HOJE',   true)}
-          ${renderEscalDia(amanhaRows, 'AMANHÃ', false)}
+          ${renderEscalDia(hojeRows,   'HOJE',   'dot-hoje',   true)}
+          ${renderEscalDia(amanhaRows, 'AMANHÃ', 'dot-amanha', false)}
         </div>
         <div class="escal-updated">Atualizado às <span>${hh}:${mm2}</span></div>`;
     }
-
   } catch(e) {
     body.innerHTML = `
       <div class="escal-pending">
@@ -1575,42 +1502,178 @@ async function carregarEscalacao(manual = false) {
 }
 
 // ═══════════════════════════════════════════
-// USUÁRIOS
+// USUÁRIOS — sincronizado com planilha RCM
 // ═══════════════════════════════════════════
-const USERS = {
-  "admin": { senha: "7391", nome: "Administrador" },
-  "adriano": { senha: "4827", nome: "Adriano" }, "alexandre": { senha: "9153", nome: "Alexandre" },
-  "anderson": { senha: "6042", nome: "Anderson" }, "andre": { senha: "3718", nome: "André" },
-  "camara": { senha: "5296", nome: "Camara" }, "celio": { senha: "8134", nome: "Célio" },
-  "claudinei": { senha: "2975", nome: "Claudinei" }, "claudio": { senha: "7460", nome: "Cláudio" },
-  "devanilso": { senha: "1583", nome: "Devanilso" }, "edilson": { senha: "9247", nome: "Edilson" },
-  "eduardo": { senha: "3861", nome: "Eduardo" }, "gilmar": { senha: "6529", nome: "Gilmar" },
-  "heriberto": { senha: "4073", nome: "Heriberto" }, "isaias": { senha: "8316", nome: "Isaias" },
-  "joel": { senha: "5742", nome: "Joel" }, "luiz": { senha: "2198", nome: "Luíz" },
-  "marcio": { senha: "7635", nome: "Márcio" }, "martins": { senha: "9081", nome: "Martins" },
-  "medeiros": { senha: "4362", nome: "Medeiros" }, "neves": { senha: "1794", nome: "Neves" },
-  "nogueira": { senha: "8520", nome: "Nogueira" }, "oliveira": { senha: "3647", nome: "Oliveira" },
-  "rene": { senha: "6913", nome: "René" }, "ricardo": { senha: "2458", nome: "Ricardo" },
-  "rogerio": { senha: "5184", nome: "Rogério" }, "rosendo": { senha: "9736", nome: "Rosendo" },
-  "sandro": { senha: "1329", nome: "Sandro" }, "sergio": { senha: "8067", nome: "Sérgio" },
-  "sergio.silva": { senha: "4591", nome: "Sérgio Silva" }, "vagner": { senha: "7248", nome: "Vagner" },
-  "valdir": { senha: "3905", nome: "Valdir" }, "walmir": { senha: "6173", nome: "Walmir" },
-  "marcelo.duarte": { senha: "2846", nome: "Marcelo Duarte" }, "roberto": { senha: "9412", nome: "Roberto" },
-  "deric": { senha: "5067", nome: "Deric" }, "antonio": { senha: "1738", nome: "Antônio" },
-  "irineu": { senha: "8293", nome: "Irineu" }, "ekland": { senha: "4650", nome: "Ekland" },
-  "tavares": { senha: "7814", nome: "Tavares" }, "pamela": { senha: "3027", nome: "Pâmela" },
-  "wania": { senha: "6581", nome: "Wânia" }, "agata": { senha: "9364", nome: "Agata" },
-  "giulia": { senha: "2709", nome: "Giulia" }, "ferreira": { senha: "5943", nome: "Ferreira" },
-  "alex": { senha: "1476", nome: "Alex" }, "wilson": { senha: "8032", nome: "Wilson" },
-  "braz": { senha: "4715", nome: "Braz" }, "jose": { senha: "6398", nome: "José" },
-  "nubia": { senha: "3261", nome: "Núbia" }, "lucas": { senha: "3847", nome: "Lucas" },
-  "vasconcellos": { senha: "6120", nome: "Vasconcellos" }, "daniel": { senha: "9453", nome: "Daniel" },
-  "felipe": { senha: "2786", nome: "Felipe" }, "jonni": { senha: "5039", nome: "Jonni" },
-  "souza": { senha: "8314", nome: "Souza" },
-  "thiago": { senha: "6906", nome: "Thiago" },
-  "carlos": { senha: "8050", nome: "Carlos" },
-  "robson": { senha: "3376", nome: "Robson" }
+
+// Base de usuários gerada da planilha (atualizada automaticamente a cada 3min)
+// DEMITIDOS são removidos; demais status (ATIVO, LICENÇA, FÉRIAS, TREINAMENTO) mantêm acesso
+let USERS = {
+  "admin":        { senha: "7391", nome: "Administrador", status: "ATIVO" },
+  "angelica":     { senha: "2824", nome: "ANGÉLICA",     status: "ATIVO" },
+  "alexandre":    { senha: "9153", nome: "ALEXANDRE",    status: "ATIVO" },
+  "pamela":       { senha: "3027", nome: "PAMELA",       status: "ATIVO" },
+  "daniel":       { senha: "9453", nome: "DANIEL",       status: "ATIVO" },
+  "devanilso":    { senha: "1583", nome: "DEVANILSO",    status: "ATIVO" },
+  "vasconcellos": { senha: "6120", nome: "VASCONCELLOS", status: "ATIVO" },
+  "ekland":       { senha: "4650", nome: "EKLAND",       status: "ATIVO" },
+  "heriberto":    { senha: "4073", nome: "HERIBERTO",    status: "ATIVO" },
+  "sergio":       { senha: "8067", nome: "SÉRGIO",       status: "ATIVO" },
+  "zilmar":       { senha: "1409", nome: "ZILMAR",       status: "ATIVO" },
+  "wania":        { senha: "6581", nome: "WÂNIA",        status: "ATIVO" },
+  "zezinho":      { senha: "6398", nome: "ZEZINHO",      status: "ATIVO" },
+  "carlinhos":    { senha: "8050", nome: "CARLINHOS",    status: "ATIVO" },
+  "antonio":      { senha: "1738", nome: "ANTÔNIO",      status: "LICENÇA" },
+  "irineu":       { senha: "8293", nome: "IRINEU",       status: "ATIVO" },
+  "camara":       { senha: "5296", nome: "CAMARA",       status: "ATIVO" },
+  "neves":        { senha: "1794", nome: "NEVES",        status: "ATIVO" },
+  "valdir":       { senha: "3905", nome: "VALDIR",       status: "ATIVO" },
+  "tavares":      { senha: "7814", nome: "TAVARES",      status: "ATIVO" },
+  "rogerio":      { senha: "5184", nome: "ROGERIO",      status: "ATIVO" },
+  "edilson":      { senha: "9247", nome: "EDILSON",      status: "ATIVO" },
+  "sergio.silva": { senha: "4591", nome: "SÉRGIO SILVA", status: "ATIVO" },
+  "gilmar":       { senha: "6529", nome: "GILMAR",       status: "ATIVO" },
+  "sandro":       { senha: "1329", nome: "SANDRO",       status: "ATIVO" },
+  "luiz":         { senha: "2198", nome: "LUIZ",         status: "ATIVO" },
+  "medeiros":     { senha: "4362", nome: "MEDEIROS",     status: "ATIVO" },
+  "alex":         { senha: "1476", nome: "ALEX",         status: "ATIVO" },
+  "wilson":       { senha: "8032", nome: "WILSON",       status: "ATIVO" },
+  "nogueira":     { senha: "8520", nome: "NOGUEIRA",     status: "ATIVO" },
+  "mauro":        { senha: "5506", nome: "MAURO",        status: "LICENÇA" },
+  "ricardo":      { senha: "2458", nome: "RICARDO",      status: "FÉRIAS" },
+  "nubia":        { senha: "3261", nome: "NÚBIA",        status: "ATIVO" },
+  "eduardo":      { senha: "3861", nome: "EDUARDO",      status: "ATIVO" },
+  "assis":        { senha: "3718", nome: "ASSIS",        status: "ATIVO" },
+  "claudinei":    { senha: "2975", nome: "CLAUDINEI",    status: "FÉRIAS" },
+  "duarte":       { senha: "2846", nome: "DUARTE",       status: "LICENÇA" },
+  "roberto":      { senha: "9412", nome: "ROBERTO",      status: "LICENÇA" },
+  "rosendo":      { senha: "9736", nome: "ROSENDO",      status: "ATIVO" },
+  "anderson":     { senha: "6042", nome: "ANDERSON",     status: "ATIVO" },
+  "braz":         { senha: "4715", nome: "BRAZ",         status: "ATIVO" },
+  "isaias":       { senha: "8316", nome: "ISAÍAS",       status: "FÉRIAS" },
+  "luis":         { senha: "5012", nome: "LUIS",         status: "ATIVO" },
+  "rene":         { senha: "6913", nome: "RENÊ",         status: "ATIVO" },
+  "felipe":       { senha: "2786", nome: "FELIPE",       status: "ATIVO" },
+  "giulia":       { senha: "2709", nome: "GIULIA",       status: "ATIVO" },
+  "adriano":      { senha: "4827", nome: "ADRIANO",      status: "ATIVO" },
+  "joel":         { senha: "5742", nome: "JOEL",         status: "ATIVO" },
+  "walmir":       { senha: "6173", nome: "WALMIR",       status: "ATIVO" },
+  "vitoria":      { senha: "4657", nome: "VITORIA",      status: "ATIVO" },
+  "jone":         { senha: "3286", nome: "JONE",         status: "ATIVO" },
+  "andre":        { senha: "3718", nome: "ANDRÉ",        status: "ATIVO" },
+  "mikaele":      { senha: "2679", nome: "MIKAELE",      status: "ATIVO" },
+  "ferreira":     { senha: "5943", nome: "FERREIRA",     status: "ATIVO" },
+  "vagner":       { senha: "7248", nome: "VAGNER",       status: "ATIVO" },
+  "celio":        { senha: "8134", nome: "CÉLIO",        status: "ATIVO" },
+  "gabriel":      { senha: "9935", nome: "GABRIEL",      status: "ATIVO" },
+  "souza":        { senha: "8314", nome: "SOUZA",        status: "ATIVO" },
+  "oliveira":     { senha: "3647", nome: "OLIVEIRA",     status: "ATIVO" },
+  "marquinho":    { senha: "2424", nome: "MARQUINHO",    status: "ATIVO" },
+  "marcio":       { senha: "7635", nome: "MARCIO",       status: "LICENÇA" },
+  "agatha":       { senha: "9364", nome: "AGATHA",       status: "ATIVO" },
+  "robson":       { senha: "3376", nome: "ROBSON",       status: "ATIVO" },
+  "thiago":       { senha: "6906", nome: "THIAGO",       status: "ATIVO" },
+  "carlos":       { senha: "8050", nome: "CARLOS",       status: "ATIVO" },
+  "marcelo":      { senha: "7912", nome: "MARCELO",      status: "TREINAMENTO" },
+  "edilei":       { senha: "1520", nome: "EDILEI",       status: "TREINAMENTO" }
 };
+
+// ═══════════════════════════════════════════
+// SINCRONIZAÇÃO AUTOMÁTICA COM PLANILHA RCM
+// Atualiza a cada 3 minutos via Google Sheets CSV export
+// URL fixa da planilha RCM (publicada como CSV)
+// ═══════════════════════════════════════════
+const RCM_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQU606Dbi9ZWn1RSpKGn9Daey3XAsTWRDgstXI3ARb6Na2UF-nZ1hkfB7EVFwzfvQ/pub?gid=182320512&single=true&output=csv';
+const RCM_LAST_SYNC_KEY = 'rcm_last_sync';
+const SYNC_INTERVAL_MS = 3 * 60 * 1000; // 3 minutos
+let syncTimer = null;
+
+function normalizeLogin(str) {
+  return String(str).trim().toLowerCase()
+    .replace(/\s+/g, '.')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9.]/g, '');
+}
+
+function parseRCMCsv(csvText) {
+  const lines = csvText.split('\n');
+  if (lines.length < 2) return null;
+
+  // Find header row
+  const header = lines[0].split(',').map(h => h.trim().replace(/\r/g,''));
+  const idxNome    = header.findIndex(h => h.includes('FUNCION'));
+  const idxGuerra  = header.findIndex(h => h.includes('GUERRA'));
+  const idxSenha   = header.findIndex(h => h.includes('SENHA'));
+  const idxSit     = header.findIndex(h => h.includes('SITUA') || h.includes('SUTU'));
+
+  if (idxNome < 0 || idxGuerra < 0 || idxSenha < 0 || idxSit < 0) return null;
+
+  const newUsers = { "admin": { senha: "7391", nome: "Administrador", status: "ATIVO" } };
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim().replace(/\r/g,''));
+    if (!cols[idxNome] || !cols[idxGuerra] || !cols[idxSenha]) continue;
+
+    const nome    = cols[idxNome].trim();
+    const guerra  = cols[idxGuerra].trim();
+    const senha   = cols[idxSenha].trim();
+    const situacao = (cols[idxSit] || '').trim().toUpperCase();
+
+    if (!nome || !guerra || !senha) continue;
+    // DEMITIDO = sem acesso (excluído da lista)
+    if (situacao === 'DEMITIDO') continue;
+
+    const login = normalizeLogin(guerra);
+    if (!login) continue;
+
+    newUsers[login] = { senha, nome: guerra.toUpperCase(), status: situacao || 'ATIVO' };
+  }
+  return newUsers;
+}
+
+async function syncUsersFromSheet() {
+  try {
+    const resp = await fetch(RCM_CSV_URL, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    const parsed = parseRCMCsv(text);
+
+    if (parsed && Object.keys(parsed).length > 1) {
+      USERS = parsed;
+      localStorage.setItem(RCM_LAST_SYNC_KEY, new Date().toISOString());
+      updateSyncStatus('ok');
+
+      // Se o usuário logado foi demitido, forçar logout
+      if (currentUser && currentUser.login !== 'admin' && !USERS[currentUser.login]) {
+        showToast('⚠️ Seu acesso foi revogado. Faça login novamente.', 'error');
+        setTimeout(() => doLogout(), 2500);
+      }
+    }
+  } catch(e) {
+    updateSyncStatus('erro');
+    console.warn('RCM sync falhou:', e.message);
+  }
+}
+
+function updateSyncStatus(state) {
+  const el = document.getElementById('rcm-sync-status');
+  if (!el) return;
+  const last = localStorage.getItem(RCM_LAST_SYNC_KEY);
+  const hora = last ? new Date(last).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '--:--';
+  if (state === 'ok') {
+    el.textContent = `✅ RCM sincronizado ${hora}`;
+    el.style.color = 'var(--green)';
+  } else {
+    el.textContent = `⚠️ Sem sync — usando cache (${hora})`;
+    el.style.color = 'var(--yellow)';
+  }
+}
+
+function startAutoSync() {
+  syncUsersFromSheet(); // disparo imediato
+  if (syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(syncUsersFromSheet, SYNC_INTERVAL_MS);
+}
+
 
 // ═══════════════════════════════════════════
 // ESTADO GLOBAL
@@ -2162,6 +2225,7 @@ function saveSetup() {
   localStorage.setItem(SCRIPT_URL_KEY, url);
   showScreen('login-screen');
   initClock();
+  startAutoSync();
 }
 function doLogin() {
   const user = document.getElementById('login-user').value.trim().toLowerCase();
@@ -2169,7 +2233,7 @@ function doLogin() {
   const err = document.getElementById('login-error');
   err.style.display = 'none';
   if (!USERS[user] || USERS[user].senha !== pass) { err.style.display = 'block'; return; }
-  currentUser = { login: user, nome: USERS[user].nome };
+  currentUser = { login: user, nome: USERS[user].nome, status: USERS[user].status };
   localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
   iniciarApp();
 }
@@ -2196,6 +2260,8 @@ function iniciarApp() {
   carregarEscalacao();
 }
 window.addEventListener('load', () => {
+  // Inicia sync automático com planilha RCM (URL fixa, sem necessidade de config)
+  startAutoSync();
   const url = localStorage.getItem(SCRIPT_URL_KEY);
   if (!url) { showScreen('setup-screen'); return; }
   const savedUser = localStorage.getItem('jt_saved_user');
