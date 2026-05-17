@@ -416,7 +416,6 @@
 
   .hist-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
 
-  /* ⬇️ CORREÇÃO PRINCIPAL: UM ÚNICO CAMPO DE DATA ⬇️ */
   .hist-date-row {
     display: flex;
     gap: 0.5rem;
@@ -914,7 +913,6 @@
     flex-shrink: 0;
   }
 
-  /* Veiculo */
   .escal-veiculo {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
@@ -943,7 +941,6 @@
     letter-spacing: 0.05em;
   }
 
-  /* Hora */
   .escal-hora-row {
     display: flex;
     align-items: center;
@@ -966,7 +963,6 @@
     color: #7eb3ff;
   }
 
-  /* Destino */
   .escal-destino {
     font-size: 0.72rem;
     color: var(--text);
@@ -985,7 +981,6 @@
     margin-bottom: 0.2rem;
   }
 
-  /* Estado sem escalação */
   .escal-pending {
     padding: 0.75rem 1.1rem 1rem;
     display: flex;
@@ -1024,7 +1019,6 @@
     color: var(--green);
   }
 
-  /* Loading state */
   .escal-loading {
     display: flex;
     align-items: center;
@@ -1044,7 +1038,6 @@
     animation: spin 0.7s linear infinite;
   }
 
-  /* Lancamento time chip */
   .escal-lancamento {
     display: inline-flex;
     align-items: center;
@@ -1104,11 +1097,9 @@
     <button class="btn-primary" onclick="doLogin()" id="btn-login">Entrar</button>
     <div class="error-msg" id="login-error">Usuário ou senha incorretos.</div>
 
-    <!-- Status de sincronização RCM -->
     <div id="rcm-sync-status" style="margin-top:1rem;font-size:0.72rem;text-align:center;color:var(--muted);min-height:1.2em;">
       ⏳ Aguardando sync com planilha RCM...
     </div>
-
   </div>
 </div>
 
@@ -1222,7 +1213,7 @@
   </div>
 </div>
 
-<!-- HISTÓRICO PESSOAL SCREEN — CORRIGIDO: APENAS UMA DATA -->
+<!-- HISTÓRICO PESSOAL SCREEN -->
 <div id="historico-screen" class="screen">
   <div class="hist-header">
     <div>
@@ -1346,7 +1337,6 @@ function parseCSV(text) {
   if (!lines.length) return [];
   const header = lines[0].split(',').map(h => h.trim());
   return lines.slice(1).map(line => {
-    // handle commas inside quoted fields
     const vals = [];
     let cur = '', inQ = false;
     for (let i = 0; i < line.length; i++) {
@@ -1366,11 +1356,9 @@ function normalizeName(n) {
 }
 
 function escalarParaDia(rows, nomeUser, dataBR) {
-  // data no formato dd/mm/yy ou dd/mm/yyyy
   const norm = normalizeName(nomeUser);
   return rows.filter(r => {
     const d = (r['DATA'] || '').trim();
-    // match both yy and yyyy variants
     const dShort = d.replace(/\/(\d{4})$/, (m, y) => '/' + y.slice(-2));
     const dtShort = dataBR.replace(/\/(\d{4})$/, (m, y) => '/' + y.slice(-2));
     const dateMatch = d === dataBR || dShort === dtShort || d === dtShort;
@@ -1392,16 +1380,13 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
     </div>`;
   }
 
-  const r = rows[0]; // primeiro turno do dia
+  const r = rows[0];
   const veiculo = r['VEICULO'] || '—';
-  // split veiculo: "064 LUV 9296" → num=064, placa=LUV 9296
   const vParts = veiculo.match(/^(\d+)\s+(.+)$/);
   const vNum = vParts ? vParts[1] : veiculo;
   const vPlaca = vParts ? vParts[2] : '';
   const hora = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(':00','').slice(0,5);
   const destino = r['DESTINO'] || '—';
-
-  // Horário de lançamento: usamos SAÍDA_VEÍCULO_CD como proxy de quando foi lançado na planilha
   const lancado = r['SAÍDA_VEÍCULO_CD'] || '';
 
   const horaClass = isHoje ? 'escal-hora' : 'escal-hora escal-hora-amanha';
@@ -1445,7 +1430,6 @@ async function carregarEscalacao(manual = false) {
   const hojeBR   = formatDateBR(hoje);
   const amanhaBR = formatDateBR(amanha);
 
-  // Sub-header date
   const subEl = document.getElementById('escal-sub-date');
   if (subEl) {
     const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -1504,9 +1488,6 @@ async function carregarEscalacao(manual = false) {
 // ═══════════════════════════════════════════
 // USUÁRIOS — sincronizado com planilha RCM
 // ═══════════════════════════════════════════
-
-// Base de usuários gerada da planilha (atualizada automaticamente a cada 3min)
-// DEMITIDOS são removidos; demais status (ATIVO, LICENÇA, FÉRIAS, TREINAMENTO) mantêm acesso
 let USERS = {
   "admin":        { senha: "7391", nome: "Administrador", status: "ATIVO" },
   "angelica":     { senha: "2824", nome: "ANGÉLICA",     status: "ATIVO" },
@@ -1579,12 +1560,10 @@ let USERS = {
 
 // ═══════════════════════════════════════════
 // SINCRONIZAÇÃO AUTOMÁTICA COM PLANILHA RCM
-// Atualiza a cada 3 minutos via Google Sheets CSV export
-// URL fixa da planilha RCM (publicada como CSV)
 // ═══════════════════════════════════════════
 const RCM_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQU606Dbi9ZWn1RSpKGn9Daey3XAsTWRDgstXI3ARb6Na2UF-nZ1hkfB7EVFwzfvQ/pub?gid=182320512&single=true&output=csv';
 const RCM_LAST_SYNC_KEY = 'rcm_last_sync';
-const SYNC_INTERVAL_MS = 3 * 60 * 1000; // 3 minutos
+const SYNC_INTERVAL_MS = 3 * 60 * 1000;
 let syncTimer = null;
 
 function normalizeLogin(str) {
@@ -1598,7 +1577,6 @@ function parseRCMCsv(csvText) {
   const lines = csvText.split('\n');
   if (lines.length < 2) return null;
 
-  // Find header row
   const header = lines[0].split(',').map(h => h.trim().replace(/\r/g,''));
   const idxNome    = header.findIndex(h => h.includes('FUNCION'));
   const idxGuerra  = header.findIndex(h => h.includes('GUERRA'));
@@ -1619,7 +1597,6 @@ function parseRCMCsv(csvText) {
     const situacao = (cols[idxSit] || '').trim().toUpperCase();
 
     if (!nome || !guerra || !senha) continue;
-    // DEMITIDO = sem acesso (excluído da lista)
     if (situacao === 'DEMITIDO') continue;
 
     const login = normalizeLogin(guerra);
@@ -1642,7 +1619,6 @@ async function syncUsersFromSheet() {
       localStorage.setItem(RCM_LAST_SYNC_KEY, new Date().toISOString());
       updateSyncStatus('ok');
 
-      // Se o usuário logado foi demitido, forçar logout
       if (currentUser && currentUser.login !== 'admin' && !USERS[currentUser.login]) {
         showToast('⚠️ Seu acesso foi revogado. Faça login novamente.', 'error');
         setTimeout(() => doLogout(), 2500);
@@ -1669,7 +1645,7 @@ function updateSyncStatus(state) {
 }
 
 function startAutoSync() {
-  syncUsersFromSheet(); // disparo imediato
+  syncUsersFromSheet();
   if (syncTimer) clearInterval(syncTimer);
   syncTimer = setInterval(syncUsersFromSheet, SYNC_INTERVAL_MS);
 }
@@ -1682,8 +1658,8 @@ let currentUser = null;
 let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
-let paradaTimer = null;
-let fimRefeicaoTimer = null;
+let paradaTimer = null;       // setTimeout para o alerta das 4h
+let fimRefeicaoTimer = null;  // setInterval do countdown de 1h de refeição
 const DESCANSO_MS = 11 * 60 * 60 * 1000;
 let descansoTimer = null;
 let mealAlertRepeat = null;
@@ -1752,7 +1728,7 @@ function mostrarAlertaRefeicao(tipo) {
     icon.textContent = '↩️';
     title.textContent = 'Intervalo Encerrado!';
     title.style.color = '#7eb3ff';
-    desc.textContent = 'O período mínimo de 30 minutos de refeição foi cumprido. Registre seu Retorno quando estiver pronto.';
+    desc.textContent = 'O período de 1 hora de refeição foi cumprido. Registre seu Retorno quando estiver pronto.';
     document.querySelector('.btn-dismiss-meal').style.background = 'linear-gradient(135deg,#0066ff,#0044cc)';
     document.querySelector('.btn-dismiss-meal').style.color = '#fff';
     tocarAlertaFimRefeicao();
@@ -1790,7 +1766,7 @@ function showScreen(id) {
 }
 
 // ═══════════════════════════════════════════
-// HISTÓRICO PESSOAL — CORRIGIDO: UMA ÚNICA DATA
+// HISTÓRICO PESSOAL
 // ═══════════════════════════════════════════
 async function buscarHistorico() {
   const dataUnica = document.getElementById('hist-data-unica').value;
@@ -1986,46 +1962,82 @@ function limparEstadoDiaAnterior() {
   showToast('✅ Descanso cumprido! Nova jornada liberada.', 'success');
 }
 
+// ═══════════════════════════════════════════
+// CORREÇÃO 1: ALERTA DAS 4H APÓS INÍCIO
+// ═══════════════════════════════════════════
 function verificarLiberacaoParada() {
   if (jornadaState.parada || !jornadaState.inicio) return;
+
   const btn = document.getElementById('btn-parada');
-  // Botão liberado imediatamente após o início da jornada
+  // Botão sempre liberado (motorista pode parar quando quiser)
   btn.disabled = false;
   btn.classList.add('available');
   btn.classList.remove('done');
-  if (paradaTimer) clearInterval(paradaTimer);
-  atualizarLabelParada(null);
-}
-function atualizarLabelParada(countdown) {
-  const timeEl = document.getElementById('time-parada');
-  if (countdown) { timeEl.textContent = `Libera em ${countdown}`; timeEl.style.color = 'var(--yellow)'; }
-  else if (!jornadaState.parada) { timeEl.textContent = '—'; timeEl.style.color = ''; }
+
+  // Calcula quando completam 4h desde o início da jornada
+  const [h, m, s] = jornadaState.inicio.split(':').map(Number);
+  const hoje = new Date();
+  const inicioMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
+  const alertaEm = inicioMs + 4 * 60 * 60 * 1000; // +4 horas
+  const agora = Date.now();
+
+  // Se já passou das 4h, não repete o alerta
+  if (agora >= alertaEm) return;
+
+  // Agenda o alerta sonoro + modal para quando bater as 4h
+  if (paradaTimer) clearTimeout(paradaTimer);
+  paradaTimer = setTimeout(() => {
+    if (!jornadaState.parada) {
+      mostrarAlertaRefeicao('liberada');
+      showToast('🍽️ Parada para refeição disponível!', 'success');
+    }
+  }, alertaEm - agora);
 }
 
+// ═══════════════════════════════════════════
+// CORREÇÃO 2: ALERTA DE FIM DE REFEIÇÃO (1H)
+// ═══════════════════════════════════════════
 function iniciarTimerFimRefeicao() {
   if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
   if (!jornadaState.parada || jornadaState.retorno) return;
-  const [h,m,s] = jornadaState.parada.split(':').map(Number);
+
+  const [h, m, s] = jornadaState.parada.split(':').map(Number);
   const hoje = new Date();
   const paradaMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
-  const fimMs = paradaMs + 30 * 60 * 1000;
+
+  // ✅ CORRIGIDO: 1 hora (60 min) em vez de 30 min
+  const fimMs = paradaMs + 60 * 60 * 1000;
+
   const btnRetorno = document.getElementById('btn-retorno');
   const timeRetorno = document.getElementById('time-retorno');
+
+  // Se já passou da 1h, não inicia o timer
   if (Date.now() >= fimMs) return;
+
   fimRefeicaoTimer = setInterval(() => {
     if (jornadaState.retorno) { clearInterval(fimRefeicaoTimer); return; }
     const restante = fimMs - Date.now();
     if (restante <= 0) {
       clearInterval(fimRefeicaoTimer);
-      if (timeRetorno && !jornadaState.retorno) { timeRetorno.textContent = 'Libera agora'; timeRetorno.style.color = 'var(--green)'; }
-      if (!jornadaState.retorno) { showToast('↩️ Intervalo de refeição encerrado!', 'success'); mostrarAlertaRefeicao('fim'); }
+      if (timeRetorno && !jornadaState.retorno) {
+        timeRetorno.textContent = 'Retorno disponível';
+        timeRetorno.style.color = 'var(--green)';
+      }
+      if (!jornadaState.retorno) {
+        showToast('↩️ Hora de refeição encerrada!', 'success');
+        mostrarAlertaRefeicao('fim');
+      }
       return;
     }
     const rm = String(Math.floor(restante / 60000)).padStart(2,'0');
     const rs = String(Math.floor((restante % 60000) / 1000)).padStart(2,'0');
-    if (timeRetorno && !jornadaState.retorno) { timeRetorno.textContent = `Retorno em ${rm}:${rs}`; timeRetorno.style.color = 'var(--yellow)'; }
+    if (timeRetorno && !jornadaState.retorno) {
+      timeRetorno.textContent = `Retorno em ${rm}:${rs}`;
+      timeRetorno.style.color = 'var(--yellow)';
+    }
   }, 1000);
 }
+
 function restaurarTimerFimRefeicao() {
   if (jornadaState.parada && !jornadaState.retorno) iniciarTimerFimRefeicao();
 }
@@ -2124,10 +2136,14 @@ async function confirmarRegistro() {
   if (tipo === 'parada') iniciarTimerFimRefeicao();
   if (tipo === 'fim') {
     ['inicio', 'parada', 'retorno'].forEach(t => { if (!jornadaState[t]) { const btn = document.getElementById(`btn-${t}`); btn.disabled = true; btn.classList.remove('available'); btn.classList.add('done'); } });
-    if (paradaTimer) clearInterval(paradaTimer);
+    if (paradaTimer) clearTimeout(paradaTimer);
     if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
   }
-  if (tipo === 'retorno') { if (fimRefeicaoTimer) { clearInterval(fimRefeicaoTimer); fimRefeicaoTimer = null; } const timeRetorno = document.getElementById('time-retorno'); if (timeRetorno) timeRetorno.style.color = ''; }
+  if (tipo === 'retorno') {
+    if (fimRefeicaoTimer) { clearInterval(fimRefeicaoTimer); fimRefeicaoTimer = null; }
+    const timeRetorno = document.getElementById('time-retorno');
+    if (timeRetorno) timeRetorno.style.color = '';
+  }
   await enviarParaSheets(payload);
 }
 async function enviarParaSheets(payload) {
@@ -2136,7 +2152,7 @@ async function enviarParaSheets(payload) {
   showLoading(true);
   try {
     await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    showToast(`✅ ${EVENTOS[payload.evento.toLowerCase().replace(/ .*/,'')] ? payload.evento : 'Registro'} enviado!`, 'success');
+    showToast(`✅ ${payload.evento} enviado!`, 'success');
   } catch(e) { showToast('❌ Erro ao enviar. Verifique conexão.', 'error'); console.error(e); }
   finally { showLoading(false); }
 }
@@ -2260,7 +2276,6 @@ function iniciarApp() {
   carregarEscalacao();
 }
 window.addEventListener('load', () => {
-  // Inicia sync automático com planilha RCM (URL fixa, sem necessidade de config)
   startAutoSync();
   const url = localStorage.getItem(SCRIPT_URL_KEY);
   if (!url) { showScreen('setup-screen'); return; }
@@ -2274,7 +2289,7 @@ window.addEventListener('load', () => {
 // ═══════════════════════════════════════════
 // AUTO-REFRESH & SYNC
 // ═══════════════════════════════════════════
-const AUTO_REFRESH_MS = 3 * 60 * 1000; // 3 minutos
+const AUTO_REFRESH_MS = 3 * 60 * 1000;
 let refreshCountdown = AUTO_REFRESH_MS;
 let refreshInterval = null;
 let countdownInterval = null;
@@ -2295,12 +2310,10 @@ function updateBadges(ms) {
 }
 
 function doAutoRefresh() {
-  // Só recarrega se não houver modal aberto nem loading visível
   const loading = document.getElementById('loading');
   const modal = document.getElementById('modal-confirm');
   if ((loading && loading.style.display === 'flex') ||
       (modal && modal.style.display === 'flex')) {
-    // Adia 10s para não interromper ação do usuário
     refreshCountdown = 10000;
     return;
   }
