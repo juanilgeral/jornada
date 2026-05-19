@@ -1123,8 +1123,11 @@
 
   <div class="app-body">
 
-    <!-- CARD ESCALAÇÃO DO DIA — oculto por padrão; exibido apenas para motoristas -->
-    <div class="escal-card" id="escal-card" style="display:none">
+    <!-- ══════════════════════════════════════════════════════
+         CARD ESCALAÇÃO — visível SOMENTE para MOTORISTAS
+         Começa oculto (display:none); iniciarApp() decide se exibe
+         ══════════════════════════════════════════════════════ -->
+    <div class="escal-card" id="escal-card" style="display:none;">
       <div class="escal-header">
         <div class="escal-header-left">
           <div class="escal-icon-wrap">🚌</div>
@@ -1388,7 +1391,6 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
   const hora = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(':00','').slice(0,5);
   const destino = r['DESTINO'] || '—';
   const lancado = r['SAÍDA_VEÍCULO_CD'] || '';
-
   const horaClass = isHoje ? 'escal-hora' : 'escal-hora escal-hora-amanha';
   const dotCls = isHoje ? 'dot-hoje' : 'dot-amanha';
 
@@ -1410,12 +1412,14 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
   </div>`;
 }
 
+// ═══════════════════════════════════════════════════════
+// carregarEscalacao — só executa para MOTORISTAS
+// ═══════════════════════════════════════════════════════
 async function carregarEscalacao(manual = false) {
-  // Somente motoristas (não-admin) veem a escalação
-  if (!currentUser || currentUser.login === 'admin') return;
-
-  // Exibe o card (estava oculto por padrão)
-  document.getElementById('escal-card').style.display = '';
+  // Só exibe/carrega para motoristas — dupla verificação
+  if (!currentUser) return;
+  if (currentUser.login === 'admin') return;
+  if (!ehMotorista()) return;
 
   const btn = document.getElementById('escal-reload-btn');
   if (btn) btn.classList.add('spinning');
@@ -1489,82 +1493,98 @@ async function carregarEscalacao(manual = false) {
   }
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // USUÁRIOS — sincronizado com planilha RCM
-// ═══════════════════════════════════════════
+// A planilha RCM contém as colunas FUNÇÃO (K) e GUERRA (L).
+// parseRCMCsv lê a coluna FUNÇÃO e salva em cada usuário.
+// ehMotorista() verifica se o usuário logado tem funcao=MOTORISTA.
+// ═══════════════════════════════════════════════════════════════
+
 let USERS = {
-  "admin":        { senha: "7391", nome: "Administrador", status: "ATIVO" },
-  "angelica":     { senha: "2824", nome: "ANGÉLICA",     status: "ATIVO" },
-  "alexandre":    { senha: "9153", nome: "ALEXANDRE",    status: "ATIVO" },
-  "pamela":       { senha: "3027", nome: "PAMELA",       status: "ATIVO" },
-  "daniel":       { senha: "9453", nome: "DANIEL",       status: "ATIVO" },
-  "devanilso":    { senha: "1583", nome: "DEVANILSO",    status: "ATIVO" },
-  "vasconcellos": { senha: "6120", nome: "VASCONCELLOS", status: "ATIVO" },
-  "ekland":       { senha: "4650", nome: "EKLAND",       status: "ATIVO" },
-  "heriberto":    { senha: "4073", nome: "HERIBERTO",    status: "ATIVO" },
-  "sergio":       { senha: "8067", nome: "SÉRGIO",       status: "ATIVO" },
-  "zilmar":       { senha: "1409", nome: "ZILMAR",       status: "ATIVO" },
-  "wania":        { senha: "6581", nome: "WÂNIA",        status: "ATIVO" },
-  "zezinho":      { senha: "6398", nome: "ZEZINHO",      status: "ATIVO" },
-  "carlinhos":    { senha: "8050", nome: "CARLINHOS",    status: "ATIVO" },
-  "antonio":      { senha: "1738", nome: "ANTÔNIO",      status: "LICENÇA" },
-  "irineu":       { senha: "8293", nome: "IRINEU",       status: "ATIVO" },
-  "camara":       { senha: "5296", nome: "CAMARA",       status: "ATIVO" },
-  "neves":        { senha: "1794", nome: "NEVES",        status: "ATIVO" },
-  "valdir":       { senha: "3905", nome: "VALDIR",       status: "ATIVO" },
-  "tavares":      { senha: "7814", nome: "TAVARES",      status: "ATIVO" },
-  "rogerio":      { senha: "5184", nome: "ROGERIO",      status: "ATIVO" },
-  "edilson":      { senha: "9247", nome: "EDILSON",      status: "ATIVO" },
-  "sergio.silva": { senha: "4591", nome: "SÉRGIO SILVA", status: "ATIVO" },
-  "gilmar":       { senha: "6529", nome: "GILMAR",       status: "ATIVO" },
-  "sandro":       { senha: "1329", nome: "SANDRO",       status: "ATIVO" },
-  "luiz":         { senha: "2198", nome: "LUIZ",         status: "ATIVO" },
-  "medeiros":     { senha: "4362", nome: "MEDEIROS",     status: "ATIVO" },
-  "alex":         { senha: "1476", nome: "ALEX",         status: "ATIVO" },
-  "wilson":       { senha: "8032", nome: "WILSON",       status: "ATIVO" },
-  "nogueira":     { senha: "8520", nome: "NOGUEIRA",     status: "ATIVO" },
-  "mauro":        { senha: "5506", nome: "MAURO",        status: "LICENÇA" },
-  "ricardo":      { senha: "2458", nome: "RICARDO",      status: "FÉRIAS" },
-  "nubia":        { senha: "3261", nome: "NÚBIA",        status: "ATIVO" },
-  "eduardo":      { senha: "3861", nome: "EDUARDO",      status: "ATIVO" },
-  "assis":        { senha: "3718", nome: "ASSIS",        status: "ATIVO" },
-  "claudinei":    { senha: "2975", nome: "CLAUDINEI",    status: "FÉRIAS" },
-  "duarte":       { senha: "2846", nome: "DUARTE",       status: "LICENÇA" },
-  "roberto":      { senha: "9412", nome: "ROBERTO",      status: "LICENÇA" },
-  "rosendo":      { senha: "9736", nome: "ROSENDO",      status: "ATIVO" },
-  "anderson":     { senha: "6042", nome: "ANDERSON",     status: "ATIVO" },
-  "braz":         { senha: "4715", nome: "BRAZ",         status: "ATIVO" },
-  "isaias":       { senha: "8316", nome: "ISAÍAS",       status: "FÉRIAS" },
-  "luis":         { senha: "5012", nome: "LUIS",         status: "ATIVO" },
-  "rene":         { senha: "6913", nome: "RENÊ",         status: "ATIVO" },
-  "felipe":       { senha: "2786", nome: "FELIPE",       status: "ATIVO" },
-  "giulia":       { senha: "2709", nome: "GIULIA",       status: "ATIVO" },
-  "adriano":      { senha: "4827", nome: "ADRIANO",      status: "ATIVO" },
-  "joel":         { senha: "5742", nome: "JOEL",         status: "ATIVO" },
-  "walmir":       { senha: "6173", nome: "WALMIR",       status: "ATIVO" },
-  "vitoria":      { senha: "4657", nome: "VITORIA",      status: "ATIVO" },
-  "jone":         { senha: "3286", nome: "JONE",         status: "ATIVO" },
-  "andre":        { senha: "3718", nome: "ANDRÉ",        status: "ATIVO" },
-  "mikaele":      { senha: "2679", nome: "MIKAELE",      status: "ATIVO" },
-  "ferreira":     { senha: "5943", nome: "FERREIRA",     status: "ATIVO" },
-  "vagner":       { senha: "7248", nome: "VAGNER",       status: "ATIVO" },
-  "celio":        { senha: "8134", nome: "CÉLIO",        status: "ATIVO" },
-  "gabriel":      { senha: "9935", nome: "GABRIEL",      status: "ATIVO" },
-  "souza":        { senha: "8314", nome: "SOUZA",        status: "ATIVO" },
-  "oliveira":     { senha: "3647", nome: "OLIVEIRA",     status: "ATIVO" },
-  "marquinho":    { senha: "2424", nome: "MARQUINHO",    status: "ATIVO" },
-  "marcio":       { senha: "7635", nome: "MARCIO",       status: "LICENÇA" },
-  "agatha":       { senha: "9364", nome: "AGATHA",       status: "ATIVO" },
-  "robson":       { senha: "3376", nome: "ROBSON",       status: "ATIVO" },
-  "thiago":       { senha: "6906", nome: "THIAGO",       status: "ATIVO" },
-  "carlos":       { senha: "8050", nome: "CARLOS",       status: "ATIVO" },
-  "marcelo":      { senha: "7912", nome: "MARCELO",      status: "TREINAMENTO" },
-  "edilei":       { senha: "1520", nome: "EDILEI",       status: "TREINAMENTO" }
+  "admin":        { senha: "7391", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" },
+  "angelica":     { senha: "2824", nome: "ANGÉLICA",     status: "ATIVO", funcao: "MOTORISTA" },
+  "alexandre":    { senha: "9153", nome: "ALEXANDRE",    status: "ATIVO", funcao: "MOTORISTA" },
+  "pamela":       { senha: "3027", nome: "PAMELA",       status: "ATIVO", funcao: "MOTORISTA" },
+  "daniel":       { senha: "9453", nome: "DANIEL",       status: "ATIVO", funcao: "MOTORISTA" },
+  "devanilso":    { senha: "1583", nome: "DEVANILSO",    status: "ATIVO", funcao: "MOTORISTA" },
+  "vasconcellos": { senha: "6120", nome: "VASCONCELLOS", status: "ATIVO", funcao: "MOTORISTA" },
+  "ekland":       { senha: "4650", nome: "EKLAND",       status: "ATIVO", funcao: "MOTORISTA" },
+  "heriberto":    { senha: "4073", nome: "HERIBERTO",    status: "ATIVO", funcao: "MOTORISTA" },
+  "sergio":       { senha: "8067", nome: "SÉRGIO",       status: "ATIVO", funcao: "MOTORISTA" },
+  "zilmar":       { senha: "1409", nome: "ZILMAR",       status: "ATIVO", funcao: "MOTORISTA" },
+  "wania":        { senha: "6581", nome: "WÂNIA",        status: "ATIVO", funcao: "ESCRITÓRIO" },
+  "zezinho":      { senha: "6398", nome: "ZEZINHO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "carlinhos":    { senha: "8050", nome: "CARLINHOS",    status: "ATIVO", funcao: "MOTORISTA" },
+  "antonio":      { senha: "1738", nome: "ANTÔNIO",      status: "LICENÇA", funcao: "MOTORISTA" },
+  "irineu":       { senha: "8293", nome: "IRINEU",       status: "ATIVO", funcao: "MOTORISTA" },
+  "camara":       { senha: "5296", nome: "CAMARA",       status: "ATIVO", funcao: "MOTORISTA" },
+  "neves":        { senha: "1794", nome: "NEVES",        status: "ATIVO", funcao: "MOTORISTA" },
+  "valdir":       { senha: "3905", nome: "VALDIR",       status: "ATIVO", funcao: "MOTORISTA" },
+  "tavares":      { senha: "7814", nome: "TAVARES",      status: "ATIVO", funcao: "SUPERVISOR" },
+  "rogerio":      { senha: "5184", nome: "ROGERIO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "edilson":      { senha: "9247", nome: "EDILSON",      status: "ATIVO", funcao: "MOTORISTA" },
+  "sergio.silva": { senha: "4591", nome: "SÉRGIO SILVA", status: "ATIVO", funcao: "MOTORISTA" },
+  "gilmar":       { senha: "6529", nome: "GILMAR",       status: "ATIVO", funcao: "MOTORISTA" },
+  "sandro":       { senha: "1329", nome: "SANDRO",       status: "ATIVO", funcao: "MOTORISTA" },
+  "luiz":         { senha: "2198", nome: "LUIZ",         status: "ATIVO", funcao: "MOTORISTA" },
+  "medeiros":     { senha: "4362", nome: "MEDEIROS",     status: "ATIVO", funcao: "MOTORISTA" },
+  "alex":         { senha: "1476", nome: "ALEX",         status: "ATIVO", funcao: "MOTORISTA" },
+  "wilson":       { senha: "8032", nome: "WILSON",       status: "ATIVO", funcao: "MOTORISTA" },
+  "nogueira":     { senha: "8520", nome: "NOGUEIRA",     status: "ATIVO", funcao: "MOTORISTA" },
+  "mauro":        { senha: "5506", nome: "MAURO",        status: "LICENÇA", funcao: "MOTORISTA" },
+  "ricardo":      { senha: "2458", nome: "RICARDO",      status: "FÉRIAS", funcao: "MOTORISTA" },
+  "nubia":        { senha: "3261", nome: "NÚBIA",        status: "ATIVO", funcao: "ESCRITÓRIO" },
+  "eduardo":      { senha: "3861", nome: "EDUARDO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "assis":        { senha: "3718", nome: "ASSIS",        status: "ATIVO", funcao: "MOTORISTA" },
+  "claudinei":    { senha: "2975", nome: "CLAUDINEI",    status: "FÉRIAS", funcao: "MOTORISTA" },
+  "duarte":       { senha: "2846", nome: "DUARTE",       status: "LICENÇA", funcao: "MOTORISTA" },
+  "roberto":      { senha: "9412", nome: "ROBERTO",      status: "LICENÇA", funcao: "MOTORISTA" },
+  "rosendo":      { senha: "9736", nome: "ROSENDO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "anderson":     { senha: "6042", nome: "ANDERSON",     status: "ATIVO", funcao: "MOTORISTA" },
+  "braz":         { senha: "4715", nome: "BRAZ",         status: "ATIVO", funcao: "PORTARIA" },
+  "isaias":       { senha: "8316", nome: "ISAÍAS",       status: "FÉRIAS", funcao: "MOTORISTA" },
+  "luis":         { senha: "5012", nome: "LUIS",         status: "ATIVO", funcao: "MOTORISTA" },
+  "rene":         { senha: "6913", nome: "RENÊ",         status: "ATIVO", funcao: "MOTORISTA" },
+  "felipe":       { senha: "2786", nome: "FELIPE",       status: "ATIVO", funcao: "MOTORISTA" },
+  "giulia":       { senha: "2709", nome: "GIULIA",       status: "ATIVO", funcao: "AUXILIAR" },
+  "adriano":      { senha: "4827", nome: "ADRIANO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "joel":         { senha: "5742", nome: "JOEL",         status: "ATIVO", funcao: "MOTORISTA" },
+  "walmir":       { senha: "6173", nome: "WALMIR",       status: "ATIVO", funcao: "MOTORISTA" },
+  "vitoria":      { senha: "4657", nome: "VITORIA",      status: "ATIVO", funcao: "JA" },
+  "jone":         { senha: "3286", nome: "JONE",         status: "ATIVO", funcao: "MOTORISTA" },
+  "andre":        { senha: "3718", nome: "ANDRÉ",        status: "ATIVO", funcao: "MOTORISTA" },
+  "mikaele":      { senha: "2679", nome: "MIKAELE",      status: "ATIVO", funcao: "JA" },
+  "ferreira":     { senha: "5943", nome: "FERREIRA",     status: "ATIVO", funcao: "PORTARIA" },
+  "vagner":       { senha: "7248", nome: "VAGNER",       status: "ATIVO", funcao: "MOTORISTA" },
+  "celio":        { senha: "8134", nome: "CÉLIO",        status: "ATIVO", funcao: "MOTORISTA" },
+  "gabriel":      { senha: "9935", nome: "GABRIEL",      status: "ATIVO", funcao: "AUXILIAR" },
+  "souza":        { senha: "8314", nome: "SOUZA",        status: "ATIVO", funcao: "MOTORISTA" },
+  "oliveira":     { senha: "3647", nome: "OLIVEIRA",     status: "ATIVO", funcao: "MOTORISTA" },
+  "marquinho":    { senha: "2424", nome: "MARQUINHO",    status: "ATIVO", funcao: "MOTORISTA" },
+  "marcio":       { senha: "7635", nome: "MARCIO",       status: "LICENÇA", funcao: "MOTORISTA" },
+  "agatha":       { senha: "9364", nome: "AGATHA",       status: "ATIVO", funcao: "ESCRITÓRIO" },
+  "robson":       { senha: "3376", nome: "ROBSON",       status: "ATIVO", funcao: "MOTORISTA" },
+  "thiago":       { senha: "6906", nome: "THIAGO",       status: "ATIVO", funcao: "MOTORISTA" },
+  "carlos":       { senha: "8050", nome: "CARLOS",       status: "ATIVO", funcao: "MOTORISTA" },
+  "marcelo":      { senha: "7912", nome: "MARCELO",      status: "TREINAMENTO", funcao: "MOTORISTA" },
+  "edilei":       { senha: "1520", nome: "EDILEI",       status: "TREINAMENTO", funcao: "MOTORISTA" }
 };
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// ehMotorista() — verifica se o usuário logado é MOTORISTA
+// Usa currentUser.funcao (vindo do USERS ou do CSV RCM)
+// ═══════════════════════════════════════════════════════════════
+function ehMotorista() {
+  if (!currentUser) return false;
+  if (currentUser.login === 'admin') return false;
+  const funcao = (currentUser.funcao || '').toUpperCase().trim();
+  return funcao === 'MOTORISTA';
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SINCRONIZAÇÃO AUTOMÁTICA COM PLANILHA RCM
-// ═══════════════════════════════════════════
+// Lê coluna FUNÇÃO (K) para saber se cada funcionário é motorista
+// ═══════════════════════════════════════════════════════════════
 const RCM_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQU606Dbi9ZWn1RSpKGn9Daey3XAsTWRDgstXI3ARb6Na2UF-nZ1hkfB7EVFwzfvQ/pub?gid=182320512&single=true&output=csv';
 const RCM_LAST_SYNC_KEY = 'rcm_last_sync';
 const SYNC_INTERVAL_MS = 3 * 60 * 1000;
@@ -1582,23 +1602,31 @@ function parseRCMCsv(csvText) {
   if (lines.length < 2) return null;
 
   const header = lines[0].split(',').map(h => h.trim().replace(/\r/g,''));
-  const idxNome    = header.findIndex(h => h.includes('FUNCION'));
-  const idxGuerra  = header.findIndex(h => h.includes('GUERRA'));
-  const idxSenha   = header.findIndex(h => h.includes('SENHA'));
-  const idxSit     = header.findIndex(h => h.includes('SITUA') || h.includes('SUTU'));
+
+  // Índices das colunas relevantes
+  const idxNome   = header.findIndex(h => h.includes('FUNCION'));
+  const idxGuerra = header.findIndex(h => h.includes('GUERRA'));
+  const idxSenha  = header.findIndex(h => h.includes('SENHA'));
+  const idxSit    = header.findIndex(h => h.includes('SITUA') || h.includes('SUTU'));
+  // Coluna FUNÇÃO (K = índice 10 na planilha, mas buscamos pelo nome do cabeçalho)
+  const idxFuncao = header.findIndex(h => h.replace(/\s/g,'').toUpperCase().includes('FUN') && !h.includes('FUNCION'));
 
   if (idxNome < 0 || idxGuerra < 0 || idxSenha < 0 || idxSit < 0) return null;
 
-  const newUsers = { "admin": { senha: "7391", nome: "Administrador", status: "ATIVO" } };
+  const newUsers = { "admin": { senha: "7391", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" } };
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map(c => c.trim().replace(/\r/g,''));
     if (!cols[idxNome] || !cols[idxGuerra] || !cols[idxSenha]) continue;
 
-    const nome    = cols[idxNome].trim();
-    const guerra  = cols[idxGuerra].trim();
-    const senha   = cols[idxSenha].trim();
+    const nome     = cols[idxNome].trim();
+    const guerra   = cols[idxGuerra].trim();
+    const senha    = cols[idxSenha].trim();
     const situacao = (cols[idxSit] || '').trim().toUpperCase();
+    // Lê a função: coluna FUNÇÃO (índice 10 = K) — fallback para "MOTORISTA" se não encontrado
+    const funcaoRaw = idxFuncao >= 0
+      ? (cols[idxFuncao] || '').trim().toUpperCase()
+      : (cols[10] || '').trim().toUpperCase();  // fallback: coluna K (índice 10)
 
     if (!nome || !guerra || !senha) continue;
     if (situacao === 'DEMITIDO') continue;
@@ -1606,7 +1634,12 @@ function parseRCMCsv(csvText) {
     const login = normalizeLogin(guerra);
     if (!login) continue;
 
-    newUsers[login] = { senha, nome: guerra.toUpperCase(), status: situacao || 'ATIVO' };
+    newUsers[login] = {
+      senha,
+      nome:    guerra.toUpperCase(),
+      status:  situacao || 'ATIVO',
+      funcao:  funcaoRaw || 'MOTORISTA'  // fallback seguro
+    };
   }
   return newUsers;
 }
@@ -1623,9 +1656,22 @@ async function syncUsersFromSheet() {
       localStorage.setItem(RCM_LAST_SYNC_KEY, new Date().toISOString());
       updateSyncStatus('ok');
 
+      // Se o usuário logado foi demitido, forçar logout
       if (currentUser && currentUser.login !== 'admin' && !USERS[currentUser.login]) {
         showToast('⚠️ Seu acesso foi revogado. Faça login novamente.', 'error');
         setTimeout(() => doLogout(), 2500);
+        return;
+      }
+
+      // Atualiza a função do usuário logado caso mude na planilha
+      if (currentUser && currentUser.login !== 'admin' && USERS[currentUser.login]) {
+        const novaFuncao = USERS[currentUser.login].funcao;
+        if (novaFuncao !== currentUser.funcao) {
+          currentUser.funcao = novaFuncao;
+          localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
+          // Mostra/oculta card conforme nova função
+          aplicarVisibilidadeEscalacao();
+        }
       }
     }
   } catch(e) {
@@ -1654,10 +1700,25 @@ function startAutoSync() {
   syncTimer = setInterval(syncUsersFromSheet, SYNC_INTERVAL_MS);
 }
 
+// ═══════════════════════════════════════════════════════════════
+// aplicarVisibilidadeEscalacao()
+// Mostra o card de escalação SOMENTE se o usuário for MOTORISTA.
+// Chamada no login e a cada sync que altere a função do usuário.
+// ═══════════════════════════════════════════════════════════════
+function aplicarVisibilidadeEscalacao() {
+  const card = document.getElementById('escal-card');
+  if (!card) return;
+  if (ehMotorista()) {
+    card.style.display = '';   // mostra (usa o display natural do CSS)
+    carregarEscalacao();       // carrega os dados
+  } else {
+    card.style.display = 'none'; // oculta para não-motoristas
+  }
+}
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // ESTADO GLOBAL
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 let currentUser = null;
 let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
@@ -1732,7 +1793,7 @@ function mostrarAlertaRefeicao(tipo) {
     icon.textContent = '↩️';
     title.textContent = 'Intervalo Encerrado!';
     title.style.color = '#7eb3ff';
-    desc.textContent = 'O período de 1 hora de refeição foi cumprido. Registre seu Retorno quando estiver pronto.';
+    desc.textContent = 'O período mínimo de 30 minutos de refeição foi cumprido. Registre seu Retorno quando estiver pronto.';
     document.querySelector('.btn-dismiss-meal').style.background = 'linear-gradient(135deg,#0066ff,#0044cc)';
     document.querySelector('.btn-dismiss-meal').style.color = '#fff';
     tocarAlertaFimRefeicao();
@@ -1968,67 +2029,43 @@ function limparEstadoDiaAnterior() {
 
 function verificarLiberacaoParada() {
   if (jornadaState.parada || !jornadaState.inicio) return;
-
   const btn = document.getElementById('btn-parada');
   btn.disabled = false;
   btn.classList.add('available');
   btn.classList.remove('done');
-
-  const [h, m, s] = jornadaState.inicio.split(':').map(Number);
-  const hoje = new Date();
-  const inicioMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
-  const alertaEm = inicioMs + 4 * 60 * 60 * 1000;
-  const agora = Date.now();
-
-  if (agora >= alertaEm) return;
-
-  if (paradaTimer) clearTimeout(paradaTimer);
-  paradaTimer = setTimeout(() => {
-    if (!jornadaState.parada) {
-      mostrarAlertaRefeicao('liberada');
-      showToast('🍽️ Parada para refeição disponível!', 'success');
-    }
-  }, alertaEm - agora);
+  if (paradaTimer) clearInterval(paradaTimer);
+  atualizarLabelParada(null);
+}
+function atualizarLabelParada(countdown) {
+  const timeEl = document.getElementById('time-parada');
+  if (countdown) { timeEl.textContent = `Libera em ${countdown}`; timeEl.style.color = 'var(--yellow)'; }
+  else if (!jornadaState.parada) { timeEl.textContent = '—'; timeEl.style.color = ''; }
 }
 
 function iniciarTimerFimRefeicao() {
   if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
   if (!jornadaState.parada || jornadaState.retorno) return;
-
-  const [h, m, s] = jornadaState.parada.split(':').map(Number);
+  const [h,m,s] = jornadaState.parada.split(':').map(Number);
   const hoje = new Date();
   const paradaMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
-  const fimMs = paradaMs + 60 * 60 * 1000;
-
+  const fimMs = paradaMs + 30 * 60 * 1000;
   const btnRetorno = document.getElementById('btn-retorno');
   const timeRetorno = document.getElementById('time-retorno');
-
   if (Date.now() >= fimMs) return;
-
   fimRefeicaoTimer = setInterval(() => {
     if (jornadaState.retorno) { clearInterval(fimRefeicaoTimer); return; }
     const restante = fimMs - Date.now();
     if (restante <= 0) {
       clearInterval(fimRefeicaoTimer);
-      if (timeRetorno && !jornadaState.retorno) {
-        timeRetorno.textContent = 'Retorno disponível';
-        timeRetorno.style.color = 'var(--green)';
-      }
-      if (!jornadaState.retorno) {
-        showToast('↩️ Hora de refeição encerrada!', 'success');
-        mostrarAlertaRefeicao('fim');
-      }
+      if (timeRetorno && !jornadaState.retorno) { timeRetorno.textContent = 'Libera agora'; timeRetorno.style.color = 'var(--green)'; }
+      if (!jornadaState.retorno) { showToast('↩️ Intervalo de refeição encerrado!', 'success'); mostrarAlertaRefeicao('fim'); }
       return;
     }
     const rm = String(Math.floor(restante / 60000)).padStart(2,'0');
     const rs = String(Math.floor((restante % 60000) / 1000)).padStart(2,'0');
-    if (timeRetorno && !jornadaState.retorno) {
-      timeRetorno.textContent = `Retorno em ${rm}:${rs}`;
-      timeRetorno.style.color = 'var(--yellow)';
-    }
+    if (timeRetorno && !jornadaState.retorno) { timeRetorno.textContent = `Retorno em ${rm}:${rs}`; timeRetorno.style.color = 'var(--yellow)'; }
   }, 1000);
 }
-
 function restaurarTimerFimRefeicao() {
   if (jornadaState.parada && !jornadaState.retorno) iniciarTimerFimRefeicao();
 }
@@ -2127,14 +2164,10 @@ async function confirmarRegistro() {
   if (tipo === 'parada') iniciarTimerFimRefeicao();
   if (tipo === 'fim') {
     ['inicio', 'parada', 'retorno'].forEach(t => { if (!jornadaState[t]) { const btn = document.getElementById(`btn-${t}`); btn.disabled = true; btn.classList.remove('available'); btn.classList.add('done'); } });
-    if (paradaTimer) clearTimeout(paradaTimer);
+    if (paradaTimer) clearInterval(paradaTimer);
     if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
   }
-  if (tipo === 'retorno') {
-    if (fimRefeicaoTimer) { clearInterval(fimRefeicaoTimer); fimRefeicaoTimer = null; }
-    const timeRetorno = document.getElementById('time-retorno');
-    if (timeRetorno) timeRetorno.style.color = '';
-  }
+  if (tipo === 'retorno') { if (fimRefeicaoTimer) { clearInterval(fimRefeicaoTimer); fimRefeicaoTimer = null; } const timeRetorno = document.getElementById('time-retorno'); if (timeRetorno) timeRetorno.style.color = ''; }
   await enviarParaSheets(payload);
 }
 async function enviarParaSheets(payload) {
@@ -2143,7 +2176,7 @@ async function enviarParaSheets(payload) {
   showLoading(true);
   try {
     await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    showToast(`✅ ${payload.evento} enviado!`, 'success');
+    showToast(`✅ ${EVENTOS[payload.evento.toLowerCase().replace(/ .*/,'')] ? payload.evento : 'Registro'} enviado!`, 'success');
   } catch(e) { showToast('❌ Erro ao enviar. Verifique conexão.', 'error'); console.error(e); }
   finally { showLoading(false); }
 }
@@ -2234,16 +2267,23 @@ function saveSetup() {
   initClock();
   startAutoSync();
 }
+
 function doLogin() {
   const user = document.getElementById('login-user').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
   const err = document.getElementById('login-error');
   err.style.display = 'none';
   if (!USERS[user] || USERS[user].senha !== pass) { err.style.display = 'block'; return; }
-  currentUser = { login: user, nome: USERS[user].nome, status: USERS[user].status };
+  currentUser = {
+    login:  user,
+    nome:   USERS[user].nome,
+    status: USERS[user].status,
+    funcao: USERS[user].funcao || 'MOTORISTA'  // garante que funcao sempre existe
+  };
   localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
   iniciarApp();
 }
+
 function doLogout() {
   if (!confirm('Confirmar saída?')) return;
   localStorage.removeItem('jt_saved_user');
@@ -2252,6 +2292,7 @@ function doLogout() {
   document.getElementById('login-pass').value = '';
   showScreen('login-screen');
 }
+
 function iniciarApp() {
   if (currentUser.login === 'admin') { iniciarAdmin(); return; }
   showScreen('app-screen');
@@ -2264,18 +2305,28 @@ function iniciarApp() {
   restaurarBotoes();
   restaurarTimerFimRefeicao();
   verificarDescanso();
-  carregarEscalacao(); // exibe e carrega o card somente para motoristas
+
+  // ── PONTO-CHAVE: mostra/oculta o card de escalação conforme a função ──
+  aplicarVisibilidadeEscalacao();
 }
+
 window.addEventListener('load', () => {
   startAutoSync();
   const url = localStorage.getItem(SCRIPT_URL_KEY);
   if (!url) { showScreen('setup-screen'); return; }
   const savedUser = localStorage.getItem('jt_saved_user');
-  if (savedUser) { currentUser = JSON.parse(savedUser); iniciarApp(); return; }
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    // Garante compatibilidade com sessões salvas antes da atualização (sem campo funcao)
+    if (!currentUser.funcao) {
+      currentUser.funcao = (USERS[currentUser.login] || {}).funcao || 'MOTORISTA';
+    }
+    iniciarApp();
+    return;
+  }
   showScreen('login-screen');
   initClock();
 });
-
 
 // ═══════════════════════════════════════════
 // AUTO-REFRESH & SYNC
