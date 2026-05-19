@@ -1123,8 +1123,8 @@
 
   <div class="app-body">
 
-    <!-- CARD ESCALAÇÃO DO DIA -->
-    <div class="escal-card" id="escal-card">
+    <!-- CARD ESCALAÇÃO DO DIA — oculto por padrão; exibido apenas para motoristas -->
+    <div class="escal-card" id="escal-card" style="display:none">
       <div class="escal-header">
         <div class="escal-header-left">
           <div class="escal-icon-wrap">🚌</div>
@@ -1411,7 +1411,11 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
 }
 
 async function carregarEscalacao(manual = false) {
+  // Somente motoristas (não-admin) veem a escalação
   if (!currentUser || currentUser.login === 'admin') return;
+
+  // Exibe o card (estava oculto por padrão)
+  document.getElementById('escal-card').style.display = '';
 
   const btn = document.getElementById('escal-reload-btn');
   if (btn) btn.classList.add('spinning');
@@ -1658,8 +1662,8 @@ let currentUser = null;
 let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
-let paradaTimer = null;       // setTimeout para o alerta das 4h
-let fimRefeicaoTimer = null;  // setInterval do countdown de 1h de refeição
+let paradaTimer = null;
+let fimRefeicaoTimer = null;
 const DESCANSO_MS = 11 * 60 * 60 * 1000;
 let descansoTimer = null;
 let mealAlertRepeat = null;
@@ -1962,29 +1966,22 @@ function limparEstadoDiaAnterior() {
   showToast('✅ Descanso cumprido! Nova jornada liberada.', 'success');
 }
 
-// ═══════════════════════════════════════════
-// CORREÇÃO 1: ALERTA DAS 4H APÓS INÍCIO
-// ═══════════════════════════════════════════
 function verificarLiberacaoParada() {
   if (jornadaState.parada || !jornadaState.inicio) return;
 
   const btn = document.getElementById('btn-parada');
-  // Botão sempre liberado (motorista pode parar quando quiser)
   btn.disabled = false;
   btn.classList.add('available');
   btn.classList.remove('done');
 
-  // Calcula quando completam 4h desde o início da jornada
   const [h, m, s] = jornadaState.inicio.split(':').map(Number);
   const hoje = new Date();
   const inicioMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
-  const alertaEm = inicioMs + 4 * 60 * 60 * 1000; // +4 horas
+  const alertaEm = inicioMs + 4 * 60 * 60 * 1000;
   const agora = Date.now();
 
-  // Se já passou das 4h, não repete o alerta
   if (agora >= alertaEm) return;
 
-  // Agenda o alerta sonoro + modal para quando bater as 4h
   if (paradaTimer) clearTimeout(paradaTimer);
   paradaTimer = setTimeout(() => {
     if (!jornadaState.parada) {
@@ -1994,9 +1991,6 @@ function verificarLiberacaoParada() {
   }, alertaEm - agora);
 }
 
-// ═══════════════════════════════════════════
-// CORREÇÃO 2: ALERTA DE FIM DE REFEIÇÃO (1H)
-// ═══════════════════════════════════════════
 function iniciarTimerFimRefeicao() {
   if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
   if (!jornadaState.parada || jornadaState.retorno) return;
@@ -2004,14 +1998,11 @@ function iniciarTimerFimRefeicao() {
   const [h, m, s] = jornadaState.parada.split(':').map(Number);
   const hoje = new Date();
   const paradaMs = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h, m, s).getTime();
-
-  // ✅ CORRIGIDO: 1 hora (60 min) em vez de 30 min
   const fimMs = paradaMs + 60 * 60 * 1000;
 
   const btnRetorno = document.getElementById('btn-retorno');
   const timeRetorno = document.getElementById('time-retorno');
 
-  // Se já passou da 1h, não inicia o timer
   if (Date.now() >= fimMs) return;
 
   fimRefeicaoTimer = setInterval(() => {
@@ -2273,7 +2264,7 @@ function iniciarApp() {
   restaurarBotoes();
   restaurarTimerFimRefeicao();
   verificarDescanso();
-  carregarEscalacao();
+  carregarEscalacao(); // exibe e carrega o card somente para motoristas
 }
 window.addEventListener('load', () => {
   startAutoSync();
