@@ -227,6 +227,11 @@
     padding: 1.25rem;
     position: relative;
     overflow: hidden;
+    transition: border-color 0.4s;
+  }
+  .status-card.encerrado {
+    border-color: rgba(239,68,68,0.45);
+    background: linear-gradient(135deg, #1a0d0d 0%, var(--surface) 100%);
   }
 
   .status-card::before {
@@ -2082,10 +2087,25 @@ function addToHistory(tipo, hora) {
 function updateStatusDisplay(tipo) {
   const dot = document.getElementById('status-dot');
   const txt = document.getElementById('status-text');
+  const card = document.querySelector('.status-card');
   const cores = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
   dot.style.background = cores[tipo];
-  txt.textContent = EVENTOS[tipo].label + ' registrado';
-  txt.style.color = cores[tipo];
+  if (tipo === 'fim') {
+    txt.textContent = '🔴 JORNADA ENCERRADA';
+    txt.style.color = cores[tipo];
+    txt.style.fontWeight = '700';
+    if (card) card.classList.add('encerrado');
+    // Bloqueia todos os botões visualmente ao encerrar
+    ['inicio','parada','retorno','fim'].forEach(t => {
+      const btn = document.getElementById(`btn-${t}`);
+      if (btn) { btn.disabled = true; btn.classList.remove('available','active-btn'); btn.classList.add('done'); }
+    });
+  } else {
+    txt.textContent = EVENTOS[tipo].label + ' registrado';
+    txt.style.color = cores[tipo];
+    txt.style.fontWeight = '';
+    if (card) card.classList.remove('encerrado');
+  }
 }
 function marcarBotao(tipo) {
   const btn = document.getElementById(`btn-${tipo}`);
@@ -2108,14 +2128,16 @@ function restaurarBotoes() {
       btn.classList.add('done');
       timeEl.textContent = jornadaState[tipo];
       if (!btn.querySelector('.btn-badge')) { const badge = document.createElement('div'); badge.className = 'btn-badge'; badge.textContent = '✓'; btn.appendChild(badge); }
-      updateStatusDisplay(tipo);
+      if (tipo !== 'fim') updateStatusDisplay(tipo);
       addToHistory(tipo, jornadaState[tipo]);
     } else {
       if (tipo === 'parada' && jornadaState.inicio) verificarLiberacaoParada();
       else { btn.disabled = false; btn.classList.add('available'); btn.classList.remove('done'); }
     }
   });
+  // Sempre aplica o status ENCERRADO por último se fim existir
   if (jornadaState.fim) {
+    updateStatusDisplay('fim');
     ['inicio', 'parada', 'retorno'].forEach(t => {
       if (!jornadaState[t]) { const btn = document.getElementById(`btn-${t}`); btn.disabled = true; btn.classList.remove('available'); btn.classList.add('done'); }
     });
