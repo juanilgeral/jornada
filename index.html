@@ -1056,6 +1056,23 @@
     margin-top: 0.35rem;
     letter-spacing: 0.02em;
   }
+
+  .escal-encerrado {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.35);
+    border-radius: 20px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--red);
+    margin-top: 0.4rem;
+    letter-spacing: 0.04em;
+    font-family: 'Syne', sans-serif;
+    animation: pulse-dot 2s infinite;
+  }
 </style>
 </head>
 <body>
@@ -1396,6 +1413,9 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
   const hora = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(':00','').slice(0,5);
   const destino = r['DESTINO'] || '—';
   const lancado = r['SAÍDA_VEÍCULO_CD'] || '';
+  // Lê KM_CHEGADA (coluna AH) — qualquer valor não vazio indica viagem encerrada
+  const kmChegada = r['KM_CHEGADA'] || r['KM CHEGADA'] || r['KM_CHEGADA '] || '';
+  const encerrado = kmChegada.trim() !== '';
   const horaClass = isHoje ? 'escal-hora' : 'escal-hora escal-hora-amanha';
   const dotCls = isHoje ? 'dot-hoje' : 'dot-amanha';
 
@@ -1413,7 +1433,11 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
     </div>
     <div class="escal-destino-label">Destino</div>
     <div class="escal-destino">${destino}</div>
-    ${lancado ? `<div class="escal-lancamento">✅ lançado às ${lancado.slice(0,5)}</div>` : ''}
+    ${encerrado
+      ? `<div class="escal-encerrado">🔴 ENCERRADO</div>`
+      : lancado
+        ? `<div class="escal-lancamento">✅ lançado às ${lancado.slice(0,5)}</div>`
+        : ''}
   </div>`;
 }
 
@@ -2095,11 +2119,6 @@ function updateStatusDisplay(tipo) {
     txt.style.color = cores[tipo];
     txt.style.fontWeight = '700';
     if (card) card.classList.add('encerrado');
-    // Bloqueia todos os botões visualmente ao encerrar
-    ['inicio','parada','retorno','fim'].forEach(t => {
-      const btn = document.getElementById(`btn-${t}`);
-      if (btn) { btn.disabled = true; btn.classList.remove('available','active-btn'); btn.classList.add('done'); }
-    });
   } else {
     txt.textContent = EVENTOS[tipo].label + ' registrado';
     txt.style.color = cores[tipo];
@@ -2135,7 +2154,7 @@ function restaurarBotoes() {
       else { btn.disabled = false; btn.classList.add('available'); btn.classList.remove('done'); }
     }
   });
-  // Sempre aplica o status ENCERRADO por último se fim existir
+  // Sempre aplica ENCERRADO por último se fim existir
   if (jornadaState.fim) {
     updateStatusDisplay('fim');
     ['inicio', 'parada', 'retorno'].forEach(t => {
