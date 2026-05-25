@@ -519,6 +519,257 @@
   }
   .hist-nav-btn:hover { color: var(--accent2); border-color: var(--accent2); }
 
+  /* ══════════════════════════════════════════
+     ESCALAÇÃO NO HISTÓRICO — Card de viagem
+     ══════════════════════════════════════════ */
+  .hist-escal-card {
+    background: linear-gradient(135deg, #0d1f35 0%, #0c1f18 100%);
+    border: 1px solid rgba(0,212,170,0.3);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 24px rgba(0,212,170,0.06), 0 4px 16px rgba(0,0,0,0.35);
+    animation: slide-in 0.35s ease;
+  }
+
+  .hist-escal-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .hist-escal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1rem 0.6rem;
+    border-bottom: 1px solid rgba(0,212,170,0.1);
+  }
+
+  .hist-escal-header-icon {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, rgba(0,212,170,0.2), rgba(0,102,255,0.2));
+    border: 1px solid rgba(0,212,170,0.3);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .hist-escal-header-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .hist-escal-header-sub {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .hist-escal-viagens {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .hist-escal-viagem {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    position: relative;
+  }
+
+  .hist-escal-viagem:last-child {
+    border-bottom: none;
+  }
+
+  .hist-escal-viagem-num {
+    position: absolute;
+    top: 0.85rem;
+    right: 1rem;
+    font-size: 0.6rem;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 0.1rem 0.45rem;
+    letter-spacing: 0.05em;
+  }
+
+  .hist-escal-veiculo-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .hist-escal-bus-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .hist-escal-placa {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1rem 0.4rem;
+    letter-spacing: 0.06em;
+  }
+
+  .hist-escal-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    border-radius: 20px;
+    padding: 0.15rem 0.5rem;
+    letter-spacing: 0.04em;
+  }
+
+  .hist-escal-status-encerrado {
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.35);
+    color: var(--red);
+  }
+
+  .hist-escal-status-lancado {
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.25);
+    color: var(--green);
+  }
+
+  .hist-escal-status-pendente {
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.25);
+    color: var(--yellow);
+  }
+
+  .hist-escal-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem 1rem;
+  }
+
+  .hist-escal-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .hist-escal-info-label {
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .hist-escal-info-value {
+    font-size: 0.8rem;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+  }
+
+  .hist-escal-info-value.accent { color: var(--accent); font-weight: 500; }
+  .hist-escal-info-value.blue   { color: #7eb3ff; }
+
+  .hist-escal-destino-full {
+    grid-column: 1 / -1;
+  }
+
+  .hist-escal-destino-full .hist-escal-info-value {
+    font-size: 0.78rem;
+    color: var(--text);
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  .hist-escal-footer {
+    padding: 0.4rem 1rem 0.6rem;
+    font-size: 0.6rem;
+    color: var(--muted);
+    border-top: 1px solid rgba(255,255,255,0.04);
+    text-align: right;
+  }
+
+  .hist-escal-footer span { color: var(--green); }
+
+  .hist-escal-empty {
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .hist-escal-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .hist-escal-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .hist-escal-km-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.72rem;
+    flex-wrap: wrap;
+  }
+
+  .hist-escal-km-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--muted);
+  }
+
+  .hist-escal-km-item strong {
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+  }
+
   /* ADMIN */
   #admin-screen { background: var(--bg); }
 
@@ -785,7 +1036,7 @@
     gap: 2px;
   }
 
-  /* ── ESCALAÇÃO CARD ── */
+  /* ── ESCALAÇÃO CARD (tela principal) ── */
   .escal-card {
     background: linear-gradient(135deg, #0d1f35 0%, #0f2a1a 100%);
     border: 1px solid rgba(0,212,170,0.25);
@@ -804,11 +1055,6 @@
     background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
     background-size: 200% 100%;
     animation: shimmer 3s linear infinite;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
   }
 
   .escal-header {
@@ -1145,10 +1391,7 @@
 
   <div class="app-body">
 
-    <!-- ══════════════════════════════════════════════════════
-         CARD ESCALAÇÃO — visível SOMENTE para MOTORISTAS
-         Começa oculto (display:none); iniciarApp() decide se exibe
-         ══════════════════════════════════════════════════════ -->
+    <!-- Card Escalação — visível SOMENTE para MOTORISTAS -->
     <div class="escal-card" id="escal-card" style="display:none;">
       <div class="escal-header">
         <div class="escal-header-left">
@@ -1345,16 +1588,29 @@
 <div id="loading"><div class="spinner"></div></div>
 
 <script>
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // ESCALAÇÃO DE VEÍCULOS — GOOGLE SHEETS (CSV)
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 const ESCAL_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd77MkT5hd6gzTkMfzX2BVWY5Hqqfo3NluQY58mnOklN8--hPVIoe2CfzkbttnucJKbnJFiaPEWSmR/pub?gid=1559964021&single=true&output=csv';
+
+// Cache em memória para evitar buscas repetidas na mesma sessão
+let _escCalCache = null;
+let _escCalCacheTime = 0;
+const ESCAL_CACHE_MS = 5 * 60 * 1000; // 5 min
 
 function formatDateBR(d) {
   const dd = String(d.getDate()).padStart(2,'0');
   const mm = String(d.getMonth()+1).padStart(2,'0');
   const yy = String(d.getFullYear()).slice(-2);
   return `${dd}/${mm}/${yy}`;
+}
+
+function formatDateBR4(d) {
+  // Retorna DD/MM/YYYY (4 dígitos no ano)
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 function parseCSV(text) {
@@ -1380,16 +1636,39 @@ function normalizeName(n) {
   return (n || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();
 }
 
-function escalarParaDia(rows, nomeUser, dataBR) {
+/**
+ * Compara datas no formato DD/MM/YY ou DD/MM/YYYY — tolerante com ambos
+ */
+function matchDate(rowDate, targetBR2, targetBR4) {
+  const d = (rowDate || '').trim();
+  if (!d) return false;
+  // normaliza para DD/MM/YY
+  const dShort = d.replace(/\/(\d{4})$/, (m, y) => '/' + y.slice(-2));
+  return d === targetBR4 || d === targetBR2 || dShort === targetBR2;
+}
+
+function escalarParaDia(rows, nomeUser, dataBR2, dataBR4) {
   const norm = normalizeName(nomeUser);
   return rows.filter(r => {
-    const d = (r['DATA'] || '').trim();
-    const dShort = d.replace(/\/(\d{4})$/, (m, y) => '/' + y.slice(-2));
-    const dtShort = dataBR.replace(/\/(\d{4})$/, (m, y) => '/' + y.slice(-2));
-    const dateMatch = d === dataBR || dShort === dtShort || d === dtShort;
     const motNorm = normalizeName(r['MOTORISTA']);
-    return dateMatch && motNorm === norm;
+    return matchDate(r['DATA'], dataBR2, dataBR4) && motNorm === norm;
   });
+}
+
+/**
+ * Busca o CSV de escalação — usa cache de 5 minutos
+ */
+async function fetchEscalCSV() {
+  const now = Date.now();
+  if (_escCalCache && (now - _escCalCacheTime) < ESCAL_CACHE_MS) {
+    return _escCalCache;
+  }
+  const resp = await fetch(ESCAL_CSV_URL + '&t=' + now);
+  const text = await resp.text();
+  const rows = parseCSV(text);
+  _escCalCache = rows;
+  _escCalCacheTime = now;
+  return rows;
 }
 
 function renderEscalDia(rows, label, dotClass, isHoje) {
@@ -1413,7 +1692,6 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
   const hora = (r['PONTO_ON_MOT.'] || r['SAÍDA_VEÍCULO_CD'] || '—').replace(':00','').slice(0,5);
   const destino = r['DESTINO'] || '—';
   const lancado = r['SAÍDA_VEÍCULO_CD'] || '';
-  // Lê KM_CHEGADA (coluna AH) — qualquer valor não vazio indica viagem encerrada
   const kmChegada = r['KM_CHEGADA'] || r['KM CHEGADA'] || r['KM_CHEGADA '] || '';
   const encerrado = kmChegada.trim() !== '';
   const horaClass = isHoje ? 'escal-hora' : 'escal-hora escal-hora-amanha';
@@ -1441,11 +1719,7 @@ function renderEscalDia(rows, label, dotClass, isHoje) {
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════
-// carregarEscalacao — só executa para MOTORISTAS
-// ═══════════════════════════════════════════════════════
 async function carregarEscalacao(manual = false) {
-  // Só exibe/carrega para motoristas — dupla verificação
   if (!currentUser) return;
   if (currentUser.login === 'admin') return;
   if (!ehMotorista()) return;
@@ -1464,8 +1738,10 @@ async function carregarEscalacao(manual = false) {
   const amanha = new Date(hoje);
   amanha.setDate(hoje.getDate() + 1);
 
-  const hojeBR   = formatDateBR(hoje);
-  const amanhaBR = formatDateBR(amanha);
+  const hojeBR2   = formatDateBR(hoje);
+  const hojeBR4   = formatDateBR4(hoje);
+  const amanhaBR2 = formatDateBR(amanha);
+  const amanhaBR4 = formatDateBR4(amanha);
 
   const subEl = document.getElementById('escal-sub-date');
   if (subEl) {
@@ -1475,14 +1751,10 @@ async function carregarEscalacao(manual = false) {
   }
 
   try {
-    const resp = await fetch(ESCAL_CSV_URL + '&t=' + Date.now());
-    const text = await resp.text();
-    const rows = parseCSV(text);
-
+    const rows = await fetchEscalCSV();
     const nomeUser = currentUser.nome;
-    const hojeRows   = escalarParaDia(rows, nomeUser, hojeBR);
-    const amanhaRows = escalarParaDia(rows, nomeUser, amanhaBR);
-
+    const hojeRows   = escalarParaDia(rows, nomeUser, hojeBR2, hojeBR4);
+    const amanhaRows = escalarParaDia(rows, nomeUser, amanhaBR2, amanhaBR4);
     const nenhum = hojeRows.length === 0 && amanhaRows.length === 0;
 
     const now = new Date();
@@ -1522,12 +1794,153 @@ async function carregarEscalacao(manual = false) {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// HISTÓRICO — buscar viagens na planilha de escalação
+// ════════════════════════════════════════════════════════════
+
+/**
+ * Dado um registro de linha do CSV, monta um objeto com todas
+ * as informações relevantes da viagem para exibir no histórico.
+ */
+function extrairDadosViagem(r, idx) {
+  const veiculo  = (r['VEICULO']  || '').trim();
+  const vParts   = veiculo.match(/^(\d+)\s+(.+)$/);
+  const vNum     = vParts ? vParts[1] : veiculo;
+  const vPlaca   = vParts ? vParts[2] : '';
+
+  const pontoOn  = (r['PONTO_ON_MOT.'] || '').trim();
+  const saidaCD  = (r['SAÍDA_VEÍCULO_CD'] || '').trim();
+  const destino  = (r['DESTINO'] || '—').trim();
+  const kmSaida  = (r['KM_SAIDA']  || r['KM SAIDA']  || r['KM_SAÍDA']  || '').trim();
+  const kmCheg   = (r['KM_CHEGADA'] || r['KM CHEGADA'] || r['KM_CHEGADA '] || '').trim();
+  const retCD    = (r['RETORNO_CD']  || r['RET.CD'] || r['RETORNO CD'] || '').trim();
+
+  // Status da viagem
+  let status, statusCls;
+  if (kmCheg) {
+    status = 'Encerrado'; statusCls = 'hist-escal-status-encerrado';
+  } else if (saidaCD) {
+    status = 'Em andamento'; statusCls = 'hist-escal-status-lancado';
+  } else {
+    status = 'Pendente'; statusCls = 'hist-escal-status-pendente';
+  }
+
+  return { vNum, vPlaca, pontoOn, saidaCD, destino, kmSaida, kmCheg, retCD, status, statusCls, idx };
+}
+
+/**
+ * Renderiza o card de escalação dentro do histórico pessoal.
+ * Suporta múltiplas viagens no mesmo dia (ex: dois turnos).
+ */
+function renderHistEscalCard(viagens) {
+  if (!viagens || viagens.length === 0) return '';
+
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+
+  const viagensHtml = viagens.map((v, i) => {
+    const numLabel = viagens.length > 1 ? `<span class="hist-escal-viagem-num">Viagem ${i+1}</span>` : '';
+
+    // Monta KM row somente se houver dados
+    let kmHtml = '';
+    if (v.kmSaida || v.kmCheg) {
+      kmHtml = `<div class="hist-escal-km-row">`;
+      if (v.kmSaida) kmHtml += `<span class="hist-escal-km-item">🛣️ Saída: <strong>${v.kmSaida} km</strong></span>`;
+      if (v.kmCheg)  kmHtml += `<span class="hist-escal-km-item">🏁 Chegada: <strong>${v.kmCheg} km</strong></span>`;
+      if (v.kmSaida && v.kmCheg) {
+        const diff = parseInt(v.kmCheg.replace(/\D/g,'')) - parseInt(v.kmSaida.replace(/\D/g,''));
+        if (!isNaN(diff) && diff > 0) {
+          kmHtml += `<span class="hist-escal-km-item">📏 Percurso: <strong>${diff} km</strong></span>`;
+        }
+      }
+      kmHtml += `</div>`;
+    }
+
+    // Monta grid de informações
+    const horaExib = v.pontoOn
+      ? v.pontoOn.slice(0,5)
+      : v.saidaCD
+        ? v.saidaCD.slice(0,5)
+        : '—';
+
+    const horaLabel = v.pontoOn ? 'Ponto Motorista' : 'Saída CD';
+
+    return `<div class="hist-escal-viagem">
+      ${numLabel}
+      <div class="hist-escal-veiculo-row">
+        <span class="hist-escal-bus-num">🚌 #${v.vNum || '—'}</span>
+        ${v.vPlaca ? `<span class="hist-escal-placa">${v.vPlaca}</span>` : ''}
+        <span class="hist-escal-status-pill ${v.statusCls}">${v.status === 'Encerrado' ? '🔴' : v.status === 'Em andamento' ? '🟢' : '🟡'} ${v.status}</span>
+      </div>
+      <div class="hist-escal-info-grid">
+        <div class="hist-escal-info-item">
+          <span class="hist-escal-info-label">${horaLabel}</span>
+          <span class="hist-escal-info-value accent">${horaExib}</span>
+        </div>
+        ${v.saidaCD && v.pontoOn ? `
+        <div class="hist-escal-info-item">
+          <span class="hist-escal-info-label">Saída CD</span>
+          <span class="hist-escal-info-value blue">${v.saidaCD.slice(0,5)}</span>
+        </div>` : '<div></div>'}
+        ${v.retCD ? `
+        <div class="hist-escal-info-item">
+          <span class="hist-escal-info-label">Retorno CD</span>
+          <span class="hist-escal-info-value">${v.retCD.slice(0,5)}</span>
+        </div>` : ''}
+        <div class="hist-escal-info-item hist-escal-destino-full">
+          <span class="hist-escal-info-label">Destino / Loja</span>
+          <span class="hist-escal-info-value">${v.destino}</span>
+        </div>
+      </div>
+      ${kmHtml}
+    </div>`;
+  }).join('');
+
+  return `<div class="hist-escal-card">
+    <div class="hist-escal-header">
+      <div class="hist-escal-header-icon">🚌</div>
+      <div>
+        <div class="hist-escal-header-title">Escalação do Dia</div>
+        <div class="hist-escal-header-sub">${viagens.length} viagem${viagens.length > 1 ? 's' : ''} encontrada${viagens.length > 1 ? 's' : ''}</div>
+      </div>
+    </div>
+    <div class="hist-escal-viagens">
+      ${viagensHtml}
+    </div>
+    <div class="hist-escal-footer">Dados da planilha de escalação · consultado às <span>${hh}:${mm}</span></div>
+  </div>`;
+}
+
+/**
+ * Busca na planilha de escalação as viagens de um motorista em uma data específica.
+ * Retorna o HTML do card para injetar no histórico.
+ */
+async function buscarEscalacaoHistorico(dataISO) {
+  if (!currentUser || !ehMotorista()) return '';
+
+  try {
+    const [yyyy, mm, dd] = dataISO.split('-');
+    const d = new Date(Number(yyyy), Number(mm)-1, Number(dd));
+    const dataBR2 = formatDateBR(d);     // DD/MM/YY
+    const dataBR4 = formatDateBR4(d);    // DD/MM/YYYY
+
+    const rows = await fetchEscalCSV();
+    const matching = escalarParaDia(rows, currentUser.nome, dataBR2, dataBR4);
+
+    if (!matching.length) return '';
+
+    const viagens = matching.map((r, i) => extrairDadosViagem(r, i));
+    return renderHistEscalCard(viagens);
+  } catch(e) {
+    console.warn('Histórico escalação:', e);
+    return '';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
 // USUÁRIOS — sincronizado com planilha RCM
-// A planilha RCM contém as colunas FUNÇÃO (K) e GUERRA (L).
-// parseRCMCsv lê a coluna FUNÇÃO e salva em cada usuário.
-// ehMotorista() verifica se o usuário logado tem funcao=MOTORISTA.
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 
 let USERS = {
   "admin":        { senha: "7391", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" },
@@ -1599,10 +2012,6 @@ let USERS = {
   "edilei":       { senha: "1520", nome: "EDILEI",       status: "TREINAMENTO", funcao: "MOTORISTA" }
 };
 
-// ═══════════════════════════════════════════════════════════════
-// ehMotorista() — verifica se o usuário logado é MOTORISTA
-// Usa currentUser.funcao (vindo do USERS ou do CSV RCM)
-// ═══════════════════════════════════════════════════════════════
 function ehMotorista() {
   if (!currentUser) return false;
   if (currentUser.login === 'admin') return false;
@@ -1610,10 +2019,9 @@ function ehMotorista() {
   return funcao === 'MOTORISTA';
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // SINCRONIZAÇÃO AUTOMÁTICA COM PLANILHA RCM
-// Lê coluna FUNÇÃO (K) para saber se cada funcionário é motorista
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 const RCM_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQU606Dbi9ZWn1RSpKGn9Daey3XAsTWRDgstXI3ARb6Na2UF-nZ1hkfB7EVFwzfvQ/pub?gid=182320512&single=true&output=csv';
 const RCM_LAST_SYNC_KEY = 'rcm_last_sync';
 const SYNC_INTERVAL_MS = 3 * 60 * 1000;
@@ -1632,12 +2040,10 @@ function parseRCMCsv(csvText) {
 
   const header = lines[0].split(',').map(h => h.trim().replace(/\r/g,''));
 
-  // Índices das colunas relevantes
   const idxNome   = header.findIndex(h => h.includes('FUNCION'));
   const idxGuerra = header.findIndex(h => h.includes('GUERRA'));
   const idxSenha  = header.findIndex(h => h.includes('SENHA'));
   const idxSit    = header.findIndex(h => h.includes('SITUA') || h.includes('SUTU'));
-  // Coluna FUNÇÃO (K = índice 10 na planilha, mas buscamos pelo nome do cabeçalho)
   const idxFuncao = header.findIndex(h => h.replace(/\s/g,'').toUpperCase().includes('FUN') && !h.includes('FUNCION'));
 
   if (idxNome < 0 || idxGuerra < 0 || idxSenha < 0 || idxSit < 0) return null;
@@ -1652,10 +2058,9 @@ function parseRCMCsv(csvText) {
     const guerra   = cols[idxGuerra].trim();
     const senha    = cols[idxSenha].trim();
     const situacao = (cols[idxSit] || '').trim().toUpperCase();
-    // Lê a função: coluna FUNÇÃO (índice 10 = K) — fallback para "MOTORISTA" se não encontrado
     const funcaoRaw = idxFuncao >= 0
       ? (cols[idxFuncao] || '').trim().toUpperCase()
-      : (cols[10] || '').trim().toUpperCase();  // fallback: coluna K (índice 10)
+      : (cols[10] || '').trim().toUpperCase();
 
     if (!nome || !guerra || !senha) continue;
     if (situacao === 'DEMITIDO') continue;
@@ -1667,7 +2072,7 @@ function parseRCMCsv(csvText) {
       senha,
       nome:    guerra.toUpperCase(),
       status:  situacao || 'ATIVO',
-      funcao:  funcaoRaw || 'MOTORISTA'  // fallback seguro
+      funcao:  funcaoRaw || 'MOTORISTA'
     };
   }
   return newUsers;
@@ -1685,20 +2090,17 @@ async function syncUsersFromSheet() {
       localStorage.setItem(RCM_LAST_SYNC_KEY, new Date().toISOString());
       updateSyncStatus('ok');
 
-      // Se o usuário logado foi demitido, forçar logout
       if (currentUser && currentUser.login !== 'admin' && !USERS[currentUser.login]) {
         showToast('⚠️ Seu acesso foi revogado. Faça login novamente.', 'error');
         setTimeout(() => doLogout(), 2500);
         return;
       }
 
-      // Atualiza a função do usuário logado caso mude na planilha
       if (currentUser && currentUser.login !== 'admin' && USERS[currentUser.login]) {
         const novaFuncao = USERS[currentUser.login].funcao;
         if (novaFuncao !== currentUser.funcao) {
           currentUser.funcao = novaFuncao;
           localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
-          // Mostra/oculta card conforme nova função
           aplicarVisibilidadeEscalacao();
         }
       }
@@ -1729,25 +2131,20 @@ function startAutoSync() {
   syncTimer = setInterval(syncUsersFromSheet, SYNC_INTERVAL_MS);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// aplicarVisibilidadeEscalacao()
-// Mostra o card de escalação SOMENTE se o usuário for MOTORISTA.
-// Chamada no login e a cada sync que altere a função do usuário.
-// ═══════════════════════════════════════════════════════════════
 function aplicarVisibilidadeEscalacao() {
   const card = document.getElementById('escal-card');
   if (!card) return;
   if (ehMotorista()) {
-    card.style.display = '';   // mostra (usa o display natural do CSS)
-    carregarEscalacao();       // carrega os dados
+    card.style.display = '';
+    carregarEscalacao();
   } else {
-    card.style.display = 'none'; // oculta para não-motoristas
+    card.style.display = 'none';
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // ESTADO GLOBAL
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 let currentUser = null;
 let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
@@ -1769,9 +2166,9 @@ const ICONES = { inicio: '🟢', parada: '🍽️', retorno: '↩️', fim: '�
 const CORES_BTN = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
 let tipoConfirmando = null;
 
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // ÁUDIO
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 let audioCtx = null;
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1837,9 +2234,9 @@ function fecharAlertaRefeicao() {
   if (mealAlertRepeat) { clearInterval(mealAlertRepeat); mealAlertRepeat = null; }
 }
 
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // NAVEGAÇÃO
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function mostrarPainel(painel) {
   if (painel === 'historico') {
     showScreen('historico-screen');
@@ -1859,9 +2256,9 @@ function showScreen(id) {
   }
 }
 
-// ═══════════════════════════════════════════
-// HISTÓRICO PESSOAL
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// HISTÓRICO PESSOAL — com escalação integrada
+// ════════════════════════════════════════════════════════════
 async function buscarHistorico() {
   const dataUnica = document.getElementById('hist-data-unica').value;
   if (!dataUnica) { showToast('Selecione uma data', 'error'); return; }
@@ -1871,72 +2268,100 @@ async function buscarHistorico() {
 
   const dataBR = dataUnica.split('-').reverse().join('/');
 
-  showLoading(true);
+  const container = document.getElementById('hist-results');
+  // Mostrar loading inline sem bloquear a tela toda
+  container.innerHTML = `<div style="display:flex;align-items:center;gap:0.6rem;padding:1.5rem;color:var(--muted);font-size:0.78rem;">
+    <div class="hist-escal-spinner"></div> Buscando registros...
+  </div>`;
+
   try {
-    const resp = await fetch(`${url}?acao=historico_usuario&usuario=${encodeURIComponent(currentUser.login)}&data=${encodeURIComponent(dataBR)}`);
-    const json = await resp.json();
-    renderHistoricoUsuario(json.registros || [], dataBR);
+    // Busca ponto e escalação em paralelo
+    const [pontoResult, escalHtml] = await Promise.allSettled([
+      fetch(`${url}?acao=historico_usuario&usuario=${encodeURIComponent(currentUser.login)}&data=${encodeURIComponent(dataBR)}`)
+        .then(r => r.json()),
+      buscarEscalacaoHistorico(dataUnica)
+    ]);
+
+    const registros = pontoResult.status === 'fulfilled'
+      ? (pontoResult.value.registros || [])
+      : null;
+
+    const escHtml = escalHtml.status === 'fulfilled' ? escalHtml.value : '';
+
+    if (registros !== null) {
+      renderHistoricoUsuario(registros, dataBR, escHtml);
+    } else {
+      renderHistoricoLocal(dataUnica, escHtml);
+    }
   } catch(e) {
     console.error(e);
-    renderHistoricoLocal(dataUnica);
-  } finally {
-    showLoading(false);
+    const escHtml = await buscarEscalacaoHistorico(dataUnica).catch(() => '');
+    renderHistoricoLocal(dataUnica, escHtml);
   }
 }
 
-function renderHistoricoLocal(dataISO) {
+function renderHistoricoLocal(dataISO, escHtml = '') {
   const [yyyy, mm, dd] = dataISO.split('-');
   const dataBR = `${dd}/${mm}/${yyyy}`;
   const key = `jt_state_${currentUser.login}_${yyyy}-${mm}-${dd}`;
   const saved = localStorage.getItem(key);
   if (saved) {
     const st = JSON.parse(saved);
-    renderHistoricoUsuario([{ data: dataBR, ...st }], dataBR);
+    renderHistoricoUsuario([{ data: dataBR, ...st }], dataBR, escHtml);
   } else {
-    document.getElementById('hist-results').innerHTML = `<div class="hist-empty">Nenhum registro encontrado para ${dataBR}</div>`;
+    const container = document.getElementById('hist-results');
+    container.innerHTML = escHtml
+      ? `${escHtml}<div class="hist-empty" style="padding:1.5rem;">Nenhum registro de ponto para ${dataBR}</div>`
+      : `<div class="hist-empty">Nenhum registro encontrado para ${dataBR}</div>`;
   }
 }
 
-function renderHistoricoUsuario(registros, dataBusca) {
+function renderHistoricoUsuario(registros, dataBusca, escHtml = '') {
   const container = document.getElementById('hist-results');
-  if (!registros || registros.length === 0) {
-    container.innerHTML = `<div class="hist-empty">Nenhum registro encontrado para ${dataBusca}</div>`;
-    return;
-  }
 
   const CORES = { inicio: '#22c55e', parada: '#f59e0b', retorno: '#0066ff', fim: '#ef4444' };
   const NOMES = { inicio: 'Início de Jornada', parada: 'Parada Refeição', retorno: 'Retorno Refeição', fim: 'Fim de Jornada' };
 
-  container.innerHTML = registros.map(dia => {
-    const eventos = ['inicio','parada','retorno','fim'].filter(k => dia[k]);
-    let trabalhado = '—';
-    let refeicao = '—';
-    if (dia.inicio && dia.fim) {
-      const minutos = calcMinutosDiff(dia.inicio, dia.fim);
-      const refMin = dia.parada && dia.retorno ? calcMinutosDiff(dia.parada, dia.retorno) : 0;
-      const liq = minutos - refMin;
-      trabalhado = formatMinutos(liq);
-      if (refMin > 0) refeicao = formatMinutos(refMin);
-    }
-    const statusLabel = dia.fim ? 'Finalizado' : eventos.length ? 'Em andamento' : 'Sem dados';
-    const statusCls = dia.fim ? 'pill pill-red' : eventos.length ? 'pill pill-green' : 'pill pill-muted';
+  let pontoHtml = '';
+  if (!registros || registros.length === 0) {
+    pontoHtml = `<div class="hist-empty" style="padding:1.5rem;">Nenhum registro de ponto para ${dataBusca}</div>`;
+  } else {
+    pontoHtml = registros.map(dia => {
+      const eventos = ['inicio','parada','retorno','fim'].filter(k => dia[k]);
+      let trabalhado = '—';
+      let refeicao = '—';
+      if (dia.inicio && dia.fim) {
+        const minutos = calcMinutosDiff(dia.inicio, dia.fim);
+        const refMin = dia.parada && dia.retorno ? calcMinutosDiff(dia.parada, dia.retorno) : 0;
+        const liq = minutos - refMin;
+        trabalhado = formatMinutos(liq);
+        if (refMin > 0) refeicao = formatMinutos(refMin);
+      }
+      const statusLabel = dia.fim ? 'Finalizado' : eventos.length ? 'Em andamento' : 'Sem dados';
+      const statusCls = dia.fim ? 'pill pill-red' : eventos.length ? 'pill pill-green' : 'pill pill-muted';
 
-    return `<div class="hist-day-card">
-      <div class="hist-day-header">
-        <span class="hist-day-date">${formatarDataBR(dia.data)}</span>
-        <span class="${statusCls}" style="font-size:0.68rem;">${statusLabel}</span>
-      </div>
-      <div class="hist-events">
-        ${['inicio','parada','retorno','fim'].map(k => dia[k] ? `
-          <div class="hist-event-row">
-            <span class="hist-event-dot" style="background:${CORES[k]}"></span>
-            <span class="hist-event-label">${NOMES[k]}</span>
-            <span class="hist-event-time">${dia[k]}</span>
-          </div>` : '').join('')}
-      </div>
-      ${trabalhado !== '—' ? `<div class="hist-worked"><span>Trabalhado: <strong>${trabalhado}</strong></span>${refeicao !== '—' ? `<span>Refeição: <strong>${refeicao}</strong></span>` : ''}</div>` : ''}
-    </div>`;
-  }).join('');
+      return `<div class="hist-day-card">
+        <div class="hist-day-header">
+          <span class="hist-day-date">${formatarDataBR(dia.data)}</span>
+          <span class="${statusCls}" style="font-size:0.68rem;">${statusLabel}</span>
+        </div>
+        <div class="hist-events">
+          ${['inicio','parada','retorno','fim'].map(k => dia[k] ? `
+            <div class="hist-event-row">
+              <span class="hist-event-dot" style="background:${CORES[k]}"></span>
+              <span class="hist-event-label">${NOMES[k]}</span>
+              <span class="hist-event-time">${dia[k]}</span>
+            </div>` : '').join('')}
+        </div>
+        ${trabalhado !== '—' ? `<div class="hist-worked"><span>Trabalhado: <strong>${trabalhado}</strong></span>${refeicao !== '—' ? `<span>Refeição: <strong>${refeicao}</strong></span>` : ''}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // Monta resultado final: escalação primeiro (contexto da viagem), depois ponto
+  container.innerHTML = escHtml
+    ? `${escHtml}${pontoHtml}`
+    : pontoHtml;
 }
 
 function calcMinutosDiff(h1, h2) {
@@ -1960,9 +2385,9 @@ function formatarDataBR(dataBR) {
   } catch(e) { return dataBR; }
 }
 
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // FUNÇÕES AUXILIARES
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function stateKey() {
   const hoje = new Date();
   return `jt_state_${currentUser?.login}_${hoje.getFullYear()}-${hoje.getMonth()+1}-${hoje.getDate()}`;
@@ -2154,7 +2579,6 @@ function restaurarBotoes() {
       else { btn.disabled = false; btn.classList.add('available'); btn.classList.remove('done'); }
     }
   });
-  // Sempre aplica ENCERRADO por último se fim existir
   if (jornadaState.fim) {
     updateStatusDisplay('fim');
     ['inicio', 'parada', 'retorno'].forEach(t => {
@@ -2163,9 +2587,9 @@ function restaurarBotoes() {
   }
 }
 
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // REGISTRO
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function registrar(tipo) {
   if (jornadaState[tipo]) return;
   tipoConfirmando = tipo;
@@ -2222,9 +2646,9 @@ async function enviarParaSheets(payload) {
   finally { showLoading(false); }
 }
 
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // ADMIN
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function iniciarAdmin() {
   showScreen('admin-screen');
   const hoje = new Date();
@@ -2297,9 +2721,9 @@ async function limparTudo() {
   try { await fetch(`${url}?acao=limpar_planilha`, { redirect: 'follow' }); showToast('✅ Tudo limpo com sucesso!', 'success'); } catch(e) { showToast('❌ Erro ao limpar planilha', 'error'); } finally { showLoading(false); }
 }
 
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // LOGIN E INICIALIZAÇÃO
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function saveSetup() {
   const url = document.getElementById('setup-url').value.trim();
   if (!url.startsWith('https://script.google.com/macros/')) { showToast('❌ URL inválida', 'error'); return; }
@@ -2319,7 +2743,7 @@ function doLogin() {
     login:  user,
     nome:   USERS[user].nome,
     status: USERS[user].status,
-    funcao: USERS[user].funcao || 'MOTORISTA'  // garante que funcao sempre existe
+    funcao: USERS[user].funcao || 'MOTORISTA'
   };
   localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
   iniciarApp();
@@ -2346,8 +2770,6 @@ function iniciarApp() {
   restaurarBotoes();
   restaurarTimerFimRefeicao();
   verificarDescanso();
-
-  // ── PONTO-CHAVE: mostra/oculta o card de escalação conforme a função ──
   aplicarVisibilidadeEscalacao();
 }
 
@@ -2358,7 +2780,6 @@ window.addEventListener('load', () => {
   const savedUser = localStorage.getItem('jt_saved_user');
   if (savedUser) {
     currentUser = JSON.parse(savedUser);
-    // Garante compatibilidade com sessões salvas antes da atualização (sem campo funcao)
     if (!currentUser.funcao) {
       currentUser.funcao = (USERS[currentUser.login] || {}).funcao || 'MOTORISTA';
     }
@@ -2369,9 +2790,9 @@ window.addEventListener('load', () => {
   initClock();
 });
 
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 // AUTO-REFRESH & SYNC
-// ═══════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 const AUTO_REFRESH_MS = 3 * 60 * 1000;
 let refreshCountdown = AUTO_REFRESH_MS;
 let refreshInterval = null;
