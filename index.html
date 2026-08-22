@@ -1543,8 +1543,8 @@
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Nome</th><th>Início</th><th>Destino</th><th>Saída Veíc.</th><th>Abertura Baú</th><th>Total Loja</th><th>Parada</th><th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
-          <tbody id="admin-tbody"><tr><td colspan="14" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
+          <thead><tr><th>Nome</th><th>Início</th><th>Operação</th><th>Destino</th><th>Saída Veíc.</th><th>Abertura Baú</th><th>Total Loja</th><th>Parada</th><th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
+          <tbody id="admin-tbody"><tr><td colspan="15" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2704,6 +2704,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
       if (!chave) return;
       const primeiraLoja = (lanc.Paradas && lanc.Paradas[0]) || {};
       (mapa[chave] = mapa[chave] || []).push({
+        operacao: lanc.Operacao || '',
         destino: lanc.Destino || '',
         saidaVeiculo: lanc.HoraProgramadaSaida || '',
         aberturaBau: primeiraLoja.HoraAberturaBau || '',
@@ -2724,7 +2725,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
 function renderTabelaDia(registros, frotaMap) {
   frotaMap = frotaMap || {};
   const tbody = document.getElementById('admin-tbody');
-  if (!registros.length) { tbody.innerHTML = '<tr><td colspan="14" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
+  if (!registros.length) { tbody.innerHTML = '<tr><td colspan="15" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
     ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => document.getElementById(id).textContent = '0'); return; }
   document.getElementById('stat-total').textContent = registros.length;
   document.getElementById('stat-iniciados').textContent = registros.filter(r => r.inicio).length;
@@ -2743,6 +2744,7 @@ function renderTabelaDia(registros, frotaMap) {
       linhas += `<tr class="${grupoClasse}">`
         + nomeCel
         + `<td>${r.inicio ? `<span class="pill pill-green">${r.inicio}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${fj.operacao ? `<span class="pill pill-blue">${fj.operacao}</span>` : vazio}</td>`
         + `<td>${fj.destino || vazio}</td>`
         + `<td>${fj.saidaVeiculo || vazio}</td>`
         + `<td>${fj.aberturaBau || vazio}</td>`
