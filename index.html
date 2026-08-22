@@ -868,6 +868,8 @@
   .admin-table tr:last-child td { border-bottom: none; }
   .admin-table tr:hover td { background: rgba(255,255,255,0.03); }
   .admin-empty { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.8rem; }
+  #admin-tbody tr.grupo-a { background: rgba(255,255,255,0.02); }
+  #admin-tbody tr.grupo-b { background: rgba(0,102,255,0.035); }
 
   .pill { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.68rem; font-weight: 500; }
   .pill-green  { background: rgba(34,197,94,0.15); color: var(--green); }
@@ -1478,6 +1480,7 @@
   <div class="app-nav">
     <button class="nav-pill active" id="navbtn-ponto" onclick="mostrarPainel('ponto')">📋 Ponto</button>
     <button class="nav-pill" id="navbtn-historico" onclick="mostrarPainel('historico')">📅 Histórico</button>
+    <button class="nav-pill" onclick="window.open('https://juanilgeral.github.io/frota-jornada/', '_blank')">🚚 Frota Jornada</button>
   </div>
 </div>
 
@@ -1513,6 +1516,7 @@
         <button class="btn-sync" id="btn-sync-admin" onclick="syncNow('admin')" title="Sincronizar agora">
           <span class="sync-icon">🔄</span> Sync
         </button>
+        <button class="btn-logout" onclick="window.open('https://juanilgeral.github.io/frota-jornada/painel.html', '_blank')" title="Abrir painel do Frota Jornada">🚚 Frota Jornada</button>
         <button class="btn-logout" style="color:var(--red); border-color:var(--red);" onclick="limparTudo()">🗑️ Limpar</button>
         <button class="btn-logout" onclick="doLogout()">Sair</button>
       </div>
@@ -1539,8 +1543,8 @@
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Nome</th><th>Início</th><th>Parada</th><th>Retorno</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
-          <tbody id="admin-tbody"><tr><td colspan="8" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
+          <thead><tr><th>Nome</th><th>Início</th><th>Destino</th><th>Saída Veíc.</th><th>Abertura Baú</th><th>Total Loja</th><th>Parada</th><th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
+          <tbody id="admin-tbody"><tr><td colspan="14" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2149,6 +2153,7 @@ let currentUser = null;
 let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
+const FROTA_JORNADA_API_URL = 'https://script.google.com/macros/s/AKfycbymMok1wWF8985aeyKS3nsjdiqIoLeMgEGIHF3GO2vvr_ErcDtYJmzM3gb9ju4YK9Ae/exec';
 let paradaTimer = null;
 let fimRefeicaoTimer = null;
 const DESCANSO_MS = 11 * 60 * 60 * 1000;
@@ -2674,21 +2679,86 @@ async function buscarDia() {
   try {
     const resp = await fetch(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`);
     const json = await resp.json();
-    renderTabelaDia(json.registros || []);
+    const frotaMap = await buscarFrotaJornadaDoDia_(inputData);
+    renderTabelaDia(json.registros || [], frotaMap);
   } catch(e) { showToast('❌ Erro ao buscar dados', 'error'); } finally { showLoading(false); }
 }
-function renderTabelaDia(registros) {
+
+// Busca os lançamentos do Frota Jornada pra essa data e monta um mapa por
+// nome do motorista (normalizado), pra casar com os registros do Jornada
+// Juanil. Se der qualquer erro (fora do ar, etc.), retorna mapa vazio sem
+// travar o painel do Jornada Juanil.
+function normalizarNome_(nome) {
+  return String(nome || '').trim().toUpperCase();
+}
+async function buscarFrotaJornadaDoDia_(dataISO) {
+  const mapa = {};
+  try {
+    const resp = await fetch(`${FROTA_JORNADA_API_URL}?action=getLancamentos&data=${encodeURIComponent(dataISO)}`);
+    const lista = await resp.json();
+    if (!Array.isArray(lista)) return mapa;
+    // agora guarda TODAS as viagens do motorista naquele dia (carga casada,
+    // 2ª/3ª saída etc.), não só a mais recente
+    lista.forEach(lanc => {
+      const chave = normalizarNome_(lanc.Motorista);
+      if (!chave) return;
+      const primeiraLoja = (lanc.Paradas && lanc.Paradas[0]) || {};
+      (mapa[chave] = mapa[chave] || []).push({
+        destino: lanc.Destino || '',
+        saidaVeiculo: lanc.HoraProgramadaSaida || '',
+        aberturaBau: primeiraLoja.HoraAberturaBau || '',
+        totalLoja: primeiraLoja.TotalLoja || '',
+        chegadaCD: lanc.HoraChegadaCD || '',
+        kmChegada: lanc.KmChegada || ''
+      });
+    });
+    // ordena as viagens de cada motorista pela hora de saída, pra ficar na
+    // sequência real do dia (1ª viagem, 2ª viagem...)
+    Object.keys(mapa).forEach(chave => {
+      mapa[chave].sort((a, b) => (a.saidaVeiculo || '').localeCompare(b.saidaVeiculo || ''));
+    });
+  } catch (e) { /* Frota Jornada fora do ar — segue sem essas colunas */ }
+  return mapa;
+}
+
+function renderTabelaDia(registros, frotaMap) {
+  frotaMap = frotaMap || {};
   const tbody = document.getElementById('admin-tbody');
-  if (!registros.length) { tbody.innerHTML = '<tr><td colspan="8" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
+  if (!registros.length) { tbody.innerHTML = '<tr><td colspan="14" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
     ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => document.getElementById(id).textContent = '0'); return; }
   document.getElementById('stat-total').textContent = registros.length;
   document.getElementById('stat-iniciados').textContent = registros.filter(r => r.inicio).length;
   document.getElementById('stat-almoco').textContent = registros.filter(r => r.parada && !r.retorno).length;
   document.getElementById('stat-finalizados').textContent = registros.filter(r => r.fim).length;
-  tbody.innerHTML = registros.map(r => {
+  const vazio = '<span style="color:var(--muted)">—</span>';
+  let linhas = '';
+  registros.forEach((r, idxRegistro) => {
     const status = (() => { if (r.fim) return { label: 'Finalizado', cls: 'pill-red' }; if (r.retorno) return { label: 'Trabalhando', cls: 'pill-green' }; if (r.parada && !r.retorno) return { label: 'Almoço', cls: 'pill-yellow' }; if (r.inicio && !r.parada) return { label: 'Em serviço', cls: 'pill-blue' }; return { label: 'Não iniciou', cls: 'pill-muted' }; })();
-    return `<tr><td style="font-weight:600">${r.nome}</td><td>${r.inicio ? `<span class="pill pill-green">${r.inicio}</span>` : '<span class="pill pill-muted">—</span>'}</td><td>${r.parada ? `<span class="pill pill-yellow">${r.parada}</span>` : '<span class="pill pill-muted">—</span>'}</td><td>${r.retorno ? `<span class="pill pill-blue">${r.retorno}</span>` : '<span class="pill pill-muted">—</span>'}</td><td>${r.fim ? `<span class="pill pill-red">${r.fim}</span>` : '<span class="pill pill-muted">—</span>'}</td><td>${r.trabalhado || '<span style="color:var(--muted)">—</span>'}</td><td>${r.extra && r.extra !== '—' ? `<span class="pill pill-yellow">${r.extra}</span>` : '<span style="color:var(--muted)">—</span>'}</td><td><span class="pill ${status.cls}">${status.label}</span></td></tr>`;
-  }).join('');
+    const viagens = frotaMap[normalizarNome_(r.nome)] || [{}]; // se não tiver nenhuma, mostra 1 linha em branco
+    const grupoClasse = idxRegistro % 2 === 0 ? 'grupo-a' : 'grupo-b';
+    viagens.forEach((fj, idxViagem) => {
+      const nomeCel = idxViagem === 0
+        ? `<td style="font-weight:600">${r.nome}${viagens.length > 1 ? ` <span class="pill pill-muted" style="font-size:0.65rem">${viagens.length} viagens</span>` : ''}</td>`
+        : `<td style="font-weight:500;color:var(--muted);font-size:0.8rem">↳ ${idxViagem + 1}ª viagem</td>`;
+      linhas += `<tr class="${grupoClasse}">`
+        + nomeCel
+        + `<td>${r.inicio ? `<span class="pill pill-green">${r.inicio}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${fj.destino || vazio}</td>`
+        + `<td>${fj.saidaVeiculo || vazio}</td>`
+        + `<td>${fj.aberturaBau || vazio}</td>`
+        + `<td>${fj.totalLoja || vazio}</td>`
+        + `<td>${r.parada ? `<span class="pill pill-yellow">${r.parada}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${r.retorno ? `<span class="pill pill-blue">${r.retorno}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${fj.chegadaCD || vazio}</td>`
+        + `<td>${fj.kmChegada || vazio}</td>`
+        + `<td>${r.fim ? `<span class="pill pill-red">${r.fim}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${r.trabalhado || vazio}</td>`
+        + `<td>${r.extra && r.extra !== '—' ? `<span class="pill pill-yellow">${r.extra}</span>` : vazio}</td>`
+        + `<td><span class="pill ${status.cls}">${status.label}</span></td>`
+        + `</tr>`;
+    });
+  });
+  tbody.innerHTML = linhas;
 }
 async function buscarSemana() {
   const inputData = document.getElementById('admin-semana-data').value;
