@@ -2704,6 +2704,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
       if (!chave) return;
       const primeiraLoja = (lanc.Paradas && lanc.Paradas[0]) || {};
       (mapa[chave] = mapa[chave] || []).push({
+        nome: lanc.Motorista || chave,
         placa: lanc.Placa || '',
         operacao: lanc.Operacao || '',
         destino: lanc.Destino || '',
@@ -2714,7 +2715,8 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         saidaLoja: primeiraLoja.HoraSaida || '',
         totalLoja: primeiraLoja.TotalLoja || '',
         chegadaCD: lanc.HoraChegadaCD || '',
-        kmChegada: lanc.KmChegada || ''
+        kmChegada: lanc.KmChegada || '',
+        statusFrota: lanc.Status || ''
       });
     });
     // ordena as viagens de cada motorista pela hora de saída, pra ficar na
@@ -2729,21 +2731,28 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
 function renderTabelaDia(registros, frotaMap) {
   frotaMap = frotaMap || {};
   const tbody = document.getElementById('admin-tbody');
-  if (!registros.length) { tbody.innerHTML = '<tr><td colspan="19" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
-    ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => document.getElementById(id).textContent = '0'); return; }
-  document.getElementById('stat-total').textContent = registros.length;
-  document.getElementById('stat-iniciados').textContent = registros.filter(r => r.inicio).length;
-  document.getElementById('stat-almoco').textContent = registros.filter(r => r.parada && !r.retorno).length;
-  document.getElementById('stat-finalizados').textContent = registros.filter(r => r.fim).length;
   const vazio = '<span style="color:var(--muted)">—</span>';
+  const nomesComPonto = new Set();
   let linhas = '';
-  registros.forEach((r, idxRegistro) => {
-    const status = (() => { if (r.fim) return { label: 'Finalizado', cls: 'pill-red' }; if (r.retorno) return { label: 'Trabalhando', cls: 'pill-green' }; if (r.parada && !r.retorno) return { label: 'Almoço', cls: 'pill-yellow' }; if (r.inicio && !r.parada) return { label: 'Em serviço', cls: 'pill-blue' }; return { label: 'Não iniciou', cls: 'pill-muted' }; })();
-    const viagens = frotaMap[normalizarNome_(r.nome)] || [{}]; // se não tiver nenhuma, mostra 1 linha em branco
-    const grupoClasse = idxRegistro % 2 === 0 ? 'grupo-a' : 'grupo-b';
+  let idxGrupo = 0;
+
+  // 1) Quem tem registro de ponto no Jornada (com ou sem viagem no Frota)
+  registros.forEach((r) => {
+    const chave = normalizarNome_(r.nome);
+    if (chave) nomesComPonto.add(chave);
+    const status = (() => {
+      if (r.fim) return { label: 'Finalizado', cls: 'pill-red' };
+      if (r.retorno) return { label: 'Trabalhando', cls: 'pill-green' };
+      if (r.parada && !r.retorno) return { label: 'Almoço', cls: 'pill-yellow' };
+      if (r.inicio && !r.parada) return { label: 'Em serviço', cls: 'pill-blue' };
+      return { label: 'Não iniciou', cls: 'pill-muted' };
+    })();
+    const viagens = frotaMap[chave] || [{}];
+    const grupoClasse = idxGrupo % 2 === 0 ? 'grupo-a' : 'grupo-b';
+    idxGrupo++;
     viagens.forEach((fj, idxViagem) => {
       const nomeCel = idxViagem === 0
-        ? `<td style="font-weight:600">${r.nome}${viagens.length > 1 ? ` <span class="pill pill-muted" style="font-size:0.65rem">${viagens.length} viagens</span>` : ''}</td>`
+        ? `<td style="font-weight:600">${r.nome}${viagens.length > 1 && viagens[0].placa !== undefined ? ` <span class="pill pill-muted" style="font-size:0.65rem">${viagens.length} viagens</span>` : ''}</td>`
         : `<td style="font-weight:500;color:var(--muted);font-size:0.8rem">↳ ${idxViagem + 1}ª viagem</td>`;
       linhas += `<tr class="${grupoClasse}">`
         + nomeCel
@@ -2768,6 +2777,54 @@ function renderTabelaDia(registros, frotaMap) {
         + `</tr>`;
     });
   });
+
+  // 2) Quem só lançou no Frota Jornada (sem ponto no Jornada) — também aparece
+  Object.keys(frotaMap).forEach((chave) => {
+    if (nomesComPonto.has(chave)) return;
+    const viagens = frotaMap[chave] || [];
+    if (!viagens.length) return;
+    const nomeExibicao = viagens[0].nome || chave;
+    const grupoClasse = idxGrupo % 2 === 0 ? 'grupo-a' : 'grupo-b';
+    idxGrupo++;
+    viagens.forEach((fj, idxViagem) => {
+      const statusLabel = fj.statusFrota || 'Só Frota';
+      const nomeCel = idxViagem === 0
+        ? `<td style="font-weight:600">${nomeExibicao}${viagens.length > 1 ? ` <span class="pill pill-muted" style="font-size:0.65rem">${viagens.length} viagens</span>` : ''} <span class="pill pill-muted" style="font-size:0.62rem" title="Lançou só no Frota Jornada, sem ponto no Jornada">só Frota</span></td>`
+        : `<td style="font-weight:500;color:var(--muted);font-size:0.8rem">↳ ${idxViagem + 1}ª viagem</td>`;
+      linhas += `<tr class="${grupoClasse}">`
+        + nomeCel
+        + `<td style="font-weight:700;letter-spacing:.3px">${fj.placa || vazio}</td>`
+        + `<td><span class="pill pill-muted">—</span></td>`
+        + `<td>${fj.operacao ? `<span class="pill pill-blue">${fj.operacao}</span>` : vazio}</td>`
+        + `<td>${fj.destino || vazio}</td>`
+        + `<td>${fj.saidaVeiculo || vazio}</td>`
+        + `<td>${fj.chegadaLoja || vazio}</td>`
+        + `<td>${fj.aberturaBau || vazio}</td>`
+        + `<td>${fj.fechamentoBau || vazio}</td>`
+        + `<td>${fj.saidaLoja || vazio}</td>`
+        + `<td>${fj.totalLoja || vazio}</td>`
+        + `<td><span class="pill pill-muted">—</span></td>`
+        + `<td><span class="pill pill-muted">—</span></td>`
+        + `<td>${fj.chegadaCD || vazio}</td>`
+        + `<td>${fj.kmChegada || vazio}</td>`
+        + `<td><span class="pill pill-muted">—</span></td>`
+        + `<td>${vazio}</td>`
+        + `<td>${vazio}</td>`
+        + `<td><span class="pill pill-muted">${statusLabel}</span></td>`
+        + `</tr>`;
+    });
+  });
+
+  const totalLinhasMotoristas = registros.length + Object.keys(frotaMap).filter(k => !nomesComPonto.has(k)).length;
+  if (!linhas) {
+    tbody.innerHTML = '<tr><td colspan="19" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
+    ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => document.getElementById(id).textContent = '0');
+    return;
+  }
+  document.getElementById('stat-total').textContent = totalLinhasMotoristas;
+  document.getElementById('stat-iniciados').textContent = registros.filter(r => r.inicio).length;
+  document.getElementById('stat-almoco').textContent = registros.filter(r => r.parada && !r.retorno).length;
+  document.getElementById('stat-finalizados').textContent = registros.filter(r => r.fim).length;
   tbody.innerHTML = linhas;
 }
 async function buscarSemana() {
