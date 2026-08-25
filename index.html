@@ -1543,8 +1543,8 @@
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Nome</th><th>Início</th><th>Operação</th><th>Destino</th><th>Saída Veíc.</th><th>Abertura Baú</th><th>Fechamento Baú</th><th>Total Loja</th><th>Parada</th><th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
-          <tbody id="admin-tbody"><tr><td colspan="16" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
+          <thead><tr><th>Nome</th><th>Início</th><th>Operação</th><th>Destino</th><th>Saída Veíc.</th><th>Chegada Loja</th><th>Abertura Baú</th><th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>Parada</th><th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
+          <tbody id="admin-tbody"><tr><td colspan="18" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2707,8 +2707,10 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         operacao: lanc.Operacao || '',
         destino: lanc.Destino || '',
         saidaVeiculo: lanc.HoraProgramadaSaida || '',
+        chegadaLoja: primeiraLoja.HoraChegada || '',
         aberturaBau: primeiraLoja.HoraAberturaBau || '',
         fechamentoBau: primeiraLoja.HoraFechamentoBau || '',
+        saidaLoja: primeiraLoja.HoraSaida || '',
         totalLoja: primeiraLoja.TotalLoja || '',
         chegadaCD: lanc.HoraChegadaCD || '',
         kmChegada: lanc.KmChegada || ''
@@ -2726,7 +2728,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
 function renderTabelaDia(registros, frotaMap) {
   frotaMap = frotaMap || {};
   const tbody = document.getElementById('admin-tbody');
-  if (!registros.length) { tbody.innerHTML = '<tr><td colspan="16" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
+  if (!registros.length) { tbody.innerHTML = '<tr><td colspan="18" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
     ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => document.getElementById(id).textContent = '0'); return; }
   document.getElementById('stat-total').textContent = registros.length;
   document.getElementById('stat-iniciados').textContent = registros.filter(r => r.inicio).length;
@@ -2748,8 +2750,10 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td>${fj.operacao ? `<span class="pill pill-blue">${fj.operacao}</span>` : vazio}</td>`
         + `<td>${fj.destino || vazio}</td>`
         + `<td>${fj.saidaVeiculo || vazio}</td>`
+        + `<td>${fj.chegadaLoja || vazio}</td>`
         + `<td>${fj.aberturaBau || vazio}</td>`
         + `<td>${fj.fechamentoBau || vazio}</td>`
+        + `<td>${fj.saidaLoja || vazio}</td>`
         + `<td>${fj.totalLoja || vazio}</td>`
         + `<td>${r.parada ? `<span class="pill pill-yellow">${r.parada}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${r.retorno ? `<span class="pill pill-blue">${r.retorno}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
