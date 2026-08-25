@@ -820,7 +820,8 @@
     align-items: center;
   }
 
-  .admin-date-row input {
+  .admin-date-row input,
+  .admin-date-row select {
     flex: 1;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -830,6 +831,11 @@
     font-family: 'DM Mono', monospace;
     font-size: 0.85rem;
     outline: none;
+    min-width: 0;
+  }
+  .admin-date-row select {
+    flex: 0 1 140px;
+    cursor: pointer;
   }
 
   .btn-buscar {
@@ -1533,6 +1539,15 @@
     <div id="painel-dia">
       <div class="admin-date-row">
         <input type="date" id="admin-data" />
+        <select id="admin-filtro-op" onchange="aplicarFiltroOperacaoAdmin()">
+          <option value="">Todas operações</option>
+          <option value="LS">LS</option>
+          <option value="TL">TL</option>
+          <option value="HT">HT</option>
+          <option value="CV">CV</option>
+          <option value="__SEM__">Sem operação</option>
+          <option value="__OUTRAS__">Outras</option>
+        </select>
         <button class="btn-buscar" onclick="buscarDia()">Buscar</button>
       </div>
       <div class="admin-stats">
@@ -2668,6 +2683,20 @@ function mudarAba(aba) {
   document.getElementById('tab-dia').classList.toggle('active', aba === 'dia');
   document.getElementById('tab-semana').classList.toggle('active', aba === 'semana');
 }
+let _adminDiaCache = { registros: [], frotaMap: {} };
+
+function aplicarFiltroOperacaoAdmin() {
+  renderTabelaDia(_adminDiaCache.registros || [], _adminDiaCache.frotaMap || {});
+}
+
+function operacaoPassaFiltro_(op, filtro) {
+  const o = String(op || '').trim().toUpperCase();
+  if (!filtro) return true;
+  if (filtro === '__SEM__') return !o;
+  if (filtro === '__OUTRAS__') return o && !['LS', 'TL', 'HT', 'CV'].includes(o);
+  return o === String(filtro).toUpperCase();
+}
+
 async function buscarDia() {
   const inputData = document.getElementById('admin-data').value;
   if (!inputData) { showToast('Selecione uma data', 'error'); return; }
@@ -2680,7 +2709,8 @@ async function buscarDia() {
     const resp = await fetch(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`);
     const json = await resp.json();
     const frotaMap = await buscarFrotaJornadaDoDia_(inputData);
-    renderTabelaDia(json.registros || [], frotaMap);
+    _adminDiaCache = { registros: json.registros || [], frotaMap: frotaMap || {} };
+    renderTabelaDia(_adminDiaCache.registros, _adminDiaCache.frotaMap);
   } catch(e) { showToast('❌ Erro ao buscar dados', 'error'); } finally { showLoading(false); }
 }
 
@@ -2732,9 +2762,14 @@ function renderTabelaDia(registros, frotaMap) {
   frotaMap = frotaMap || {};
   const tbody = document.getElementById('admin-tbody');
   const vazio = '<span style="color:var(--muted)">—</span>';
+  const filtroOp = (document.getElementById('admin-filtro-op') || {}).value || '';
   const nomesComPonto = new Set();
   let linhas = '';
   let idxGrupo = 0;
+  let totalMotoristasVisiveis = 0;
+  let iniciadosVisiveis = 0;
+  let almocoVisiveis = 0;
+  let finalizadosVisiveis = 0;
 
   // 1) Quem tem registro de ponto no Jornada (com ou sem viagem no Frota)
   registros.forEach((r) => {
@@ -2747,7 +2782,20 @@ function renderTabelaDia(registros, frotaMap) {
       if (r.inicio && !r.parada) return { label: 'Em serviço', cls: 'pill-blue' };
       return { label: 'Não iniciou', cls: 'pill-muted' };
     })();
-    const viagens = frotaMap[chave] || [{}];
+    const todasViagens = frotaMap[chave] || [{}];
+    const viagens = filtroOp
+      ? todasViagens.filter(fj => operacaoPassaFiltro_(fj.operacao, filtroOp))
+      : todasViagens;
+    // Com filtro ativo e nenhuma viagem da operação: não mostra a linha do motorista
+    if (filtroOp && viagens.length === 0) return;
+    // Caso especial: sem frota (objeto vazio) e filtro pede operação específica → some
+    if (filtroOp && viagens.length === 1 && !viagens[0].operacao && !viagens[0].placa && filtroOp !== '__SEM__') return;
+
+    totalMotoristasVisiveis++;
+    if (r.inicio) iniciadosVisiveis++;
+    if (r.parada && !r.retorno) almocoVisiveis++;
+    if (r.fim) finalizadosVisiveis++;
+
     const grupoClasse = idxGrupo % 2 === 0 ? 'grupo-a' : 'grupo-b';
     idxGrupo++;
     viagens.forEach((fj, idxViagem) => {
@@ -2781,9 +2829,13 @@ function renderTabelaDia(registros, frotaMap) {
   // 2) Quem só lançou no Frota Jornada (sem ponto no Jornada) — também aparece
   Object.keys(frotaMap).forEach((chave) => {
     if (nomesComPonto.has(chave)) return;
-    const viagens = frotaMap[chave] || [];
+    const todasViagens = frotaMap[chave] || [];
+    const viagens = filtroOp
+      ? todasViagens.filter(fj => operacaoPassaFiltro_(fj.operacao, filtroOp))
+      : todasViagens;
     if (!viagens.length) return;
     const nomeExibicao = viagens[0].nome || chave;
+    totalMotoristasVisiveis++;
     const grupoClasse = idxGrupo % 2 === 0 ? 'grupo-a' : 'grupo-b';
     idxGrupo++;
     viagens.forEach((fj, idxViagem) => {
@@ -2815,16 +2867,18 @@ function renderTabelaDia(registros, frotaMap) {
     });
   });
 
-  const totalLinhasMotoristas = registros.length + Object.keys(frotaMap).filter(k => !nomesComPonto.has(k)).length;
   if (!linhas) {
-    tbody.innerHTML = '<tr><td colspan="19" class="admin-empty">Nenhum registro encontrado para esta data</td></tr>';
+    const msg = filtroOp
+      ? 'Nenhum registro para a operação selecionada nesta data'
+      : 'Nenhum registro encontrado para esta data';
+    tbody.innerHTML = `<tr><td colspan="19" class="admin-empty">${msg}</td></tr>`;
     ['stat-total','stat-iniciados','stat-almoco','stat-finalizados'].forEach(id => document.getElementById(id).textContent = '0');
     return;
   }
-  document.getElementById('stat-total').textContent = totalLinhasMotoristas;
-  document.getElementById('stat-iniciados').textContent = registros.filter(r => r.inicio).length;
-  document.getElementById('stat-almoco').textContent = registros.filter(r => r.parada && !r.retorno).length;
-  document.getElementById('stat-finalizados').textContent = registros.filter(r => r.fim).length;
+  document.getElementById('stat-total').textContent = totalMotoristasVisiveis;
+  document.getElementById('stat-iniciados').textContent = iniciadosVisiveis;
+  document.getElementById('stat-almoco').textContent = almocoVisiveis;
+  document.getElementById('stat-finalizados').textContent = finalizadosVisiveis;
   tbody.innerHTML = linhas;
 }
 async function buscarSemana() {
