@@ -264,7 +264,11 @@ function parseRCMCsv(csvText) {
   const idxGuerra = header.findIndex(h => h.includes('GUERRA'));
   const idxSenha  = header.findIndex(h => h.includes('SENHA'));
   const idxSit    = header.findIndex(h => h.includes('SITUA') || h.includes('SUTU'));
-  const idxFuncao = header.findIndex(h => h.replace(/\s/g, '').toUpperCase().includes('FUN') && !h.includes('FUNCION'));
+  // Preferir a coluna FUNÇÃO/FUNCAO (evita pegar "TOTAL DE FUNC.")
+  const idxFuncao = header.findIndex(h => {
+    const n = h.replace(/\s/g, '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return n === 'FUNCAO' || n.startsWith('FUNCAO');
+  });
 
   if (idxNome < 0 || idxGuerra < 0 || idxSenha < 0 || idxSit < 0) return null;
 
@@ -280,7 +284,7 @@ function parseRCMCsv(csvText) {
     const situacao = (cols[idxSit] || '').trim().toUpperCase();
     const funcaoRaw = idxFuncao >= 0
       ? (cols[idxFuncao] || '').trim().toUpperCase()
-      : (cols[10] || '').trim().toUpperCase();
+      : (cols[11] || '').trim().toUpperCase();
 
     if (!nome || !guerra || !senha) continue;
     if (situacao === 'DEMITIDO') continue;
