@@ -90,9 +90,31 @@
   .pill.retorno{background:#2b1f3a;color:#b18ef0;}
   .pill.concluido{background:#12301f;color:var(--green);}
   .pill.manual{background:#1a2a3a;color:#7eb8f0;}
+  .pill.ponto-ok{background:#12301f;color:var(--green);}
+  .pill.ponto-falta{background:#3a1f1f;color:#f87171;}
+  .pill.ponto-almoco{background:#3a2f10;color:var(--amber);}
+  .pill.ponto-fim{background:#2a3746;color:var(--muted);}
   .summary-line{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:3px 0;}
   .summary-line b{color:var(--text);}
   .hint{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .ponto-badge-row{margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+  .secao-sem-frota{
+    margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);
+  }
+  .secao-sem-frota h3{
+    margin:0 0 8px;font-size:12.5px;color:var(--amber);text-transform:uppercase;letter-spacing:.4px;
+  }
+  .item-sem-frota{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;
+  }
+  .item-sem-frota:last-child{border-bottom:none;}
+  .item-sem-frota .nome{font-weight:600;}
+  .item-sem-frota button{
+    flex:0 0 auto;width:auto;margin:0;padding:7px 12px;font-size:12px;
+    border-radius:8px;border:1px solid var(--amber);background:transparent;
+    color:var(--amber);font-weight:700;cursor:pointer;
+  }
   .toast{
     position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
     background:#20304a;color:var(--text);padding:11px 18px;border-radius:10px;
@@ -225,6 +247,8 @@ const CONFIG = {
 /* ── Acesso (mesma planilha RCM do app Jornada) ── */
 const RCM_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQU606Dbi9ZWn1RSpKGn9Daey3XAsTWRDgstXI3ARb6Na2UF-nZ1hkfB7EVFwzfvQ/pub?gid=182320512&single=true&output=csv';
 const SESSION_KEY = 'frota_enc_user';
+/** Mesma chave do app Jornada (index.html) — URL do Apps Script de ponto */
+const SCRIPT_URL_KEY = 'jornadatrack_script_url';
 
 /** Funções autorizadas a usar este painel */
 const FUNCOES_PERMITIDAS = new Set(['ADMIN', 'ENCARREGADO', 'SUPERVISOR', 'AUXILIAR']);
@@ -240,11 +264,54 @@ let currentUser = null;
 let PLACAS = [];
 let MOTORISTAS = [];
 let LISTA = [];
+/** Mapa nome-normalizado → registro de ponto do dia { nome, inicio, parada, retorno, fim, ... } */
+let PONTO_MAP = {};
 let LANC = null;
 let MODO = 'lista';
 let DATA_FILTRO = '';
 let OP_FILTRO = localStorage.getItem('frota_enc_op_filtro') || '';
 let opSelecionada = '';
+
+function normalizarNome(n){
+  return String(n || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+/** Busca resumo de ponto do dia no app Jornada (se a URL estiver configurada no aparelho). */
+async function buscarPontoDoDia(dataISO){
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if(!url || !dataISO) return {};
+  try{
+    let dataBR = dataISO;
+    const m = String(dataISO).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(m) dataBR = `${m[3]}/${m[2]}/${m[1]}`;
+    const resp = await fetch(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`, { cache: 'no-store' });
+    if(!resp.ok) return {};
+    const json = await resp.json();
+    const regs = Array.isArray(json.registros) ? json.registros : [];
+    const mapa = {};
+    regs.forEach(r => {
+      const chave = normalizarNome(r.nome);
+      if(chave) mapa[chave] = r;
+    });
+    return mapa;
+  }catch(e){
+    console.warn('[Encarregado] falha ao buscar ponto Jornada:', e);
+    return {};
+  }
+}
+
+function pontoPill(r){
+  if(!r) return '<span class="pill ponto-falta">Sem ponto</span>';
+  if(r.fim) return `<span class="pill ponto-fim">Ponto fim ${escHtml(r.fim)}</span>`;
+  if(r.parada && !r.retorno) return `<span class="pill ponto-almoco">Almoço ${escHtml(r.parada)}</span>`;
+  if(r.retorno) return `<span class="pill ponto-ok">Ponto ${escHtml(r.inicio || '✓')} · ret. ${escHtml(r.retorno)}</span>`;
+  if(r.inicio) return `<span class="pill ponto-ok">Ponto ${escHtml(r.inicio)}</span>`;
+  return '<span class="pill ponto-falta">Sem ponto</span>';
+}
 
 /* ======================= LOGIN / ACESSO ======================= */
 function normalizeLogin(str) {
@@ -573,8 +640,12 @@ async function carregarLista(){
   $('#btnNovo').onclick = () => renderNovo();
 
   try{
-    const lista = await apiGet({action:'getLancamentos', data: DATA_FILTRO});
+    const [lista, pontoMap] = await Promise.all([
+      apiGet({action:'getLancamentos', data: DATA_FILTRO}),
+      buscarPontoDoDia(DATA_FILTRO)
+    ]);
     LISTA = Array.isArray(lista) ? lista : [];
+    PONTO_MAP = pontoMap || {};
     renderLista();
   }catch(e){
     $('#listaCard').innerHTML = '<div class="empty">Falha ao carregar. Verifique a conexão.</div>';
@@ -586,12 +657,35 @@ function renderLista(){
   const filtrada = LISTA.filter(l => opPassaFiltro(l.Operacao, OP_FILTRO));
 
   if(!LISTA.length){
+    const semFrotaVazio = Object.values(PONTO_MAP)
+      .filter(r => r && r.inicio)
+      .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
+    let extra = '';
+    if (semFrotaVazio.length) {
+      extra = `
+        <div class="secao-sem-frota" style="text-align:left">
+          <h3>⚠️ Com ponto, sem lançamento de frota (${semFrotaVazio.length})</h3>
+          <p class="hint" style="margin:0 0 8px">Bateram ponto no app Jornada. Toque em <b>Lançar</b> para criar a viagem.</p>
+          ${semFrotaVazio.map(r => `
+            <div class="item-sem-frota">
+              <div>
+                <div class="nome">${escHtml(r.nome || '—')}</div>
+                <div class="ponto-badge-row">${pontoPill(r)}</div>
+              </div>
+              <button type="button" data-nome="${escHtml(r.nome || '')}">+ Lançar</button>
+            </div>
+          `).join('')}
+        </div>`;
+    }
     card.innerHTML = `
       <div class="empty">
-        Nenhum lançamento em ${formatarDataBR(DATA_FILTRO)}.<br><br>
+        Nenhum lançamento de frota em ${formatarDataBR(DATA_FILTRO)}.<br><br>
         <button class="primary" id="btnNovoEmpty" style="max-width:220px;margin:0 auto">Criar o primeiro</button>
-      </div>`;
+      </div>${extra}`;
     $('#btnNovoEmpty') && ($('#btnNovoEmpty').onclick = () => renderNovo());
+    $$('.item-sem-frota button').forEach(btn => {
+      btn.onclick = () => renderNovo(btn.getAttribute('data-nome') || '');
+    });
     return;
   }
 
@@ -622,13 +716,31 @@ function renderLista(){
        </div>`
     : '';
 
-  card.innerHTML = avisoFiltro + filtrada.map(l => {
+  const temUrlPonto = !!localStorage.getItem(SCRIPT_URL_KEY);
+  const avisoPonto = !temUrlPonto
+    ? `<div class="hint" style="margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#2a2210;border:1px solid #5c4a1a;color:var(--amber)">
+         ⚠️ URL do app Jornada (ponto) não configurada neste aparelho.
+         Abra o app Jornada uma vez e salve a URL do Apps Script para o encarregado ver quem já bateu ponto.
+       </div>`
+    : '';
+
+  // Quem tem ponto mas ainda não tem lançamento de frota neste dia
+  const nomesComFrota = new Set(
+    LISTA.map(l => normalizarNome(l.Motorista)).filter(Boolean)
+  );
+  const semFrota = Object.values(PONTO_MAP)
+    .filter(r => r && r.inicio && !nomesComFrota.has(normalizarNome(r.nome)))
+    .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
+
+  const htmlLista = filtrada.map(l => {
     const nLojas = (l.Paradas || []).length;
+    const ponto = PONTO_MAP[normalizarNome(l.Motorista)];
     return `
       <div class="lista-item" data-id="${escHtml(l.ID)}">
         <div>
           <div class="titulo">${escHtml(l.Placa || '—')} · ${escHtml(l.Motorista || '—')}</div>
           <div class="meta">${escHtml(l.Operacao || '—')} · ${escHtml(l.Destino || 'sem destino')} · ${nLojas} loja(s)</div>
+          <div class="ponto-badge-row">${pontoPill(ponto)}</div>
         </div>
         <div class="direita">
           ${statusPill(l.Status)}
@@ -636,6 +748,41 @@ function renderLista(){
         </div>
       </div>`;
   }).join('');
+
+  let htmlSemFrota = '';
+  if (semFrota.length) {
+    htmlSemFrota = `
+      <div class="secao-sem-frota">
+        <h3>⚠️ Com ponto, sem lançamento de frota (${semFrota.length})</h3>
+        <p class="hint" style="margin:0 0 8px">Bateram ponto no app Jornada, mas ainda não há viagem lançada na frota. Toque em <b>Lançar</b> para preencher.</p>
+        ${semFrota.map(r => `
+          <div class="item-sem-frota">
+            <div>
+              <div class="nome">${escHtml(r.nome || '—')}</div>
+              <div class="ponto-badge-row">${pontoPill(r)}</div>
+            </div>
+            <button type="button" data-nome="${escHtml(r.nome || '')}">+ Lançar</button>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
+  // Contadores rápidos de ponto (só se houver URL)
+  let resumoPonto = '';
+  if (temUrlPonto && filtrada.length) {
+    let comPonto = 0, semPonto = 0;
+    filtrada.forEach(l => {
+      const p = PONTO_MAP[normalizarNome(l.Motorista)];
+      if (p && p.inicio) comPonto++; else semPonto++;
+    });
+    resumoPonto = `<div class="hint" style="margin:0 0 10px">
+      Ponto no app Jornada: <b style="color:var(--green)">${comPonto} com ponto</b>
+      · <b style="color:#f87171">${semPonto} sem ponto</b>
+      ${semFrota.length ? ` · <b style="color:var(--amber)">${semFrota.length} só no ponto</b>` : ''}
+    </div>`;
+  }
+
+  card.innerHTML = avisoPonto + avisoFiltro + resumoPonto + htmlLista + htmlSemFrota;
 
   $$('.lista-item').forEach(el => {
     el.onclick = async () => {
@@ -654,18 +801,30 @@ function renderLista(){
       }
     };
   });
+
+  $$('.item-sem-frota button').forEach(btn => {
+    btn.onclick = (ev) => {
+      ev.stopPropagation();
+      const nome = btn.getAttribute('data-nome') || '';
+      renderNovo(nome);
+    };
+  });
 }
 
 /* ======================= NOVO LANÇAMENTO ======================= */
-function renderNovo(){
+function renderNovo(nomePrefill){
   MODO = 'novo';
   LANC = null;
   opSelecionada = (OP_FILTRO && ['LS','TL','HT','CV'].includes(OP_FILTRO)) ? OP_FILTRO : '';
   $('#btnVoltarLista').style.display = '';
   $('#statusLine').textContent = (currentUser ? currentUser.nome + ' · ' : '') + 'Novo lançamento';
 
+  const prefill = String(nomePrefill || '').trim();
   const optsMotorista = MOTORISTAS.length
-    ? MOTORISTAS.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('')
+    ? MOTORISTAS.map(n => {
+        const sel = prefill && normalizarNome(n) === normalizarNome(prefill) ? ' selected' : '';
+        return `<option value="${escHtml(n)}"${sel}>${escHtml(n)}</option>`;
+      }).join('')
     : '<option value="">— digite o nome —</option>';
 
   let optsPlaca = '<option value="">Selecione a placa</option>';
@@ -694,7 +853,7 @@ function renderNovo(){
       <label>Motorista</label>
       ${MOTORISTAS.length
         ? `<select id="fMotorista"><option value="">Selecione</option>${optsMotorista}</select>`
-        : `<input id="fMotorista" placeholder="Nome do motorista" autocomplete="off">`}
+        : `<input id="fMotorista" placeholder="Nome do motorista" autocomplete="off" value="${escHtml(prefill)}">`}
 
       <label>Data da saída</label>
       <input type="date" id="fData" value="${DATA_FILTRO || hojeISO()}">
@@ -814,10 +973,12 @@ function renderEditar(){
   const paradas = LANC.Paradas || [];
   const concluido = LANC.Status === 'Concluído';
 
+  const pontoReg = PONTO_MAP[normalizarNome(LANC.Motorista)];
   let html = `
     <div class="card">
       <h2><span class="n">✓</span> Resumo</h2>
       <div class="summary-line"><span>Motorista</span><b>${escHtml(LANC.Motorista||'—')}</b></div>
+      <div class="summary-line"><span>Ponto (Jornada)</span><b>${pontoPill(pontoReg)}</b></div>
       <div class="summary-line"><span>Data</span><b>${formatarDataBR(LANC.Data)}</b></div>
       <div class="summary-line"><span>Operação</span><b>${escHtml(LANC.Operacao||'—')}</b></div>
       <div class="summary-line"><span>Placa</span><b>${escHtml(LANC.Placa||'—')}</b></div>
