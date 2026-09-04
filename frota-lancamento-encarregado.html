@@ -249,6 +249,15 @@ const RCM_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQU606Dbi9Z
 const SESSION_KEY = 'frota_enc_user';
 /** Mesma chave do app Jornada (index.html) — URL do Apps Script de ponto */
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrwfM5xkgod6aCg7PEiJbXys2iHMtgwqyJQhKvGBnZTbutBZPZkI4bTXcCruDaTYW4/exec';
+function getScriptUrl() {
+  let url = (localStorage.getItem(SCRIPT_URL_KEY) || '').trim();
+  if (!url) {
+    url = DEFAULT_SCRIPT_URL;
+    try { localStorage.setItem(SCRIPT_URL_KEY, url); } catch (e) {}
+  }
+  return url;
+}
 
 /** Funções autorizadas a usar este painel */
 const FUNCOES_PERMITIDAS = new Set(['ADMIN', 'ENCARREGADO', 'SUPERVISOR', 'AUXILIAR']);
@@ -282,7 +291,7 @@ function normalizarNome(n){
 
 /** Busca resumo de ponto do dia no app Jornada (se a URL estiver configurada no aparelho). */
 async function buscarPontoDoDia(dataISO){
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  const url = getScriptUrl();
   if(!url || !dataISO) return {};
   try{
     let dataBR = dataISO;
@@ -716,13 +725,8 @@ function renderLista(){
        </div>`
     : '';
 
-  const temUrlPonto = !!localStorage.getItem(SCRIPT_URL_KEY);
-  const avisoPonto = !temUrlPonto
-    ? `<div class="hint" style="margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#2a2210;border:1px solid #5c4a1a;color:var(--amber)">
-         ⚠️ URL do app Jornada (ponto) não configurada neste aparelho.
-         Abra o app Jornada uma vez e salve a URL do Apps Script para o encarregado ver quem já bateu ponto.
-       </div>`
-    : '';
+  const temUrlPonto = !!getScriptUrl();
+  const avisoPonto = '';
 
   // Quem tem ponto mas ainda não tem lançamento de frota neste dia
   const nomesComFrota = new Set(
