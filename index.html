@@ -2228,7 +2228,19 @@ let currentUser = null;
 let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
+/** URL padrão do Apps Script de ponto — embutida para não pedir setup a cada aparelho */
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrwfM5xkgod6aCg7PEiJbXys2iHMtgwqyJQhKvGBnZTbutBZPZkI4bTXcCruDaTYW4/exec';
 const FROTA_JORNADA_API_URL = 'https://script.google.com/macros/s/AKfycbymMok1wWF8985aeyKS3nsjdiqIoLeMgEGIHF3GO2vvr_ErcDtYJmzM3gb9ju4YK9Ae/exec';
+
+/** Retorna a URL do Apps Script (localStorage ou padrão embutida). */
+function getScriptUrl() {
+  let url = (localStorage.getItem(SCRIPT_URL_KEY) || '').trim();
+  if (!url) {
+    url = DEFAULT_SCRIPT_URL;
+    try { localStorage.setItem(SCRIPT_URL_KEY, url); } catch (e) {}
+  }
+  return url;
+}
 let paradaTimer = null;
 let fimRefeicaoTimer = null;
 const DESCANSO_MS = 11 * 60 * 60 * 1000;
@@ -2343,7 +2355,7 @@ async function buscarHistorico() {
   const dataUnica = document.getElementById('hist-data-unica').value;
   if (!dataUnica) { showToast('Selecione uma data', 'error'); return; }
 
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  const url = getScriptUrl();
   if (!url) { showToast('URL não configurada', 'error'); return; }
 
   const dataBR = dataUnica.split('-').reverse().join('/');
@@ -2716,7 +2728,7 @@ async function confirmarRegistro() {
   await enviarParaSheets(payload);
 }
 async function enviarParaSheets(payload) {
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  const url = getScriptUrl();
   if (!url) { showToast('⚠️ URL não configurada', 'error'); return; }
   showLoading(true);
   try {
@@ -2762,7 +2774,7 @@ async function buscarDia() {
   if (!inputData) { showToast('Selecione uma data', 'error'); return; }
   const [yyyy, mm, dd] = inputData.split('-');
   const dataBR = `${dd}/${mm}/${yyyy}`;
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  const url = getScriptUrl();
   if (!url) { showToast('URL não configurada', 'error'); return; }
   showLoading(true);
   try {
@@ -2974,7 +2986,7 @@ async function buscarSemana() {
   const segunda = new Date(d);
   segunda.setDate(d.getDate() + diffSeg);
   const semanaKey = `${String(segunda.getDate()).padStart(2,'0')}/${String(segunda.getMonth()+1).padStart(2,'0')}/${segunda.getFullYear()}`;
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  const url = getScriptUrl();
   if (!url) { showToast('URL não configurada', 'error'); return; }
   showLoading(true);
   try {
@@ -2990,7 +3002,7 @@ async function limparTudo() {
   if (!confirm('⚠️ Isso vai limpar TODOS os estados locais dos usuários E apagar todas as abas da planilha. Tem certeza?')) return;
   if (!confirm('🚨 Última confirmação! Todos os registros serão apagados. Continuar?')) return;
   for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && (key.startsWith('jt_state_') || key.startsWith('jt_fim_ts_'))) localStorage.removeItem(key); }
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  const url = getScriptUrl();
   if (!url) { showToast('⚠️ URL não configurada', 'error'); return; }
   showLoading(true);
   try { await fetch(`${url}?acao=limpar_planilha`, { redirect: 'follow' }); showToast('✅ Tudo limpo com sucesso!', 'success'); } catch(e) { showToast('❌ Erro ao limpar planilha', 'error'); } finally { showLoading(false); }
@@ -3050,8 +3062,8 @@ function iniciarApp() {
 
 window.addEventListener('load', () => {
   startAutoSync();
-  const url = localStorage.getItem(SCRIPT_URL_KEY);
-  if (!url) { showScreen('setup-screen'); return; }
+  // Garante URL do Apps Script (padrão embutida se ainda não houver no aparelho)
+  getScriptUrl();
   const savedUser = localStorage.getItem('jt_saved_user');
   if (savedUser) {
     currentUser = JSON.parse(savedUser);
