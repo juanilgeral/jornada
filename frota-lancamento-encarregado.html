@@ -322,6 +322,79 @@ function pontoPill(r){
   return '<span class="pill ponto-falta">Sem ponto</span>';
 }
 
+/** Resolve login do motorista pelo nome (RCM / USERS). */
+function loginDoMotorista(nomeMotorista){
+  const chave = normalizarNome(nomeMotorista);
+  if(!chave) return '';
+  for(const [login, u] of Object.entries(USERS || {})){
+    if(normalizarNome(u.nome) === chave) return login;
+  }
+  return normalizeLogin(nomeMotorista);
+}
+
+/**
+ * Lança evento de ponto no Apps Script do Jornada em nome do motorista.
+ * tipo: 'parada' | 'retorno' | 'inicio' | 'fim'
+ * horaHHMM: '12:30' ou '12:30:00'
+ */
+async function registrarPontoMotorista(nomeMotorista, tipo, horaHHMM, dataISO){
+  const url = getScriptUrl();
+  if(!url) throw new Error('URL do Jornada nao configurada');
+
+  const labels = {
+    inicio: 'Início de Jornada',
+    parada: 'Parada Refeição',
+    retorno: 'Retorno Refeição',
+    fim: 'Fim de Jornada'
+  };
+  const evento = labels[tipo];
+  if(!evento) throw new Error('Tipo invalido');
+
+  let hora = String(horaHHMM || '').trim();
+  if(/^\d{2}:\d{2}$/.test(hora)) hora = hora + ':00';
+  if(!/^\d{2}:\d{2}:\d{2}$/.test(hora)) throw new Error('Informe o horario (HH:MM)');
+
+  let dataBR = '';
+  const m = String(dataISO || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m) dataBR = m[3] + '/' + m[2] + '/' + m[1];
+  else {
+    const d = new Date();
+    dataBR = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  }
+
+  const login = loginDoMotorista(nomeMotorista);
+  const nome = String(nomeMotorista || '').trim().toUpperCase();
+  const payload = {
+    usuario: login || normalizeLogin(nome),
+    nome: nome,
+    evento: evento,
+    hora: hora,
+    data: dataBR,
+    timestamp: new Date().toISOString(),
+    latitude: 'N/D',
+    longitude: 'N/D',
+    precisao: 'N/D',
+    gmt: 'GMT-3',
+    dispositivo: 'Encarregado/' + String(currentUser?.nome || 'painel').substring(0, 40)
+  };
+
+  await fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const chave = normalizarNome(nome);
+  if(!PONTO_MAP[chave]) PONTO_MAP[chave] = { nome: nome };
+  if(tipo === 'parada') PONTO_MAP[chave].parada = hora.slice(0, 5);
+  if(tipo === 'retorno') PONTO_MAP[chave].retorno = hora.slice(0, 5);
+  if(tipo === 'inicio') PONTO_MAP[chave].inicio = hora.slice(0, 5);
+  if(tipo === 'fim') PONTO_MAP[chave].fim = hora.slice(0, 5);
+
+  return true;
+}
+
 /* ======================= LOGIN / ACESSO ======================= */
 function normalizeLogin(str) {
   return String(str || '').trim().toLowerCase()
@@ -994,6 +1067,31 @@ function renderEditar(){
     </div>
   `;
 
+  // Card para o encarregado lançar almoço (ponto) quando o motorista esqueceu / não usa o app
+  const almocoInicioVal = (pontoReg && pontoReg.parada) ? String(pontoReg.parada).slice(0,5) : '';
+  const almocoFimVal = (pontoReg && pontoReg.retorno) ? String(pontoReg.retorno).slice(0,5) : '';
+  html += `
+    <div class="card">
+      <h2><span class="n">🍽️</span> Almoço (ponto Jornada)</h2>
+      <p class="hint" style="margin:0 0 10px">
+        Use quando o motorista esqueceu de registrar no app Jornada.
+        O lançamento vai para a planilha de ponto, no nome dele.
+      </p>
+      <div class="summary-line" style="margin-bottom:10px"><span>Situação atual</span><b>${pontoPill(pontoReg)}</b></div>
+      <label>Início do almoço (parada)</label>
+      <div class="campo-hora">
+        <input type="time" id="fAlmocoInicio" value="${escHtml(almocoInicioVal)}">
+        <button class="secondary" id="btnAlmocoInicio" type="button">Lançar início</button>
+      </div>
+      <label>Término do almoço (retorno)</label>
+      <div class="campo-hora">
+        <input type="time" id="fAlmocoFim" value="${escHtml(almocoFimVal)}">
+        <button class="secondary" id="btnAlmocoFim" type="button">Lançar término</button>
+      </div>
+      <p class="hint" id="statusAlmocoEnc" style="margin-top:8px"></p>
+    </div>
+  `;
+
   html += `
     <div class="card">
       <h2><span class="n">1</span> Dados principais</h2>
@@ -1085,6 +1183,43 @@ function renderEditar(){
   app.innerHTML = html;
 
   $('#btnVoltar').onclick = () => carregarLista();
+
+  // Lançamento de almoço (ponto) pelo encarregado
+  const statusAlmoco = () => $('#statusAlmocoEnc');
+  const bindAlmoco = (btnId, inputId, tipo, okMsg) => {
+    const btn = $(btnId);
+    if(!btn) return;
+    btn.onclick = async () => {
+      const hora = ($(inputId)?.value || '').trim();
+      const nome = (LANC.Motorista || '').trim();
+      if(!nome){ toast('Motorista não informado no lançamento', true); return; }
+      if(!hora){ toast('Informe o horário do almoço', true); return; }
+      btn.disabled = true;
+      const txt = btn.textContent;
+      btn.textContent = 'Enviando...';
+      try{
+        await registrarPontoMotorista(nome, tipo, hora, LANC.Data || DATA_FILTRO);
+        toast(okMsg);
+        if(statusAlmoco()) statusAlmoco().innerHTML = pontoPill(PONTO_MAP[normalizarNome(nome)]);
+        // atualiza badge no resumo (re-render leve do status)
+        const resumoPonto = document.querySelector('.summary-line b');
+        // força refresh do mapa de ponto após alguns segundos
+        setTimeout(async () => {
+          try{
+            const mapa = await buscarPontoDoDia(LANC.Data || DATA_FILTRO);
+            Object.assign(PONTO_MAP, mapa || {});
+          }catch(e){}
+        }, 1500);
+      }catch(e){
+        console.error(e);
+        toast(e.message || 'Falha ao lançar almoço', true);
+      }
+      btn.disabled = false;
+      btn.textContent = txt;
+    };
+  };
+  bindAlmoco('#btnAlmocoInicio', '#fAlmocoInicio', 'parada', 'Início do almoço lançado no ponto');
+  bindAlmoco('#btnAlmocoFim', '#fAlmocoFim', 'retorno', 'Término do almoço lançado no ponto');
 
   $('#btnSalvarPrincipais').onclick = async () => {
     const campos = {
