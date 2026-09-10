@@ -2789,6 +2789,19 @@ function salvarDadosVeiculo() {
   if (kmChegada) msg += ' | KM Final: ' + kmChegada;
   statusEl.textContent = msg;
   statusEl.style.color = 'var(--green)';
+
+  // Envia para o Frota Jornada (cria/atualiza lançamento na planilha)
+  const urlFrota = 'https://script.google.com/macros/s/AKfycbymMok1wWF8985aeyKS3nsjdiqIoLeMgEGIHF3GO2vvr_ErcDtYJmzM3gb9ju4YK9Ae/exec';
+  fetch(urlFrota, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'atualizarKmPlaca', ...dados })
+  }).then(function() {
+    statusEl.textContent = msg + ' (enviado ao Frota)';
+  }).catch(function() {
+    // no-cors não devolve resposta; local já está salvo
+  });
 }
 
 function carregarDadosVeiculo() {
