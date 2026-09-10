@@ -1511,33 +1511,79 @@
     </div>
 
     <!-- ===== DADOS DO VEÍCULO (Placa + KM) ===== -->
-    <div style="margin: 14px 0; padding: 14px; background: var(--surface2); border-radius: 14px; border: 1px solid var(--border);">
-      <div style="font-size: 12px; color: var(--muted); margin-bottom: 10px; font-weight: 600; letter-spacing: 0.3px;">
-        DADOS DO VEÍCULO (lançamento manual)
+    <div style="margin: 14px 0; padding: 16px; background: var(--surface2); border-radius: 14px; border: 1px solid var(--border);">
+      <div style="font-size: 13px; color: var(--accent); margin-bottom: 14px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;">
+        Dados do Veículo
       </div>
 
-      <label style="font-size: 11px; color: var(--muted); display:block; margin-bottom:4px;">Placa do veículo</label>
-      <input type="text" id="input-placa" placeholder="Ex: KRR2728" maxlength="8"
-             style="width:100%; padding:11px 12px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-family:inherit; box-sizing:border-box;">
+      <label style="font-size: 13px; color: #c8d4e8; display:block; margin-bottom:6px; font-weight:600;">Placa do veículo</label>
+      <select id="input-placa"
+              style="width:100%; padding:12px 12px; margin-bottom:14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-family:inherit; box-sizing:border-box;">
+        <option value="">Selecione a placa</option>
+        <option value="ATI4G85">ATI4G85</option>
+        <option value="ATJ3F42">ATJ3F42</option>
+        <option value="DPF7I23">DPF7I23</option>
+        <option value="KPE2252">KPE2252</option>
+        <option value="KPU7450">KPU7450</option>
+        <option value="KQS2672">KQS2672</option>
+        <option value="KQT1919">KQT1919</option>
+        <option value="KRO8527">KRO8527</option>
+        <option value="KRO8528">KRO8528</option>
+        <option value="KRR2728">KRR2728</option>
+        <option value="KRZ8143">KRZ8143</option>
+        <option value="KUT8573">KUT8573</option>
+        <option value="KVF3715">KVF3715</option>
+        <option value="KWB9779">KWB9779</option>
+        <option value="KXU6988">KXU6988</option>
+        <option value="KXU6989">KXU6989</option>
+        <option value="KXW7716">KXW7716</option>
+        <option value="KYP3601">KYP3601</option>
+        <option value="KZQ9648">KZQ9648</option>
+        <option value="LBW8156">LBW8156</option>
+        <option value="LKK6551">LKK6551</option>
+        <option value="LRC3089">LRC3089</option>
+        <option value="LRP8A18">LRP8A18</option>
+        <option value="LRR8757">LRR8757</option>
+        <option value="LRT4821">LRT4821</option>
+        <option value="LRX4828">LRX4828</option>
+        <option value="LRX4829">LRX4829</option>
+        <option value="LRX4830">LRX4830</option>
+        <option value="LRX4831">LRX4831</option>
+        <option value="LRX4832">LRX4832</option>
+        <option value="LSF4199">LSF4199</option>
+        <option value="LSM7748">LSM7748</option>
+        <option value="LSM7749">LSM7749</option>
+        <option value="LSM7750">LSM7750</option>
+        <option value="LSN1702">LSN1702</option>
+        <option value="LSQ6092">LSQ6092</option>
+        <option value="LSQ6093">LSQ6093</option>
+        <option value="LSZ5959">LSZ5959</option>
+        <option value="LTF9726">LTF9726</option>
+        <option value="LTJ4440">LTJ4440</option>
+        <option value="LUB1400">LUB1400</option>
+        <option value="LUV9296">LUV9296</option>
+        <option value="LUX9063">LUX9063</option>
+        <option value="OWO2F73">OWO2F73</option>
+      </select>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
         <div>
-          <label style="font-size: 11px; color: var(--muted); display:block; margin-bottom:4px;">KM Saída CD</label>
+          <label style="font-size: 13px; color: #c8d4e8; display:block; margin-bottom:6px; font-weight:600;">KM Inicial</label>
           <input type="number" id="input-km-saida" placeholder="Ex: 156560" inputmode="numeric"
-                 style="width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-family:inherit; box-sizing:border-box;">
+                 style="width:100%; padding:12px 12px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-family:inherit; box-sizing:border-box;">
         </div>
         <div>
-          <label style="font-size: 11px; color: var(--muted); display:block; margin-bottom:4px;">KM Chegada CD</label>
+          <label style="font-size: 13px; color: #c8d4e8; display:block; margin-bottom:6px; font-weight:600;">KM Final</label>
           <input type="number" id="input-km-chegada" placeholder="Ex: 156663" inputmode="numeric"
-                 style="width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-family:inherit; box-sizing:border-box;">
+                 style="width:100%; padding:12px 12px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-family:inherit; box-sizing:border-box;">
         </div>
       </div>
 
       <button type="button" onclick="salvarDadosVeiculo()"
-              style="width:100%; margin-top:12px; padding:13px; border:none; border-radius:12px; background:var(--accent); color:#0a0f1e; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit;">
+              style="width:100%; margin-top:14px; padding:14px; border:none; border-radius:12px; background:var(--accent); color:#0a0f1e; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit;">
         💾 Salvar Placa + KM
       </button>
-      <div id="status-veiculo" style="font-size:12px; color:var(--muted); margin-top:8px; min-height:16px; text-align:center;"></div>
+      <div id="status-veiculo" style="font-size:13px; color:var(--muted); margin-top:10px; min-height:18px; text-align:center; font-weight:600;"></div>
     </div>
     <!-- ===== FIM DADOS DO VEÍCULO ===== -->
 
@@ -2718,7 +2764,7 @@ function salvarDadosVeiculo() {
   const kmChegada = (kmChegadaEl && kmChegadaEl.value || '').trim();
 
   if (!placa) {
-    statusEl.textContent = 'Informe a placa.';
+    statusEl.textContent = 'Selecione a placa.';
     statusEl.style.color = 'var(--red)';
     return;
   }
@@ -2738,7 +2784,10 @@ function salvarDadosVeiculo() {
 
   localStorage.setItem('jornada_veiculo_hoje', JSON.stringify(dados));
 
-  statusEl.textContent = 'Salvo ✓  Placa: ' + placa + (kmSaida ? ' | KM Saída: ' + kmSaida : '');
+  let msg = 'Salvo ✓  Placa: ' + placa;
+  if (kmSaida) msg += ' | KM Inicial: ' + kmSaida;
+  if (kmChegada) msg += ' | KM Final: ' + kmChegada;
+  statusEl.textContent = msg;
   statusEl.style.color = 'var(--green)';
 }
 
