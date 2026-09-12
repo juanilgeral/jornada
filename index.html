@@ -2821,6 +2821,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
     // guarda TODAS as viagens do motorista naquele dia (carga casada,
     // 2ª/3ª saída etc.), não só a mais recente
     lista.forEach(lanc => {
+      if (/ignorado/i.test(String(lanc.Status || ''))) return;
       const chave = normalizarNome_(lanc.Motorista);
       if (!chave) return;
       const paradas = (lanc.Paradas || []).slice().sort((a,b) => (a.NumeroLoja||0)-(b.NumeroLoja||0));
