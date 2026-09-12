@@ -2749,6 +2749,15 @@ function aplicarFiltroOperacaoAdmin() {
   renderTabelaDia(_adminDiaCache.registros || [], _adminDiaCache.frotaMap || {});
 }
 
+function operacaoClass(op) {
+  const o = String(op || '').trim().toUpperCase();
+  if (o === 'TL') return 'pill-green';
+  if (o === 'HT') return 'pill-blue';
+  if (o === 'CV') return 'pill-yellow';
+  if (o === 'LS') return 'pill-red';
+  return 'pill-muted';
+}
+
 function operacaoPassaFiltro_(op, filtro) {
   const o = String(op || '').trim().toUpperCase();
   if (!filtro) return true;
@@ -2892,7 +2901,7 @@ function renderTabelaDia(registros, frotaMap) {
         + nomeCel
         + `<td style="font-weight:700;letter-spacing:.3px">${fj.placa || vazio}</td>`
         + `<td>${r.inicio ? `<span class="pill pill-green">${r.inicio}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
-        + `<td>${fj.operacao ? `<span class="pill pill-blue">${fj.operacao}</span>` : vazio}</td>`
+        + `<td>${fj.operacao ? `<span class="pill ${operacaoClass(fj.operacao)}">${fj.operacao}</span>` : vazio}</td>`
         + `<td>${fj.destino || vazio}</td>`
         + `<td>${fj.saidaVeiculo || vazio}</td>`
         + `<td>${fj.chegadaLoja || vazio}</td>`
@@ -2934,7 +2943,7 @@ function renderTabelaDia(registros, frotaMap) {
         + nomeCel
         + `<td style="font-weight:700;letter-spacing:.3px">${fj.placa || vazio}</td>`
         + `<td><span class="pill pill-muted">—</span></td>`
-        + `<td>${fj.operacao ? `<span class="pill pill-blue">${fj.operacao}</span>` : vazio}</td>`
+        + `<td>${fj.operacao ? `<span class="pill ${operacaoClass(fj.operacao)}">${fj.operacao}</span>` : vazio}</td>`
         + `<td>${fj.destino || vazio}</td>`
         + `<td>${fj.saidaVeiculo || vazio}</td>`
         + `<td>${fj.chegadaLoja || vazio}</td>`
