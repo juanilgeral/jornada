@@ -1538,24 +1538,24 @@
 
 
     <div class="card" id="card-km-frota" style="margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface,#0f1419);">
-      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.88rem;margin-bottom:8px;">🚚 Frota — KM do veículo</div>
-      <p style="font-size:0.72rem;color:var(--muted);margin:0 0 10px;line-height:1.4;">Informe o <b>KM Inicial</b> ao sair e o <b>KM Final</b> ao chegar no CD ou Base Juanil. A placa pode ser confirmada abaixo (ou vem do Controle).</p>
-      <label style="font-size:0.7rem;color:var(--muted);display:block;margin-bottom:4px;">Placa</label>
-      <select id="fPlacaMotorista" style="width:100%;margin-bottom:10px;padding:10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);">
+      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:8px;color:#f0f4fa;">🚚 Frota — KM do veículo</div>
+      <p style="font-size:0.84rem;color:#d0d8e6;margin:0 0 14px;line-height:1.5;">Informe o <b style="color:#ffffff;">KM Inicial</b> ao sair e o <b style="color:#ffffff;">KM Final</b> ao chegar no CD ou Base Juanil. A placa pode ser confirmada abaixo (ou vem do Controle).</p>
+      <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">Placa</label>
+      <select id="fPlacaMotorista" style="width:100%;margin-bottom:12px;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);font-size:0.95rem;">
         <option value="">Selecione a placa</option>
       </select>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
-          <label style="font-size:0.7rem;color:var(--muted);">KM Inicial</label>
-          <input type="number" inputmode="numeric" id="fKmInicial" placeholder="Saída" style="width:100%;padding:10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;">
+          <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">KM Inicial</label>
+          <input type="number" inputmode="numeric" id="fKmInicial" placeholder="Saída" style="width:100%;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.95rem;">
         </div>
         <div>
-          <label style="font-size:0.7rem;color:var(--muted);">KM Final</label>
-          <input type="number" inputmode="numeric" id="fKmFinal" placeholder="CD/Base" style="width:100%;padding:10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;">
+          <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">KM Final</label>
+          <input type="number" inputmode="numeric" id="fKmFinal" placeholder="CD/Base" style="width:100%;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.95rem;">
         </div>
       </div>
-      <button type="button" class="btn-primary" style="margin-top:12px;width:100%;" onclick="salvarKmPlacaMotorista()">💾 Salvar Placa / KM</button>
-      <div id="statusKmFrota" style="font-size:0.72rem;color:var(--muted);margin-top:8px;"></div>
+      <button type="button" class="btn-primary" style="margin-top:14px;width:100%;" onclick="salvarKmPlacaMotorista()">💾 Salvar Placa / KM</button>
+      <div id="statusKmFrota" style="font-size:0.8rem;color:#9aa8bc;margin-top:10px;"></div>
     </div>
 
     <div>
@@ -2251,6 +2251,115 @@ let gpsData = null;
 let jornadaState = { inicio: null, parada: null, retorno: null, fim: null };
 const SCRIPT_URL_KEY = 'jornadatrack_script_url';
 const FROTA_JORNADA_API_URL = 'https://script.google.com/macros/s/AKfycbymMok1wWF8985aeyKS3nsjdiqIoLeMgEGIHF3GO2vvr_ErcDtYJmzM3gb9ju4YK9Ae/exec';
+
+// ── Placas no select do motorista (card KM Frota) ──────────────────────────
+async function carregarPlacasMotorista() {
+  const sel = document.getElementById('fPlacaMotorista');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Carregando placas…</option>';
+  let placas = [];
+  try {
+    const resp = await fetch(
+      FROTA_JORNADA_API_URL + '?action=getPlacas&_=' + Date.now(),
+      { cache: 'no-store' }
+    );
+    if (resp.ok) {
+      const data = await resp.json();
+      if (Array.isArray(data)) {
+        placas = data.map(p => {
+          if (typeof p === 'string') return { placa: p, op: '' };
+          return {
+            placa: p.placa || p.PLACA || p.Placa || '',
+            op: p.op || p.OP || p.Operacao || '',
+            frota: p.frota || p.FT || '',
+            motorista: p.motorista || p.Motorista || ''
+          };
+        }).filter(p => p.placa);
+      }
+    }
+  } catch (e) {
+    console.warn('[Frota] getPlacas falhou', e);
+  }
+
+  // Fallback mínimo se API vier vazia (ex.: domingo sem Controle)
+  if (!placas.length) {
+    placas = [
+      { placa: 'DPF7I23', op: 'Geral' },
+      { placa: 'LBW8156', op: 'Geral' },
+      { placa: 'LSF4199', op: 'Geral' },
+      { placa: 'KYP3601', op: 'Geral' },
+      { placa: 'KPE2252', op: 'Geral' },
+      { placa: 'LRX4829', op: 'Geral' }
+    ];
+  }
+
+  // Agrupa por operação
+  const porOp = {};
+  placas.forEach(p => {
+    const op = (p.op || 'Geral').toUpperCase() || 'Geral';
+    if (!porOp[op]) porOp[op] = [];
+    porOp[op].push(p);
+  });
+
+  let html = '<option value="">Selecione a placa</option>';
+  Object.keys(porOp).sort().forEach(op => {
+    const lista = porOp[op].slice().sort((a,b) => a.placa.localeCompare(b.placa));
+    html += `<optgroup label="${op}">`;
+    lista.forEach(p => {
+      const extra = p.frota ? ` — Frota ${p.frota}` : '';
+      html += `<option value="${p.placa}">${p.placa}${extra}</option>`;
+    });
+    html += '</optgroup>';
+  });
+  sel.innerHTML = html;
+  if (prev) sel.value = prev;
+}
+
+async function salvarKmPlacaMotorista() {
+  const status = document.getElementById('statusKmFrota');
+  const setStatus = (msg, ok) => {
+    if (!status) return;
+    status.textContent = msg;
+    status.style.color = ok ? '#3fbb78' : '#e5615f';
+  };
+
+  const placa = (document.getElementById('fPlacaMotorista') || {}).value || '';
+  const kmInicial = (document.getElementById('fKmInicial') || {}).value || '';
+  const kmFinal = (document.getElementById('fKmFinal') || {}).value || '';
+  const motorista = (currentUser && (currentUser.nome || currentUser.login)) || '';
+
+  if (!placa) {
+    setStatus('Selecione a placa.', false);
+    return;
+  }
+
+  setStatus('Salvando…', true);
+  try {
+    const body = {
+      action: 'atualizarKmPlaca',
+      placa: placa,
+      kmSaida: kmInicial,
+      kmChegada: kmFinal,
+      motorista: motorista,
+      data: new Date().toISOString().slice(0, 10)
+    };
+    const resp = await fetch(FROTA_JORNADA_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (json && json.ok) {
+      setStatus('Salvo! Placa ' + placa + (json.acao ? ' (' + json.acao + ')' : ''), true);
+    } else {
+      setStatus('Erro: ' + (json.erro || json.error || 'falha ao salvar'), false);
+    }
+  } catch (e) {
+    setStatus('Erro de rede: ' + (e.message || e), false);
+  }
+}
+
 let paradaTimer = null;
 let fimRefeicaoTimer = null;
 const DESCANSO_MS = 11 * 60 * 60 * 1000;
@@ -3081,6 +3190,7 @@ function iniciarApp() {
   restaurarTimerFimRefeicao();
   verificarDescanso();
   aplicarVisibilidadeEscalacao();
+  carregarPlacasMotorista(); // preenche select de placas do card KM Frota
 }
 
 window.addEventListener('load', () => {
