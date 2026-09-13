@@ -1451,7 +1451,7 @@
         <button class="btn-sync" id="btn-sync-app" onclick="syncNow('app')" title="Sincronizar agora">
           <span class="sync-icon">🔄</span> Sync
         </button>
-        <button class="btn-logout" onclick="window.open('https://juanilgeral.github.io/frota-jornada/', '_blank')" title="Abrir Frota Jornada">🚚 Frota</button>
+        <button class="btn-logout" onclick="window.open('https://juanilgeral.github.io/jornada/frota-lancamento-encarregado.html', '_blank')" title="Abrir app do Encarregado">📋 Encarregado</button>
         <button class="btn-logout" onclick="doLogout()">Sair</button>
       </div>
       <div class="refresh-badge" id="refresh-badge-app">atualiza em 3:00</div>
@@ -2294,23 +2294,20 @@ async function carregarPlacasMotorista() {
     ];
   }
 
-  // Agrupa por operação
-  const porOp = {};
+  // Só placas, lista simples e ordenada (sem frota / sem agrupamento)
+  const unicas = [];
+  const seen = new Set();
   placas.forEach(p => {
-    const op = (p.op || 'Geral').toUpperCase() || 'Geral';
-    if (!porOp[op]) porOp[op] = [];
-    porOp[op].push(p);
+    const placa = String(p.placa || '').trim().toUpperCase();
+    if (!placa || seen.has(placa)) return;
+    seen.add(placa);
+    unicas.push(placa);
   });
+  unicas.sort((a, b) => a.localeCompare(b));
 
   let html = '<option value="">Selecione a placa</option>';
-  Object.keys(porOp).sort().forEach(op => {
-    const lista = porOp[op].slice().sort((a,b) => a.placa.localeCompare(b.placa));
-    html += `<optgroup label="${op}">`;
-    lista.forEach(p => {
-      const extra = p.frota ? ` — Frota ${p.frota}` : '';
-      html += `<option value="${p.placa}">${p.placa}${extra}</option>`;
-    });
-    html += '</optgroup>';
+  unicas.forEach(placa => {
+    html += `<option value="${placa}">${placa}</option>`;
   });
   sel.innerHTML = html;
   if (prev) sel.value = prev;
