@@ -1536,6 +1536,28 @@
       </div>
     </div>
 
+
+    <div class="card" id="card-km-frota" style="margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface,#0f1419);">
+      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.88rem;margin-bottom:8px;">🚚 Frota — KM do veículo</div>
+      <p style="font-size:0.72rem;color:var(--muted);margin:0 0 10px;line-height:1.4;">Informe o <b>KM Inicial</b> ao sair e o <b>KM Final</b> ao chegar no CD ou Base Juanil. A placa pode ser confirmada abaixo (ou vem do Controle).</p>
+      <label style="font-size:0.7rem;color:var(--muted);display:block;margin-bottom:4px;">Placa</label>
+      <select id="fPlacaMotorista" style="width:100%;margin-bottom:10px;padding:10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);">
+        <option value="">Selecione a placa</option>
+      </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:0.7rem;color:var(--muted);">KM Inicial</label>
+          <input type="number" inputmode="numeric" id="fKmInicial" placeholder="Saída" style="width:100%;padding:10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--muted);">KM Final</label>
+          <input type="number" inputmode="numeric" id="fKmFinal" placeholder="CD/Base" style="width:100%;padding:10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;">
+        </div>
+      </div>
+      <button type="button" class="btn-primary" style="margin-top:12px;width:100%;" onclick="salvarKmPlacaMotorista()">💾 Salvar Placa / KM</button>
+      <div id="statusKmFrota" style="font-size:0.72rem;color:var(--muted);margin-top:8px;"></div>
+    </div>
+
     <div>
       <div class="section-title">Registros de Hoje</div>
       <div class="history-list" id="history-list">
@@ -2821,7 +2843,6 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
     // guarda TODAS as viagens do motorista naquele dia (carga casada,
     // 2ª/3ª saída etc.), não só a mais recente
     lista.forEach(lanc => {
-      if (/ignorado/i.test(String(lanc.Status || ''))) return;
       const chave = normalizarNome_(lanc.Motorista);
       if (!chave) return;
       const paradas = (lanc.Paradas || []).slice().sort((a,b) => (a.NumeroLoja||0)-(b.NumeroLoja||0));
