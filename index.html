@@ -3034,6 +3034,9 @@ async function buscarControleCsvIdx_(iso){
   const iMot = idx('MOTORISTA')<0?4:idx('MOTORISTA');
   const iDest = idx('DESTINO');
   const iSaida = h.indexOf('SAÍDA_VEÍCULO_CD')>=0 ? h.indexOf('SAÍDA_VEÍCULO_CD') : idx('SAIDA_VEICULO_CD');
+  const iOn = h.findIndex(x => x.includes('PONTO') && x.includes('ON'));
+  const iOff = h.findIndex(x => x.includes('PONTO') && (x.includes('OFF') || x.includes('FIM')));
+
   const out=[];
   for(let i=1;i<linhas.length;i++){
     const row = parseCsvLineIdx_(linhas[i]);
@@ -3045,7 +3048,9 @@ async function buscarControleCsvIdx_(iso){
       placa: extrairPlacaVeiculoIdx_(row[iVeic]||''),
       motorista: mot,
       destino: iDest>=0 ? (row[iDest]||'').trim() : '',
-      saidaCd: iSaida>=0 ? String(row[iSaida]||'').trim() : ''
+      saidaCd: iSaida>=0 ? String(row[iSaida]||'').trim() : '',
+      pontoOn: iOn>=0 ? String(row[iOn]||'').trim() : '',
+      pontoOff: iOff>=0 ? String(row[iOff]||'').trim() : ''
     });
   }
   return out;
@@ -3073,7 +3078,9 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         destino: item.destino || '',
         saidaVeiculo: item.saidaCd || '',
         chegadaLoja: '', aberturaBau: '', fechamentoBau: '', saidaLoja: '', totalLoja: '',
-        chegadaCD: '', kmSaida: '', kmChegada: '', horaParada: '', horaRetorno: '', statusFrota: 'Controle', origem: 'controle'
+        chegadaCD: '', kmSaida: '', kmChegada: '', horaParada: '', horaRetorno: '',
+        inicioControle: item.pontoOn || '', fimControle: item.pontoOff || '',
+        statusFrota: 'Controle', origem: 'controle'
       });
     });
   } catch (e) { console.warn('[Controle CSV]', e); }
@@ -3131,6 +3138,12 @@ function renderTabelaDia(registros, frotaMap) {
     if (k) pontoByNome[k] = r;
   });
 
+  const hhCtrl = v => {
+    const s = String(v || '').trim();
+    if (!s || s === '—' || s === '-') return '';
+    return s.length >= 5 ? s.slice(0, 5) : s;
+  };
+
   const tbody = document.getElementById('admin-tbody');
   const vazio = '<span style="color:var(--muted)">—</span>';
   const filtroOp = (document.getElementById('admin-filtro-op') || {}).value || '';
@@ -3176,7 +3189,7 @@ function renderTabelaDia(registros, frotaMap) {
       linhas += `<tr class="${grupoClasse}">`
         + nomeCel
         + `<td style="font-weight:700;letter-spacing:.3px">${fj.placa || vazio}</td>`
-        + `<td>${r.inicio ? `<span class="pill pill-green">${r.inicio}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${(r.inicio || hhCtrl(fj.inicioControle)) ? `<span class="pill pill-green">${r.inicio || hhCtrl(fj.inicioControle)}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${fj.operacao ? `<span class="pill ${operacaoClass(fj.operacao)}">${fj.operacao}</span>` : vazio}</td>`
         + `<td>${fj.destino || vazio}</td>`
         + `<td>${fj.saidaVeiculo || vazio}</td>`
@@ -3190,7 +3203,7 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td>${(r.retorno || fj.horaRetorno) ? `<span class="pill pill-blue">${r.retorno || fj.horaRetorno}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${fj.chegadaCD || vazio}</td>`
         + `<td>${fj.kmChegada || vazio}</td>`
-        + `<td>${r.fim ? `<span class="pill pill-red">${r.fim}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${(r.fim || hhCtrl(fj.fimControle)) ? `<span class="pill pill-red">${r.fim || hhCtrl(fj.fimControle)}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${r.trabalhado || vazio}</td>`
         + `<td>${r.extra && r.extra !== '—' ? `<span class="pill pill-yellow">${r.extra}</span>` : vazio}</td>`
         + `<td><span class="pill ${status.cls}">${status.label}</span></td>`
@@ -3218,7 +3231,7 @@ function renderTabelaDia(registros, frotaMap) {
       linhas += `<tr class="${grupoClasse}">`
         + nomeCel
         + `<td style="font-weight:700;letter-spacing:.3px">${fj.placa || vazio}</td>`
-        + `<td><span class="pill pill-muted">—</span></td>`
+        + `<td>${((pontoByNome[chave] && pontoByNome[chave].inicio) || hhCtrl(fj.inicioControle)) ? `<span class="pill pill-green">${(pontoByNome[chave] && pontoByNome[chave].inicio) || hhCtrl(fj.inicioControle)}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${fj.operacao ? `<span class="pill ${operacaoClass(fj.operacao)}">${fj.operacao}</span>` : vazio}</td>`
         + `<td>${fj.destino || vazio}</td>`
         + `<td>${fj.saidaVeiculo || vazio}</td>`
@@ -3232,7 +3245,7 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td>${(pontoByNome[chave] && pontoByNome[chave].retorno) || fj.horaRetorno ? `<span class="pill pill-blue">${(pontoByNome[chave] && pontoByNome[chave].retorno) || fj.horaRetorno}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${fj.chegadaCD || vazio}</td>`
         + `<td>${fj.kmChegada || vazio}</td>`
-        + `<td><span class="pill pill-muted">—</span></td>`
+        + `<td>${((pontoByNome[chave] && pontoByNome[chave].fim) || hhCtrl(fj.fimControle)) ? `<span class="pill pill-red">${(pontoByNome[chave] && pontoByNome[chave].fim) || hhCtrl(fj.fimControle)}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${vazio}</td>`
         + `<td>${vazio}</td>`
         + `<td><span class="pill pill-muted">${statusLabel}</span></td>`

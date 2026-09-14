@@ -207,6 +207,9 @@ async function buscarControleCsv(iso){
   const iMot = idx('MOTORISTA')<0?4:idx('MOTORISTA');
   const iDest = idx('DESTINO');
   const iSaida = h.indexOf('SAÍDA_VEÍCULO_CD')>=0 ? h.indexOf('SAÍDA_VEÍCULO_CD') : idx('SAIDA_VEICULO_CD');
+  const iOn = h.findIndex(x => x.includes('PONTO') && x.includes('ON'));
+  const iOff = h.findIndex(x => x.includes('PONTO') && (x.includes('OFF') || x.includes('FIM')));
+
   const out=[];
   for(let i=1;i<linhas.length;i++){
     const r = parseCsvLine(linhas[i]);
@@ -221,7 +224,9 @@ async function buscarControleCsv(iso){
       placa: extrairPlacaVeiculo(veic),
       motorista: mot || veic,
       destino: iDest>=0 ? (r[iDest]||'').trim() : '',
-      saidaCd: iSaida>=0 ? String(r[iSaida]||'').trim() : ''
+      saidaCd: iSaida>=0 ? String(r[iSaida]||'').trim() : '',
+      pontoOn: iOn>=0 ? String(r[iOn]||'').trim() : '',
+      pontoOff: iOff>=0 ? String(r[iOff]||'').trim() : ''
     });
   }
   return out;
@@ -262,6 +267,8 @@ async function carregar(){
     row.operacao = item.op || row.operacao;
     row.destino = item.destino || row.destino;
     if(!row.saidaVeiculo) row.saidaVeiculo = item.saidaCd || '';
+    if(item.pontoOn) row.inicioControle = item.pontoOn;
+    if(item.pontoOff) row.fimControle = item.pontoOff;
   });
 
   // Ponto Jornada = horários do motorista
@@ -308,6 +315,15 @@ async function carregar(){
     if(!row.retorno) row.retorno = lanc.HoraRetorno || lanc.FimAlmoco || row.retorno;
   });
 
+  Object.values(mapa).forEach(row => {
+    const hh = v => {
+      const s = String(v||'').trim();
+      if(!s || s==='—' || s==='-') return '';
+      return s.length>=5 ? s.slice(0,5) : s;
+    };
+    if(!row.inicio) row.inicio = hh(row.inicioControle);
+    if(!row.fim) row.fim = hh(row.fimControle);
+  });
   const lista = Object.values(mapa).sort((a,b)=>{
     const ap = a.inicio ? 0 : 1, bp = b.inicio ? 0 : 1;
     if(ap!==bp) return ap-bp;
