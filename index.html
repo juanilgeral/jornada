@@ -2992,7 +2992,8 @@ async function buscarDia() {
     if (!registros.length) showToast('❌ Erro ao buscar o ponto', 'error');
   }
   try {
-    frotaMap = await buscarFrotaJornadaDoDia_(inputData) || {};
+    const novo = await buscarFrotaJornadaDoDia_(inputData) || {};
+    if (Object.keys(novo).length) frotaMap = novo;
     _adminDiaCache = { registros, frotaMap };
     renderTabelaDia(registros, frotaMap);
   } catch(e) { console.warn('frota', e); }
@@ -3072,6 +3073,55 @@ async function buscarControleCsvIdx_(iso){
 }
 
 
+
+const TRUCKSLOG_CSV_URL_IDX = 'https://docs.google.com/spreadsheets/d/1TtgHyiAFdj1jCZGfm4VYzqw-4bEluQ34c95cYH_M6OA/gviz/tq?tqx=out:csv&gid=149639861';
+function hhLogIdx_(v){
+  const s = String(v||'').trim();
+  const m = s.match(/(\d{1,2}:\d{2})/);
+  return m ? m[1].padStart(5,'0') : '';
+}
+async function buscarTrucksLogAtualIdx_(iso){
+  const out = {};
+  try {
+    const txt = await (await fetchComTempo_(TRUCKSLOG_CSV_URL_IDX+'&_='+Date.now(), 12000)).text();
+    const linhas = txt.split(/\r?\n/).filter(Boolean);
+    const p0 = String(iso||'').split('-');
+    const alvos = p0.length===3 ? [p0[2]+'/'+p0[1]+'/'+p0[0]] : [];
+    const evts = {};
+    for(let i=1;i<linhas.length;i++){
+      const r = parseCsvLineIdx_(linhas[i]);
+      const dh = String(r[0]||'');
+      if(!alvos.some(a => dh.indexOf(a)===0)) continue;
+      const ev = String(r[1]||'').toUpperCase();
+      const placa = String(r[2]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+      if(!placa) continue;
+      const hora = hhLogIdx_(r[3]) || hhLogIdx_(dh.split(' ').slice(-1)[0]);
+      (evts[placa]=evts[placa]||[]).push({ev,hora});
+    }
+    Object.keys(evts).forEach(placa => {
+      const lista = evts[placa];
+      let lastFim = -1;
+      lista.forEach((e,idx)=>{ if(e.ev==='FIM_VIAGEM'||e.ev==='FIM_FINAL'||e.ev==='RETORNO') lastFim=idx; });
+      let lastIni = -1;
+      lista.forEach((e,idx)=>{ if(e.ev==='INICIO_VIAGEM' && idx>=lastFim) lastIni=idx; });
+      if(lastIni<0) lista.forEach((e,idx)=>{ if(e.ev==='INICIO_VIAGEM') lastIni=idx; });
+      const janela = lastIni>=0 ? lista.slice(lastIni) : lista;
+      const row = { saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'' };
+      janela.forEach(e => {
+        const hora=e.hora; if(!hora) return;
+        if(e.ev==='INICIO_VIAGEM' && !row.saidaVeiculo) row.saidaVeiculo=hora;
+        if(e.ev==='CHEGADA_CLIENTE') row.chegadaLoja=hora;
+        if(e.ev==='ABERTURA_BAU' || (e.ev==='INICIO_DESCARREGAMENTO' && !row.aberturaBau)) row.aberturaBau=hora;
+        if(e.ev==='FECHAMENTO_BAU') row.fechamentoBau=hora;
+        if(e.ev==='RETORNO'||e.ev==='FIM_FINAL'||e.ev==='FIM_VIAGEM') row.chegadaCD=hora;
+      });
+      if(!janela.some(e => e.ev==='RETORNO'||e.ev==='FIM_FINAL'||e.ev==='FIM_VIAGEM')) row.chegadaCD='';
+      out[placa]=row;
+    });
+  } catch(e){ console.warn('[TrucksLog]', e); }
+  return out;
+}
+
 async function buscarFrotaJornadaDoDia_(dataISO) {
   const mapa = {};
   if (!dataISO) return mapa;
@@ -3102,7 +3152,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
 
   // Lancamentos = KM do ponto + horários Trucks
   try {
-    const resp = await fetch(`${FROTA_JORNADA_API_URL}?action=getLancamentos&data=${encodeURIComponent(dataParam)}`, { cache: 'no-store' });
+    const resp = await fetchComTempo_(`${FROTA_JORNADA_API_URL}?action=getLancamentos&data=${encodeURIComponent(dataParam)}`, 12000);
     if (resp.ok) {
       const lista = await resp.json();
       if (Array.isArray(lista)) {
@@ -3138,6 +3188,24 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
       }
     }
   } catch (e) { console.warn('[Frota]', e); }
+
+  try {
+    const logMap = await buscarTrucksLogAtualIdx_(dataParam);
+    Object.keys(mapa).forEach(chave => {
+      (mapa[chave]||[]).forEach(alvo => {
+        const pk = String(alvo.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+        const ev = logMap[pk];
+        if(!ev) return;
+        if(ev.saidaVeiculo && !alvo.saidaVeiculo) alvo.saidaVeiculo = ev.saidaVeiculo;
+        if(ev.chegadaLoja) alvo.chegadaLoja = ev.chegadaLoja;
+        if(ev.aberturaBau) alvo.aberturaBau = ev.aberturaBau;
+        if(ev.fechamentoBau) alvo.fechamentoBau = ev.fechamentoBau;
+        if(ev.saidaLoja) alvo.saidaLoja = ev.saidaLoja;
+        if(ev.chegadaCD) alvo.chegadaCD = ev.chegadaCD;
+        else if(!alvo.chegadaCD) alvo.chegadaCD = '';
+      });
+    });
+  } catch(e){ console.warn('[TrucksLog merge]', e); }
 
   Object.keys(mapa).forEach(chave => {
     mapa[chave].sort((a, b) => (a.saidaVeiculo || '').localeCompare(b.saidaVeiculo || ''));
