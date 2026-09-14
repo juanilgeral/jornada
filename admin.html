@@ -62,10 +62,10 @@
     <table>
       <thead>
         <tr>
-          <th>Nome</th><th>Placa</th><th>Início</th><th>Operação</th><th>Destino</th>
-          <th>Saída Veíc.</th><th>Chegada Loja</th><th>Abertura Baú</th><th>Fechamento Baú</th>
-          <th>Saída Loja</th><th>Total Loja</th><th>Parada</th><th>Retorno</th>
-          <th>Chegada CD</th><th>Km Saída</th><th>Km Chegada</th><th>Fim</th>
+                    <th>Nome</th><th>Placa</th><th>Início</th><th>Operação</th><th>Destino</th>
+          <th>Saída Veíc.</th><th>Km Saída</th><th>Chegada Loja</th><th>Abertura Baú</th>
+          <th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>Parada</th>
+          <th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th>
           <th>Trabalhado</th><th>Extra</th><th>Status</th>
         </tr>
       </thead>
@@ -292,6 +292,7 @@ async function carregar(){
       <td>${pillOp(r.operacao)}</td>
       <td>${vazio(r.destino)}</td>
       <td>${vazio(r.saidaVeiculo)}</td>
+      <td>${vazio(r.kmSaida)}</td>
       <td>${vazio(r.chegadaLoja)}</td>
       <td>${vazio(r.aberturaBau)}</td>
       <td>${vazio(r.fechamentoBau)}</td>
@@ -300,7 +301,6 @@ async function carregar(){
       <td>${r.parada?`<span class="pill p-yellow">${esc(r.parada)}</span>`:vazio('')}</td>
       <td>${r.retorno?`<span class="pill p-blue">${esc(r.retorno)}</span>`:vazio('')}</td>
       <td>${vazio(r.chegadaCD)}</td>
-      <td>${vazio(r.kmSaida)}</td>
       <td>${vazio(r.kmChegada)}</td>
       <td>${r.fim?`<span class="pill p-red">${esc(r.fim)}</span>`:vazio('')}</td>
       <td>${vazio(trab)}</td>

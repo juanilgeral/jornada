@@ -1639,7 +1639,7 @@
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Nome</th><th>Placa</th><th>Início</th><th>Operação</th><th>Destino</th><th>Saída Veíc.</th><th>Chegada Loja</th><th>Abertura Baú</th><th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>Parada</th><th>Retorno</th><th>Chegada CD</th><th>Km Saída</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
+          <thead><tr><th>Nome</th><th>Placa</th><th>Início</th><th>Operação</th><th>Destino</th><th>Saída Veíc.</th><th>Km Saída</th><th>Chegada Loja</th><th>Abertura Baú</th><th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>Parada</th><th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
           <tbody id="admin-tbody"><tr><td colspan="20" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
         </table>
       </div>
@@ -3109,6 +3109,7 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td>${fj.operacao ? `<span class="pill ${operacaoClass(fj.operacao)}">${fj.operacao}</span>` : vazio}</td>`
         + `<td>${fj.destino || vazio}</td>`
         + `<td>${fj.saidaVeiculo || vazio}</td>`
+        + `<td>${fj.kmSaida || vazio}</td>`
         + `<td>${fj.chegadaLoja || vazio}</td>`
         + `<td>${fj.aberturaBau || vazio}</td>`
         + `<td>${fj.fechamentoBau || vazio}</td>`
@@ -3117,7 +3118,6 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td>${r.parada ? `<span class="pill pill-yellow">${r.parada}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${r.retorno ? `<span class="pill pill-blue">${r.retorno}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${fj.chegadaCD || vazio}</td>`
-        + `<td>${fj.kmSaida || vazio}</td>`
         + `<td>${fj.kmChegada || vazio}</td>`
         + `<td>${r.fim ? `<span class="pill pill-red">${r.fim}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${r.trabalhado || vazio}</td>`
@@ -3151,6 +3151,7 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td>${fj.operacao ? `<span class="pill ${operacaoClass(fj.operacao)}">${fj.operacao}</span>` : vazio}</td>`
         + `<td>${fj.destino || vazio}</td>`
         + `<td>${fj.saidaVeiculo || vazio}</td>`
+        + `<td>${fj.kmSaida || vazio}</td>`
         + `<td>${fj.chegadaLoja || vazio}</td>`
         + `<td>${fj.aberturaBau || vazio}</td>`
         + `<td>${fj.fechamentoBau || vazio}</td>`
@@ -3159,7 +3160,6 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td><span class="pill pill-muted">—</span></td>`
         + `<td><span class="pill pill-muted">—</span></td>`
         + `<td>${fj.chegadaCD || vazio}</td>`
-        + `<td>${fj.kmSaida || vazio}</td>`
         + `<td>${fj.kmChegada || vazio}</td>`
         + `<td><span class="pill pill-muted">—</span></td>`
         + `<td>${vazio}</td>`
