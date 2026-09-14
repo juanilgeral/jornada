@@ -237,45 +237,33 @@ async function buscarTrucksLogDoDia_(iso){
   }
   Object.keys(evts).forEach(placa => {
     const lista = evts[placa];
-    const vazio = () => ({ saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', parada:'', retorno:'' });
-    const trips = [];
-    let cur = vazio();
-    let aberta = false;
-    const flush = () => {
-      const tem = cur.saidaVeiculo || cur.chegadaLoja || cur.chegadaCD || cur.aberturaBau || cur.parada;
-      if(tem) trips.push(cur);
-      cur = vazio();
-      aberta = false;
-    };
-    lista.forEach(e => {
-      const hora = e.hora;
-      if(e.ev==='INICIO_VIAGEM'){
-        if(aberta){
-          if(hora && !cur.saidaVeiculo) cur.saidaVeiculo = hora;
-          return;
-        }
-        if(cur.saidaVeiculo || cur.chegadaCD) flush();
-        cur = vazio();
-        cur.saidaVeiculo = hora || '';
-        aberta = true;
-        return;
-      }
-      if(!hora) return;
-      if(e.ev==='CHEGADA_CLIENTE') cur.chegadaLoja = hora;
-      if(e.ev==='ABERTURA_BAU') cur.aberturaBau = hora;
-      if(e.ev==='INICIO_DESCARREGAMENTO' && !cur.aberturaBau) cur.aberturaBau = hora;
-      if(e.ev==='FECHAMENTO_BAU') cur.fechamentoBau = hora;
-      if(e.ev==='PARADA_REFEICAO') cur.parada = hora;
-      if(e.ev==='REINICIO_VIAGEM' || e.ev==='REINICIO') cur.retorno = hora;
-      if(e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM'){
-        cur.chegadaCD = hora;
-        aberta = false;
-        flush();
-      }
+    const row = { saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', parada:'', retorno:'' };
+    let lastFimIdx = -1;
+    lista.forEach((e, idx) => {
+      if(e.ev==='FIM_VIAGEM' || e.ev==='FIM_FINAL' || e.ev==='RETORNO') lastFimIdx = idx;
     });
-    if(cur.saidaVeiculo || cur.chegadaLoja || cur.chegadaCD || cur.aberturaBau || cur.parada) trips.push(cur);
-    if(!trips.length) trips.push(vazio());
-    out[placa] = trips;
+    let lastInicioIdx = -1;
+    lista.forEach((e, idx) => {
+      if(e.ev==='INICIO_VIAGEM' && idx >= lastFimIdx) lastInicioIdx = idx;
+    });
+    if(lastInicioIdx < 0){
+      lista.forEach((e, idx) => { if(e.ev==='INICIO_VIAGEM') lastInicioIdx = idx; });
+    }
+    const janela = lastInicioIdx >= 0 ? lista.slice(lastInicioIdx) : lista;
+    janela.forEach(e => {
+      const hora = e.hora;
+      if(!hora) return;
+      if(e.ev==='INICIO_VIAGEM' && !row.saidaVeiculo) row.saidaVeiculo = hora;
+      if(e.ev==='CHEGADA_CLIENTE') row.chegadaLoja = hora;
+      if(e.ev==='ABERTURA_BAU') row.aberturaBau = hora;
+      if(e.ev==='INICIO_DESCARREGAMENTO' && !row.aberturaBau) row.aberturaBau = hora;
+      if(e.ev==='FECHAMENTO_BAU') row.fechamentoBau = hora;
+      if(e.ev==='PARADA_REFEICAO') row.parada = hora;
+      if(e.ev==='REINICIO_VIAGEM' || e.ev==='REINICIO') row.retorno = hora;
+      if(e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM') row.chegadaCD = hora;
+    });
+    if(!janela.some(e => e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM')) row.chegadaCD = '';
+    out[placa] = row;
   });
   return out;
 }
@@ -366,29 +354,22 @@ async function buscarTrucksLogDoDia_(iso){
   });
 
   const hh = v => { const s=String(v||'').trim(); if(!s||s==='—') return ''; return s.length>=5?s.slice(0,5):s; };
-  const lista = [];
-  Object.values(mapa).forEach(base => {
-    if(!base.inicio) base.inicio = hh(base.inicioControle);
-    if(!base.fim) base.fim = hh(base.fimControle);
-    const pk = String(base.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-    const trips = Array.isArray(trucksLogMap[pk]) ? trucksLogMap[pk] : (trucksLogMap[pk] ? [trucksLogMap[pk]] : [{}]);
-    trips.forEach((ev, idx) => {
-      const row = Object.assign({}, base);
-      if(ev.saidaVeiculo) row.saidaVeiculo = ev.saidaVeiculo;
-      if(ev.chegadaLoja) row.chegadaLoja = ev.chegadaLoja;
-      if(ev.aberturaBau) row.aberturaBau = ev.aberturaBau;
-      if(ev.fechamentoBau) row.fechamentoBau = ev.fechamentoBau;
-      if(ev.saidaLoja) row.saidaLoja = ev.saidaLoja;
-      row.chegadaCD = ev.chegadaCD || '';
-      if(!row.parada && ev.parada) row.parada = ev.parada;
-      if(!row.retorno && ev.retorno) row.retorno = ev.retorno;
-      if(idx>0){ row.inicio = ''; row.parada = ev.parada||''; row.retorno = ev.retorno||''; row.fim = ''; row.viagem = idx+1; }
-      else row.viagem = trips.length>1 ? 1 : 0;
-      row.totalViagens = trips.length;
-      lista.push(row);
-    });
+  Object.values(mapa).forEach(row => {
+    if(!row.inicio) row.inicio = hh(row.inicioControle);
+    if(!row.fim) row.fim = hh(row.fimControle);
+    const pk = String(row.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+    const ev = trucksLogMap[pk];
+    if(!ev) return;
+    if(ev.saidaVeiculo) row.saidaVeiculo = ev.saidaVeiculo;
+    if(ev.chegadaLoja) row.chegadaLoja = ev.chegadaLoja;
+    if(ev.aberturaBau) row.aberturaBau = ev.aberturaBau;
+    if(ev.fechamentoBau) row.fechamentoBau = ev.fechamentoBau;
+    if(ev.saidaLoja) row.saidaLoja = ev.saidaLoja;
+    row.chegadaCD = ev.chegadaCD || '';
+    if(!row.parada && ev.parada) row.parada = ev.parada;
+    if(!row.retorno && ev.retorno) row.retorno = ev.retorno;
   });
-  lista.sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR') || String(a.saidaVeiculo).localeCompare(String(b.saidaVeiculo)));
+  const lista = Object.values(mapa).sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR'));
   let iniciados=0, almoco=0, fins=0;
   lista.forEach(r => { if(r.inicio) iniciados++; if(r.parada && !r.retorno) almoco++; if(r.fim) fins++; });
   $('#stats').innerHTML = `
@@ -414,7 +395,7 @@ async function buscarTrucksLogDoDia_(iso){
     const trab = r.trabalhado || calcTrabalhado(r);
     const extra = r.extra || calcExtra(trab);
     return `<tr>
-      <td style="font-weight:700">${esc(r.nome)}${r.totalViagens>1?` <span class="pill p-muted">${r.viagem}ª viagem</span>`:''}</td>
+      <td style="font-weight:700">${esc(r.nome)}</td>
       <td style="font-weight:800">${vazio(r.placa)}</td>
       <td>${r.inicio?`<span class="pill p-green">${esc(r.inicio)}</span>`:vazio('')}</td>
       <td><span class="pill p-green">TL</span></td>
