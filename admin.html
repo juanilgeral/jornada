@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jornada — Painel Admin</title>
+<style>
+  :root{
+    --bg:#0a0f1e; --card:#111827; --line:#1f2d45; --text:#e8edf5; --muted:#9aa8bc;
+    --green:#22c55e; --blue:#3b82f6; --yellow:#f59e0b; --red:#ef4444; --orange:#f97316;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  header{position:sticky;top:0;z-index:20;background:#0d1424;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+  .brand{font-weight:800}
+  .brand small{display:block;color:#c8a96e;font-weight:500;font-size:.72rem}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  input,select,button{background:#0a0e14;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  button{cursor:pointer}
+  .btn{background:#f97316;border-color:#f97316;color:#111;font-weight:700}
+  .wrap{padding:14px 16px 40px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .stat .n{font-size:1.4rem;font-weight:800}
+  .stat .l{font-size:.72rem;color:var(--muted);margin-top:4px}
+  .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+  table{width:100%;border-collapse:collapse;min-width:1400px;font-size:.78rem}
+  th{position:sticky;top:0;background:#152036;text-align:left;padding:8px;white-space:nowrap;color:#c5d0e0}
+  td{padding:8px;border-top:1px solid var(--line);white-space:nowrap}
+  tr:nth-child(even){background:#0e1626}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700}
+  .p-green{background:#16351f;color:#4ade80}
+  .p-blue{background:#102a4a;color:#60a5fa}
+  .p-yellow{background:#3a2a10;color:#fbbf24}
+  .p-red{background:#3a1414;color:#f87171}
+  .p-muted{background:#1b2433;color:#8b9bb0}
+  .empty{text-align:center;padding:28px;color:var(--muted)}
+  a.link{color:#93c5fd;text-decoration:none;font-size:.8rem}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Painel Admin<small>Jornada Juanil — não altera o app de ponto</small></div>
+  <div class="row">
+    <input type="date" id="fData">
+    <select id="fOp">
+      <option value="">Todas operações</option>
+      <option value="TL">TL</option>
+      <option value="LS">LS</option>
+      <option value="HT">HT</option>
+      <option value="CV">CV</option>
+    </select>
+    <button class="btn" onclick="carregar()">Buscar</button>
+    <a class="link" href="./index.html">App ponto</a>
+    <a class="link" href="./painel-tl.html">Painel TL</a>
+    <a class="link" href="./frota-lancamento-encarregado.html">Encarregado</a>
+  </div>
+</header>
+<div class="wrap">
+  <div class="stats" id="stats"></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th><th>Placa</th><th>Início</th><th>Operação</th><th>Destino</th>
+          <th>Saída Veíc.</th><th>Km Saída</th><th>Chegada Loja</th><th>Abertura Baú</th>
+          <th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>Parada</th>
+          <th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th>
+          <th>Trabalhado</th><th>Extra</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"><tr><td colspan="20" class="empty">Selecione a data e clique em Buscar</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<script>
+const JORNADA_URL = localStorage.getItem('jornadatrack_script_url')
+  || 'https://script.google.com/macros/s/AKfycbxrwfM5xkgod6aCg7PEiJbXys2iHMtgwqyJQhKvGBnZTbutBZPZkI4bTXcCruDaTYW4/exec';
+const FROTA_URL = 'https://script.google.com/macros/s/AKfycbymMok1wWF8985aeyKS3nsjdiqIoLeMgEGIHF3GO2vvr_ErcDtYJmzM3gb9ju4YK9Ae/exec';
+
+const $ = s => document.querySelector(s);
+function hojeISO(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+$('#fData').value = hojeISO();
+
+function normNome(n){
+  return String(n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+}
+function placaKey(p){ return String(p||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase(); }
+function esc(v){ return String(v??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function vazio(v){ return v ? esc(v) : '<span style="color:#6b7a90">—</span>'; }
+function pillOp(op){
+  const o = String(op||'').toUpperCase();
+  const cls = o==='TL'?'p-green':o==='HT'?'p-blue':o==='CV'?'p-yellow':o==='LS'?'p-red':'p-muted';
+  return o ? `<span class="pill ${cls}">${esc(o)}</span>` : vazio('');
+}
+
+function parseHora(h){
+  const m = String(h||'').match(/(\d{1,2}):(\d{2})/);
+  if(!m) return null;
+  return Number(m[1])*60 + Number(m[2]);
+}
+function fmtMin(min){
+  if(min==null || isNaN(min) || min<0) return '';
+  const hh = Math.floor(min/60), mm = min%60;
+  return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+}
+function calcTrabalhado(r){
+  const i = parseHora(r.inicio), f = parseHora(r.fim);
+  if(i==null || f==null) return '';
+  let tot = f - i;
+  const p = parseHora(r.parada), ret = parseHora(r.retorno);
+  if(p!=null && ret!=null && ret>=p) tot -= (ret-p);
+  if(tot<0) tot += 24*60;
+  return fmtMin(tot);
+}
+function calcExtra(trab){
+  const m = parseHora(trab);
+  if(m==null) return '';
+  const extra = m - 8*60;
+  return extra>0 ? fmtMin(extra) : '00:00';
+}
+function calcTotalLoja(chegada, saida){
+  const a = parseHora(chegada), b = parseHora(saida);
+  if(a==null || b==null) return '';
+  let tot = b-a;
+  if(tot<0) tot += 24*60;
+  return fmtMin(tot);
+}
+
+function toBR(iso){
+  const p = String(iso||'').split('-');
+  return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : iso;
+}
+
+async function carregar(){
+  const iso = $('#fData').value;
+  const filtro = $('#fOp').value;
+  if(!iso) return;
+  $('#tbody').innerHTML = '<tr><td colspan="20" class="empty">Carregando…</td></tr>';
+
+  const [ponto, controle, lancs] = await Promise.all([
+    fetch(`${JORNADA_URL}?acao=resumo_dia&data=${encodeURIComponent(toBR(iso))}`).then(r=>r.json()).catch(()=>({registros:[]})),
+    fetch(`${FROTA_URL}?action=getControleDoDia&data=${encodeURIComponent(iso)}&_=${Date.now()}`).then(r=>r.json()).catch(()=>[]),
+    fetch(`${FROTA_URL}?action=getLancamentos&data=${encodeURIComponent(iso)}`).then(r=>r.json()).catch(()=>[])
+  ]);
+
+  const mapa = {};
+  const garanta = (chave, nome) => {
+    if(!mapa[chave]) mapa[chave] = { nome, inicio:'', parada:'', retorno:'', fim:'', placa:'', operacao:'', destino:'', saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', kmSaida:'', kmChegada:'', totalLoja:'', status:'' };
+    return mapa[chave];
+  };
+
+  // Controle = PLACA / OP / DESTINO
+  (Array.isArray(controle)?controle:[]).forEach(item => {
+    const chave = normNome(item.motorista);
+    if(!chave) return;
+    if(filtro && String(item.op||'').toUpperCase() !== filtro) return;
+    const row = garanta(chave, item.motorista || chave);
+    row.placa = item.placa || row.placa;
+    row.operacao = item.op || row.operacao;
+    row.destino = item.destino || row.destino;
+    if(!row.saidaVeiculo) row.saidaVeiculo = item.saidaCd || '';
+  });
+
+  // Ponto Jornada = horários do motorista
+  (ponto.registros||[]).forEach(r => {
+    const chave = normNome(r.nome);
+    if(!chave) return;
+    const row = mapa[chave];
+    if(filtro && row && row.operacao && row.operacao.toUpperCase() !== filtro) return;
+    const dest = garanta(chave, r.nome || chave);
+    dest.inicio = r.inicio || dest.inicio;
+    dest.parada = r.parada || dest.parada;
+    dest.retorno = r.retorno || dest.retorno;
+    dest.fim = r.fim || dest.fim;
+    dest.trabalhado = r.trabalhado || r.Trabalhado || dest.trabalhado;
+    dest.extra = r.extra || r.Extra || dest.extra;
+  });
+
+  // Trucks / Lancamentos = loja, baú, CD, KM do app e almoço automático se o ponto não tiver
+  (Array.isArray(lancs)?lancs:[]).forEach(lanc => {
+    if(/ignorado/i.test(String(lanc.Status||''))) return;
+    const chave = normNome(lanc.Motorista);
+    if(!chave) return;
+    const row = mapa[chave] || garanta(chave, lanc.Motorista || chave);
+    if(filtro && row.operacao && row.operacao.toUpperCase() !== filtro && String(lanc.Operacao||'').toUpperCase() !== filtro) return;
+    if(!row.placa && lanc.Placa) row.placa = lanc.Placa;
+    if(!row.operacao && lanc.Operacao) row.operacao = lanc.Operacao;
+    if(!row.destino && lanc.Destino) row.destino = lanc.Destino;
+    if(lanc.KmSaida) row.kmSaida = lanc.KmSaida;
+    if(lanc.KmChegada) row.kmChegada = lanc.KmChegada;
+    if(lanc.HoraProgramadaSaida) row.saidaVeiculo = lanc.HoraProgramadaSaida;
+    const paradas = (lanc.Paradas||[]).slice().sort((a,b)=>(Number(a.NumeroLoja)||0)-(Number(b.NumeroLoja)||0));
+    const melhor = paradas.find(p => p.HoraChegada || p.HoraAberturaBau || p.HoraFechamentoBau || p.HoraSaida) || paradas[0] || {};
+    row.chegadaLoja = melhor.HoraChegada || row.chegadaLoja;
+    row.aberturaBau = melhor.HoraAberturaBau || row.aberturaBau;
+    row.fechamentoBau = melhor.HoraFechamentoBau || row.fechamentoBau;
+    row.saidaLoja = melhor.HoraSaida || row.saidaLoja;
+    row.totalLoja = melhor.TotalLoja || row.totalLoja;
+    row.chegadaCD = lanc.HoraChegadaCD || row.chegadaCD;
+    if(!row.parada) row.parada = lanc.HoraParada || lanc.InicioAlmoco || melhor.HoraInicioDescarregamento || row.parada;
+    if(!row.retorno) row.retorno = lanc.HoraRetorno || lanc.FimAlmoco || row.retorno;
+  });
+
+  const lista = Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  const visiveis = filtro ? lista.filter(r => String(r.operacao||'').toUpperCase()===filtro || (!r.operacao && !filtro)) : lista;
+
+  let iniciados=0, almoco=0, fins=0;
+  visiveis.forEach(r => {
+    if(r.inicio) iniciados++;
+    if(r.parada && !r.retorno) almoco++;
+    if(r.fim) fins++;
+  });
+  $('#stats').innerHTML = `
+    <div class="stat"><div class="n">${visiveis.length}</div><div class="l">Total</div></div>
+    <div class="stat"><div class="n" style="color:#4ade80">${iniciados}</div><div class="l">Iniciaram</div></div>
+    <div class="stat"><div class="n" style="color:#fbbf24">${almoco}</div><div class="l">Almoço</div></div>
+    <div class="stat"><div class="n" style="color:#f87171">${fins}</div><div class="l">Finalizaram</div></div>`;
+
+  if(!visiveis.length){
+    $('#tbody').innerHTML = '<tr><td colspan="20" class="empty">Nenhum registro nesta data</td></tr>';
+    return;
+  }
+
+  $('#tbody').innerHTML = visiveis.map(r => {
+    let st='Não iniciou', cls='p-muted';
+    if(r.fim){ st='Finalizado'; cls='p-red'; }
+    else if(r.retorno){ st='Trabalhando'; cls='p-green'; }
+    else if(r.parada){ st='Almoço'; cls='p-yellow'; }
+    else if(r.inicio){ st='Em serviço'; cls='p-blue'; }
+    const totalLoja = r.totalLoja || calcTotalLoja(r.chegadaLoja, r.saidaLoja);
+    const trab = r.trabalhado || calcTrabalhado(r);
+    const extra = r.extra || calcExtra(trab);
+    return `<tr>
+      <td style="font-weight:700">${esc(r.nome)}</td>
+      <td style="font-weight:800">${vazio(r.placa)}</td>
+      <td>${r.inicio?`<span class="pill p-green">${esc(r.inicio)}</span>`:vazio('')}</td>
+      <td>${pillOp(r.operacao)}</td>
+      <td>${vazio(r.destino)}</td>
+      <td>${vazio(r.saidaVeiculo)}</td>
+      <td>${vazio(r.kmSaida)}</td>
+      <td>${vazio(r.chegadaLoja)}</td>
+      <td>${vazio(r.aberturaBau)}</td>
+      <td>${vazio(r.fechamentoBau)}</td>
+      <td>${vazio(r.saidaLoja)}</td>
+      <td>${vazio(totalLoja)}</td>
+      <td>${r.parada?`<span class="pill p-yellow">${esc(r.parada)}</span>`:vazio('')}</td>
+      <td>${r.retorno?`<span class="pill p-blue">${esc(r.retorno)}</span>`:vazio('')}</td>
+      <td>${vazio(r.chegadaCD)}</td>
+      <td>${vazio(r.kmChegada)}</td>
+      <td>${r.fim?`<span class="pill p-red">${esc(r.fim)}</span>`:vazio('')}</td>
+      <td>${vazio(trab)}</td>
+      <td>${vazio(extra)}</td>
+      <td><span class="pill ${cls}">${st}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+carregar();
+</script>
+</body>
+</html>
