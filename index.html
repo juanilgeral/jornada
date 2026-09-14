@@ -2944,99 +2944,111 @@ function normalizarNome_(nome) {
     .trim()
     .toUpperCase();
 }
+
+const CONTROLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/19ztgd86-ivwJveXp0Q_032P1fFaSuC9D9uaMJ4r6mP8/gviz/tq?tqx=out:csv&gid=1559964021';
+function extrairPlacaVeiculoIdx_(veiculo){
+  const limpo = String(veiculo||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const m = limpo.match(/([A-Z]{3}\d[A-Z0-9]\d{2}|[A-Z]{3}\d{4})/);
+  return m ? m[1] : limpo;
+}
+function dataBateIdx_(cell, iso){
+  const p = String(iso||'').split('-');
+  if(p.length!==3) return false;
+  const alvos = [p[2]+'/'+p[1]+'/'+p[0].slice(2), p[2]+'/'+p[1]+'/'+p[0], iso];
+  const d = String(cell||'').trim().replace(/"/g,'');
+  return alvos.some(a => d===a || d.indexOf(a)===0);
+}
+function parseCsvLineIdx_(line){
+  const out=[]; let cur='', q=false;
+  for(const ch of line){
+    if(ch==='"'){ q=!q; continue; }
+    if(ch===',' && !q){ out.push(cur); cur=''; continue; }
+    cur+=ch;
+  }
+  out.push(cur);
+  return out;
+}
+async function buscarControleCsvIdx_(iso){
+  const r = await fetch(CONTROLE_CSV_URL+'&_='+Date.now(), {cache:'no-store'});
+  const txt = await r.text();
+  const linhas = txt.split(/\r?\n/).filter(Boolean);
+  if(linhas.length<2) return [];
+  const h = parseCsvLineIdx_(linhas[0]).map(x=>x.trim().toUpperCase().replace(/"/g,''));
+  const idx = n => h.indexOf(n);
+  let iData = idx('DATA'); if(iData<0) iData = 0;
+  const iOp = idx('OP')<0?2:idx('OP');
+  const iVeic = idx('VEICULO')<0?3:idx('VEICULO');
+  const iMot = idx('MOTORISTA')<0?4:idx('MOTORISTA');
+  const iDest = idx('DESTINO');
+  const iSaida = h.indexOf('SAÍDA_VEÍCULO_CD')>=0 ? h.indexOf('SAÍDA_VEÍCULO_CD') : idx('SAIDA_VEICULO_CD');
+  const out=[];
+  for(let i=1;i<linhas.length;i++){
+    const row = parseCsvLineIdx_(linhas[i]);
+    if(!dataBateIdx_(row[iData], iso)) continue;
+    const mot = (row[iMot]||'').trim();
+    if(!mot) continue;
+    out.push({
+      op: (row[iOp]||'').trim(),
+      placa: extrairPlacaVeiculoIdx_(row[iVeic]||''),
+      motorista: mot,
+      destino: iDest>=0 ? (row[iDest]||'').trim() : '',
+      saidaCd: iSaida>=0 ? String(row[iSaida]||'').trim() : ''
+    });
+  }
+  return out;
+}
+
+
 async function buscarFrotaJornadaDoDia_(dataISO) {
   const mapa = {};
   if (!dataISO) return mapa;
-
   let dataParam = String(dataISO).trim();
   const mBr = dataParam.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (mBr) dataParam = `${mBr[3]}-${mBr[2]}-${mBr[1]}`;
-
   const placaKey = (p) => String(p || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 
-  // 1) CONTROLE = só PLACA / OP / DESTINO / saída prevista (NÃO usa KM do Controle)
+  // Controle = placa / OP / destino (mesma fonte do admin.html)
   try {
-    const respC = await fetch(
-      `${FROTA_JORNADA_API_URL}?action=getControleDoDia&data=${encodeURIComponent(dataParam)}&_=${Date.now()}`,
-      { cache: 'no-store' }
-    );
-    if (respC.ok) {
-      const listaC = await respC.json();
-      if (Array.isArray(listaC)) {
-        listaC.forEach(item => {
-          const chave = normalizarNome_(item.motorista);
-          if (!chave) return;
-          (mapa[chave] = mapa[chave] || []).push({
-            nome: item.motorista || chave,
-            placa: item.placa || '',
-            operacao: item.op || '',
-            destino: item.destino || '',
-            saidaVeiculo: item.saidaCd || '',
-            chegadaLoja: '',
-            aberturaBau: '',
-            fechamentoBau: '',
-            saidaLoja: '',
-            totalLoja: '',
-            chegadaCD: '',
-            kmSaida: '',
-            kmChegada: '',
-            statusFrota: 'Controle',
-            origem: 'controle'
-          });
-        });
-      }
-    }
-  } catch (e) {
-    console.warn('[Controle] falha:', e);
-  }
+    const listaC = await buscarControleCsvIdx_(dataParam);
+    (listaC||[]).forEach(item => {
+      const chave = normalizarNome_(item.motorista);
+      if (!chave) return;
+      (mapa[chave] = mapa[chave] || []).push({
+        nome: item.motorista || chave,
+        placa: item.placa || '',
+        operacao: item.op || '',
+        destino: item.destino || '',
+        saidaVeiculo: item.saidaCd || '',
+        chegadaLoja: '', aberturaBau: '', fechamentoBau: '', saidaLoja: '', totalLoja: '',
+        chegadaCD: '', kmSaida: '', kmChegada: '', statusFrota: 'Controle', origem: 'controle'
+      });
+    });
+  } catch (e) { console.warn('[Controle CSV]', e); }
 
-  // 2) App de ponto / Lancamentos = KM do motorista + horários reais
+  // Lancamentos = KM do ponto + horários Trucks
   try {
-    const resp = await fetch(
-      `${FROTA_JORNADA_API_URL}?action=getLancamentos&data=${encodeURIComponent(dataParam)}`,
-      { cache: 'no-store' }
-    );
+    const resp = await fetch(`${FROTA_JORNADA_API_URL}?action=getLancamentos&data=${encodeURIComponent(dataParam)}`, { cache: 'no-store' });
     if (resp.ok) {
       const lista = await resp.json();
       if (Array.isArray(lista)) {
         lista.forEach(lanc => {
           const chave = normalizarNome_(lanc.Motorista);
           if (!chave) return;
-          const paradas = (lanc.Paradas || []).slice().sort((a,b) => (a.NumeroLoja||0)-(b.NumeroLoja||0));
+          const paradas = (lanc.Paradas || []).slice().sort((a,b) => (Number(a.NumeroLoja)||0)-(Number(b.NumeroLoja)||0));
           const melhor = paradas.find(p => p.HoraChegada || p.HoraAberturaBau || p.HoraFechamentoBau || p.HoraSaida) || paradas[0] || {};
           const listaChave = mapa[chave] || [];
-          let alvo = listaChave.find(v => placaKey(v.placa) && placaKey(v.placa) === placaKey(lanc.Placa))
-                  || listaChave[0];
+          let alvo = listaChave.find(v => placaKey(v.placa) && placaKey(v.placa) === placaKey(lanc.Placa)) || listaChave[0];
           if (!alvo) {
-            alvo = {
-              nome: lanc.Motorista || chave,
-              placa: '',
-              operacao: lanc.Operacao || '',
-              destino: lanc.Destino || '',
-              saidaVeiculo: '',
-              chegadaLoja: '',
-              aberturaBau: '',
-              fechamentoBau: '',
-              saidaLoja: '',
-              totalLoja: '',
-              chegadaCD: '',
-              kmSaida: '',
-              kmChegada: '',
-              statusFrota: lanc.Status || '',
-              origem: 'frota'
-            };
+            alvo = { nome: lanc.Motorista || chave, placa: '', operacao: lanc.Operacao || '', destino: lanc.Destino || '',
+              saidaVeiculo: '', chegadaLoja: '', aberturaBau: '', fechamentoBau: '', saidaLoja: '', totalLoja: '',
+              chegadaCD: '', kmSaida: '', kmChegada: '', statusFrota: lanc.Status || '', origem: 'frota' };
             (mapa[chave] = mapa[chave] || []).push(alvo);
           }
-
-          // PLACA: Controle prevalece. Só usa a do lançamento se Controle não tiver.
           if (!alvo.placa && lanc.Placa) alvo.placa = lanc.Placa;
           if (!alvo.operacao && lanc.Operacao) alvo.operacao = lanc.Operacao;
           if (!alvo.destino && lanc.Destino) alvo.destino = lanc.Destino;
-
-          // KM: SOMENTE do app de ponto (Lancamentos), nunca do Controle
           if (lanc.KmSaida) alvo.kmSaida = lanc.KmSaida;
           if (lanc.KmChegada) alvo.kmChegada = lanc.KmChegada;
-
           if (lanc.HoraProgramadaSaida) alvo.saidaVeiculo = lanc.HoraProgramadaSaida;
           alvo.chegadaLoja = melhor.HoraChegada || alvo.chegadaLoja;
           alvo.aberturaBau = melhor.HoraAberturaBau || alvo.aberturaBau;
@@ -3048,9 +3060,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         });
       }
     }
-  } catch (e) {
-    console.warn('[Frota Jornada] falha ao buscar lançamentos:', e);
-  }
+  } catch (e) { console.warn('[Frota]', e); }
 
   Object.keys(mapa).forEach(chave => {
     mapa[chave].sort((a, b) => (a.saidaVeiculo || '').localeCompare(b.saidaVeiculo || ''));
