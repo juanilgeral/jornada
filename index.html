@@ -3071,7 +3071,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         destino: item.destino || '',
         saidaVeiculo: item.saidaCd || '',
         chegadaLoja: '', aberturaBau: '', fechamentoBau: '', saidaLoja: '', totalLoja: '',
-        chegadaCD: '', kmSaida: '', kmChegada: '', statusFrota: 'Controle', origem: 'controle'
+        chegadaCD: '', kmSaida: '', kmChegada: '', horaParada: '', horaRetorno: '', statusFrota: 'Controle', origem: 'controle'
       });
     });
   } catch (e) { console.warn('[Controle CSV]', e); }
@@ -3092,7 +3092,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
           if (!alvo) {
             alvo = { nome: lanc.Motorista || chave, placa: '', operacao: lanc.Operacao || '', destino: lanc.Destino || '',
               saidaVeiculo: '', chegadaLoja: '', aberturaBau: '', fechamentoBau: '', saidaLoja: '', totalLoja: '',
-              chegadaCD: '', kmSaida: '', kmChegada: '', statusFrota: lanc.Status || '', origem: 'frota' };
+              chegadaCD: '', kmSaida: '', kmChegada: '', horaParada: '', horaRetorno: '', statusFrota: lanc.Status || '', origem: 'frota' };
             (mapa[chave] = mapa[chave] || []).push(alvo);
           }
           if (!alvo.placa && lanc.Placa) alvo.placa = lanc.Placa;
@@ -3100,6 +3100,8 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
           if (!alvo.destino && lanc.Destino) alvo.destino = lanc.Destino;
           if (lanc.KmSaida) alvo.kmSaida = lanc.KmSaida;
           if (lanc.KmChegada) alvo.kmChegada = lanc.KmChegada;
+          if (lanc.HoraParada) alvo.horaParada = lanc.HoraParada;
+          if (lanc.HoraRetorno) alvo.horaRetorno = lanc.HoraRetorno;
           if (lanc.HoraProgramadaSaida) alvo.saidaVeiculo = lanc.HoraProgramadaSaida;
           alvo.chegadaLoja = melhor.HoraChegada || alvo.chegadaLoja;
           alvo.aberturaBau = melhor.HoraAberturaBau || alvo.aberturaBau;
@@ -3121,6 +3123,12 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
 
 function renderTabelaDia(registros, frotaMap) {
   frotaMap = frotaMap || {};
+  const pontoByNome = {};
+  (registros || []).forEach(r => {
+    const k = normalizarNome_(r.nome);
+    if (k) pontoByNome[k] = r;
+  });
+
   const tbody = document.getElementById('admin-tbody');
   const vazio = '<span style="color:var(--muted)">—</span>';
   const filtroOp = (document.getElementById('admin-filtro-op') || {}).value || '';
@@ -3176,8 +3184,8 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td>${fj.fechamentoBau || vazio}</td>`
         + `<td>${fj.saidaLoja || vazio}</td>`
         + `<td>${fj.totalLoja || vazio}</td>`
-        + `<td>${r.parada ? `<span class="pill pill-yellow">${r.parada}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
-        + `<td>${r.retorno ? `<span class="pill pill-blue">${r.retorno}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${(r.parada || fj.horaParada) ? `<span class="pill pill-yellow">${r.parada || fj.horaParada}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${(r.retorno || fj.horaRetorno) ? `<span class="pill pill-blue">${r.retorno || fj.horaRetorno}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${fj.chegadaCD || vazio}</td>`
         + `<td>${fj.kmChegada || vazio}</td>`
         + `<td>${r.fim ? `<span class="pill pill-red">${r.fim}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
@@ -3218,8 +3226,8 @@ function renderTabelaDia(registros, frotaMap) {
         + `<td>${fj.fechamentoBau || vazio}</td>`
         + `<td>${fj.saidaLoja || vazio}</td>`
         + `<td>${fj.totalLoja || vazio}</td>`
-        + `<td><span class="pill pill-muted">—</span></td>`
-        + `<td><span class="pill pill-muted">—</span></td>`
+        + `<td>${(pontoByNome[chave] && pontoByNome[chave].parada) || fj.horaParada ? `<span class="pill pill-yellow">${(pontoByNome[chave] && pontoByNome[chave].parada) || fj.horaParada}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
+        + `<td>${(pontoByNome[chave] && pontoByNome[chave].retorno) || fj.horaRetorno ? `<span class="pill pill-blue">${(pontoByNome[chave] && pontoByNome[chave].retorno) || fj.horaRetorno}</span>` : '<span class="pill pill-muted">—</span>'}</td>`
         + `<td>${fj.chegadaCD || vazio}</td>`
         + `<td>${fj.kmChegada || vazio}</td>`
         + `<td><span class="pill pill-muted">—</span></td>`

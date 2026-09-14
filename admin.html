@@ -268,9 +268,13 @@ async function carregar(){
   (ponto.registros||[]).forEach(r => {
     const chave = normNome(r.nome);
     if(!chave) return;
-    const row = mapa[chave];
-    if(filtro && row && row.operacao && row.operacao.toUpperCase() !== filtro) return;
-    const dest = garanta(chave, r.nome || chave);
+    let dest = mapa[chave];
+    if(!dest){
+      const first = chave.split(' ')[0];
+      dest = Object.values(mapa).find(x => normNome(x.nome).split(' ')[0]===first);
+    }
+    if(filtro && dest && dest.operacao && dest.operacao.toUpperCase() !== filtro) return;
+    dest = dest || garanta(chave, r.nome || chave);
     dest.inicio = r.inicio || dest.inicio;
     dest.parada = r.parada || dest.parada;
     dest.retorno = r.retorno || dest.retorno;
