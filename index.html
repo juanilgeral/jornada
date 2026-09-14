@@ -2965,6 +2965,11 @@ function operacaoPassaFiltro_(op, filtro) {
   return o === String(filtro).toUpperCase();
 }
 
+function fetchComTempo_(resource, ms){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms || 10000);
+  return fetch(resource, { cache:'no-store', signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
 async function buscarDia() {
   const inputData = document.getElementById('admin-data').value;
   if (!inputData) { showToast('Selecione uma data', 'error'); return; }
@@ -2973,15 +2978,25 @@ async function buscarDia() {
   const url = localStorage.getItem(SCRIPT_URL_KEY);
   if (!url) { showToast('URL não configurada', 'error'); return; }
   const wrap = document.querySelector('.admin-table-wrap') || document.getElementById('admin-tbody');
-  if (wrap) wrap.style.opacity = '0.7';
+  if (wrap) wrap.style.opacity = '0.85';
+  let registros = (_adminDiaCache && _adminDiaCache.registros) || [];
+  let frotaMap = (_adminDiaCache && _adminDiaCache.frotaMap) || {};
   try {
-    const resp = await fetch(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`);
+    const resp = await fetchComTempo_(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`, 10000);
     const json = await resp.json();
-    const frotaMap = await buscarFrotaJornadaDoDia_(inputData);
-    _adminDiaCache = { registros: json.registros || [], frotaMap: frotaMap || {} };
-    renderTabelaDia(_adminDiaCache.registros, _adminDiaCache.frotaMap);
-  } catch(e) { showToast('❌ Erro ao buscar dados', 'error'); }
-  finally { if (wrap) wrap.style.opacity = '1'; }
+    registros = json.registros || [];
+    _adminDiaCache = { registros, frotaMap };
+    renderTabelaDia(registros, frotaMap);
+  } catch(e) {
+    console.warn('resumo_dia', e);
+    if (!registros.length) showToast('❌ Erro ao buscar o ponto', 'error');
+  }
+  try {
+    frotaMap = await buscarFrotaJornadaDoDia_(inputData) || {};
+    _adminDiaCache = { registros, frotaMap };
+    renderTabelaDia(registros, frotaMap);
+  } catch(e) { console.warn('frota', e); }
+  if (wrap) wrap.style.opacity = '1';
 }
 
 // Busca os lançamentos do Frota Jornada pra essa data e monta um mapa por
@@ -3022,7 +3037,7 @@ function parseCsvLineIdx_(line){
   return out;
 }
 async function buscarControleCsvIdx_(iso){
-  const r = await fetch(CONTROLE_CSV_URL+'&_='+Date.now(), {cache:'no-store'});
+  const r = await fetchComTempo_(CONTROLE_CSV_URL+'&_='+Date.now(), 10000);
   const txt = await r.text();
   const linhas = txt.split(/\r?\n/).filter(Boolean);
   if(linhas.length<2) return [];
