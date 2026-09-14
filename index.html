@@ -2972,14 +2972,16 @@ async function buscarDia() {
   const dataBR = `${dd}/${mm}/${yyyy}`;
   const url = localStorage.getItem(SCRIPT_URL_KEY);
   if (!url) { showToast('URL não configurada', 'error'); return; }
-  showLoading(true);
+  const wrap = document.querySelector('.admin-table-wrap') || document.getElementById('admin-tbody');
+  if (wrap) wrap.style.opacity = '0.7';
   try {
     const resp = await fetch(`${url}?acao=resumo_dia&data=${encodeURIComponent(dataBR)}`);
     const json = await resp.json();
     const frotaMap = await buscarFrotaJornadaDoDia_(inputData);
     _adminDiaCache = { registros: json.registros || [], frotaMap: frotaMap || {} };
     renderTabelaDia(_adminDiaCache.registros, _adminDiaCache.frotaMap);
-  } catch(e) { showToast('❌ Erro ao buscar dados', 'error'); } finally { showLoading(false); }
+  } catch(e) { showToast('❌ Erro ao buscar dados', 'error'); }
+  finally { if (wrap) wrap.style.opacity = '1'; }
 }
 
 // Busca os lançamentos do Frota Jornada pra essa data e monta um mapa por
@@ -3376,12 +3378,24 @@ function updateBadges(ms) {
   if (bAdm) bAdm.textContent = txt;
 }
 
+function telaAdminAtiva() {
+  const el = document.getElementById('admin-screen');
+  return el && el.classList.contains('active') || (el && el.style.display !== 'none' && el.classList.contains('screen') && !el.classList.contains('hidden'));
+}
+
 function doAutoRefresh() {
-  const loading = document.getElementById('loading');
   const modal = document.getElementById('modal-confirm');
-  if ((loading && loading.style.display === 'flex') ||
-      (modal && modal.style.display === 'flex')) {
+  if (modal && modal.style.display === 'flex') {
     refreshCountdown = 10000;
+    iniciarAutoRefresh();
+    return;
+  }
+  const admin = document.getElementById('admin-screen');
+  const adminVisivel = admin && getComputedStyle(admin).display !== 'none';
+  if (adminVisivel && typeof buscarDia === 'function') {
+    buscarDia();
+    if (typeof syncUsersFromSheet === 'function') syncUsersFromSheet();
+    iniciarAutoRefresh();
     return;
   }
   location.reload();
@@ -3391,6 +3405,14 @@ function syncNow(origem) {
   const btnId = origem === 'admin' ? 'btn-sync-admin' : 'btn-sync-app';
   const btn = document.getElementById(btnId);
   if (btn) btn.classList.add('syncing');
+  if (origem === 'admin' && typeof buscarDia === 'function') {
+    Promise.resolve(buscarDia()).finally(() => {
+      if (btn) btn.classList.remove('syncing');
+      iniciarAutoRefresh();
+    });
+    if (typeof syncUsersFromSheet === 'function') syncUsersFromSheet();
+    return;
+  }
   clearInterval(countdownInterval);
   clearInterval(refreshInterval);
   setTimeout(() => location.reload(), 300);
