@@ -1541,21 +1541,20 @@
       <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:8px;color:#f0f4fa;">🚚 Frota — KM do veículo</div>
       <p style="font-size:0.84rem;color:#d0d8e6;margin:0 0 14px;line-height:1.5;">Informe o <b style="color:#ffffff;">KM Inicial</b> ao sair e o <b style="color:#ffffff;">KM Final</b> ao chegar no CD ou Base Juanil. A placa pode ser confirmada abaixo (ou vem do Controle).</p>
       <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">Placa</label>
-      <select id="fPlacaMotorista" style="width:100%;margin-bottom:12px;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);font-size:0.95rem;">
+      <select id="fPlacaMotorista" onchange="autoSalvarKmPlaca('placa')" style="width:100%;margin-bottom:12px;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);font-size:0.95rem;">
         <option value="">Selecione a placa</option>
       </select>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
           <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">KM Inicial</label>
-          <input type="number" inputmode="numeric" id="fKmInicial" placeholder="Saída" style="width:100%;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.95rem;">
+          <input type="number" inputmode="numeric" id="fKmInicial" placeholder="Saída" onblur="autoSalvarKmPlaca('kmInicial')" style="width:100%;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.95rem;">
         </div>
         <div>
           <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">KM Final</label>
-          <input type="number" inputmode="numeric" id="fKmFinal" placeholder="CD/Base" style="width:100%;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.95rem;">
+          <input type="number" inputmode="numeric" id="fKmFinal" placeholder="CD/Base" onblur="autoSalvarKmPlaca('kmFinal')" style="width:100%;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.95rem;">
         </div>
       </div>
-      <button type="button" class="btn-primary" style="margin-top:14px;width:100%;" onclick="salvarKmPlacaMotorista()">💾 Salvar Placa / KM</button>
-      <div id="statusKmFrota" style="font-size:0.8rem;color:#9aa8bc;margin-top:10px;"></div>
+      <div id="statusKmFrota" style="font-size:0.8rem;color:#9aa8bc;margin-top:12px;">Cada campo salva sozinho ao ser preenchido — não precisa de botão.</div>
     </div>
 
     <div>
@@ -2313,7 +2312,20 @@ async function carregarPlacasMotorista() {
   if (prev) sel.value = prev;
 }
 
-async function salvarKmPlacaMotorista() {
+// Guarda o último valor já enviado de cada campo, pra não reenviar à toa
+// (ex.: o input perde e ganha foco sem o motorista ter mudado nada).
+const ultimoEnvioKmFrota = { placa: '', kmInicial: '', kmFinal: '' };
+
+const LABEL_CAMPO_KM = {
+  placa: 'placa',
+  kmInicial: 'KM inicial',
+  kmFinal: 'KM final'
+};
+
+// Chamado sozinho quando o motorista escolhe a placa, sai do campo de
+// KM Inicial, ou sai do campo de KM Final — cada um salva na hora,
+// sem precisar de botão.
+async function autoSalvarKmPlaca(campoAlterado) {
   const status = document.getElementById('statusKmFrota');
   const setStatus = (msg, ok) => {
     if (!status) return;
@@ -2326,12 +2338,18 @@ async function salvarKmPlacaMotorista() {
   const kmFinal = (document.getElementById('fKmFinal') || {}).value || '';
   const motorista = (currentUser && (currentUser.nome || currentUser.login)) || '';
 
-  if (!placa) {
-    setStatus('Selecione a placa.', false);
-    return;
-  }
+  // Sem placa ainda não tem lançamento pra associar o KM.
+  if (!placa) return;
 
-  setStatus('Salvando…', true);
+  const valorAtual = campoAlterado === 'placa' ? placa
+    : campoAlterado === 'kmInicial' ? kmInicial
+    : kmFinal;
+
+  // Campo vazio, ou valor igual ao que já foi enviado: não reenvia.
+  if (!valorAtual || valorAtual === ultimoEnvioKmFrota[campoAlterado]) return;
+  ultimoEnvioKmFrota[campoAlterado] = valorAtual;
+
+  setStatus('Salvando ' + LABEL_CAMPO_KM[campoAlterado] + '…', true);
   try {
     const body = {
       action: 'atualizarKmPlaca',
@@ -2348,8 +2366,10 @@ async function salvarKmPlacaMotorista() {
     });
     const json = await resp.json().catch(() => ({}));
     if (json && json.ok) {
-      setStatus('Salvo! Placa ' + placa + (json.acao ? ' (' + json.acao + ')' : ''), true);
+      setStatus('✓ ' + LABEL_CAMPO_KM[campoAlterado] + ' salvo automaticamente' + (json.acao ? ' (' + json.acao + ')' : ''), true);
     } else {
+      // Não desfaz o "último enviado" — evita ficar tentando reenviar em loop
+      // um valor que o backend está recusando.
       setStatus('Erro: ' + (json.erro || json.error || 'falha ao salvar'), false);
     }
   } catch (e) {
