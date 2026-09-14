@@ -237,28 +237,44 @@ async function buscarTrucksLogDoDia_(iso){
   }
   Object.keys(evts).forEach(placa => {
     const lista = evts[placa];
-    const inicios = [];
-    lista.forEach((e, idx) => { if(e.ev==='INICIO_VIAGEM') inicios.push(idx); });
-    if(!inicios.length) inicios.push(0);
+    const vazio = () => ({ saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', parada:'', retorno:'' });
     const trips = [];
-    inicios.forEach((start, t) => {
-      const janela = lista.slice(start, t+1 < inicios.length ? inicios[t+1] : lista.length);
-      const row = { saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', parada:'', retorno:'' };
-      janela.forEach(e => {
-        const hora = e.hora;
-        if(!hora) return;
-        if(e.ev==='INICIO_VIAGEM') row.saidaVeiculo = hora;
-        if(e.ev==='CHEGADA_CLIENTE') row.chegadaLoja = hora;
-        if(e.ev==='ABERTURA_BAU') row.aberturaBau = hora;
-        if(e.ev==='INICIO_DESCARREGAMENTO' && !row.aberturaBau) row.aberturaBau = hora;
-        if(e.ev==='FECHAMENTO_BAU') row.fechamentoBau = hora;
-        if(e.ev==='PARADA_REFEICAO') row.parada = hora;
-        if(e.ev==='REINICIO_VIAGEM' || e.ev==='REINICIO') row.retorno = hora;
-        if(e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM') row.chegadaCD = hora;
-      });
-      if(!janela.some(e => e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM')) row.chegadaCD = '';
-      trips.push(row);
+    let cur = vazio();
+    let aberta = false;
+    const flush = () => {
+      const tem = cur.saidaVeiculo || cur.chegadaLoja || cur.chegadaCD || cur.aberturaBau || cur.parada;
+      if(tem) trips.push(cur);
+      cur = vazio();
+      aberta = false;
+    };
+    lista.forEach(e => {
+      const hora = e.hora;
+      if(e.ev==='INICIO_VIAGEM'){
+        if(aberta){
+          if(hora && !cur.saidaVeiculo) cur.saidaVeiculo = hora;
+          return;
+        }
+        if(cur.saidaVeiculo || cur.chegadaCD) flush();
+        cur = vazio();
+        cur.saidaVeiculo = hora || '';
+        aberta = true;
+        return;
+      }
+      if(!hora) return;
+      if(e.ev==='CHEGADA_CLIENTE') cur.chegadaLoja = hora;
+      if(e.ev==='ABERTURA_BAU') cur.aberturaBau = hora;
+      if(e.ev==='INICIO_DESCARREGAMENTO' && !cur.aberturaBau) cur.aberturaBau = hora;
+      if(e.ev==='FECHAMENTO_BAU') cur.fechamentoBau = hora;
+      if(e.ev==='PARADA_REFEICAO') cur.parada = hora;
+      if(e.ev==='REINICIO_VIAGEM' || e.ev==='REINICIO') cur.retorno = hora;
+      if(e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM'){
+        cur.chegadaCD = hora;
+        aberta = false;
+        flush();
+      }
     });
+    if(cur.saidaVeiculo || cur.chegadaLoja || cur.chegadaCD || cur.aberturaBau || cur.parada) trips.push(cur);
+    if(!trips.length) trips.push(vazio());
     out[placa] = trips;
   });
   return out;
