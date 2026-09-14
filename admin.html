@@ -231,7 +231,9 @@ async function carregar(){
   const iso = $('#fData').value;
   const filtro = $('#fOp').value;
   if(!iso) return;
-  $('#tbody').innerHTML = '<tr><td colspan="20" class="empty">Carregando…</td></tr>';
+  const tinhaLinhas = $('#tbody') && $('#tbody').querySelectorAll('tr td[colspan]').length === 0 && $('#tbody').querySelectorAll('tr').length > 0;
+  if (!tinhaLinhas) $('#tbody').innerHTML = '<tr><td colspan="20" class="empty">Carregando…</td></tr>';
+  if (tinhaLinhas) $('#tbody').style.opacity = '0.65';
 
   let ponto = {registros:[]}, controle = [], lancs = [];
   try { controle = await buscarControleCsv(iso) || []; } catch(e){ console.warn('controle', e); }
@@ -322,10 +324,12 @@ async function carregar(){
     <div class="stat"><div class="n" style="color:#f87171">${fins}</div><div class="l">Finalizaram</div></div>`;
 
   if(!visiveis.length){
+    $('#tbody').style.opacity = '1';
     $('#tbody').innerHTML = '<tr><td colspan="20" class="empty">Nenhum registro nesta data</td></tr>';
     return;
   }
 
+  $('#tbody').style.opacity = '1';
   $('#tbody').innerHTML = visiveis.map(r => {
     let st='Não iniciou', cls='p-muted';
     if(r.fim){ st='Finalizado'; cls='p-red'; }

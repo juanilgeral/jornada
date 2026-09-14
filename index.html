@@ -2310,11 +2310,59 @@ async function carregarPlacasMotorista() {
   });
   sel.innerHTML = html;
   if (prev) sel.value = prev;
+  aplicarKmLocal();
 }
 
 // Guarda o último valor já enviado de cada campo, pra não reenviar à toa
 // (ex.: o input perde e ganha foco sem o motorista ter mudado nada).
 const ultimoEnvioKmFrota = { placa: '', kmInicial: '', kmFinal: '' };
+
+function kmLocalKey() {
+  const d = new Date();
+  const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return 'jt_km_' + (currentUser && currentUser.login ? currentUser.login : '') + '_' + iso;
+}
+function lerKmLocal() {
+  try { return JSON.parse(localStorage.getItem(kmLocalKey()) || 'null'); } catch(e) { return null; }
+}
+function salvarKmLocal() {
+  if (!currentUser) return;
+  const placa = (document.getElementById('fPlacaMotorista') || {}).value || '';
+  const kmInicial = (document.getElementById('fKmInicial') || {}).value || '';
+  const kmFinal = (document.getElementById('fKmFinal') || {}).value || '';
+  localStorage.setItem(kmLocalKey(), JSON.stringify({ placa, kmInicial, kmFinal }));
+}
+function aplicarKmLocal() {
+  const saved = lerKmLocal();
+  if (!saved) return;
+  const sel = document.getElementById('fPlacaMotorista');
+  const ki = document.getElementById('fKmInicial');
+  const kf = document.getElementById('fKmFinal');
+  if (sel && saved.placa) {
+    if (![...sel.options].some(o => o.value === saved.placa)) {
+      const op = document.createElement('option');
+      op.value = saved.placa;
+      op.textContent = saved.placa;
+      sel.appendChild(op);
+    }
+    sel.value = saved.placa;
+    ultimoEnvioKmFrota.placa = saved.placa;
+  }
+  if (ki && saved.kmInicial) { ki.value = saved.kmInicial; ultimoEnvioKmFrota.kmInicial = saved.kmInicial; }
+  if (kf && saved.kmFinal) { kf.value = saved.kmFinal; ultimoEnvioKmFrota.kmFinal = saved.kmFinal; }
+}
+function limparKmLocal() {
+  localStorage.removeItem(kmLocalKey());
+  ultimoEnvioKmFrota.placa = ultimoEnvioKmFrota.kmInicial = ultimoEnvioKmFrota.kmFinal = '';
+  const sel = document.getElementById('fPlacaMotorista');
+  const ki = document.getElementById('fKmInicial');
+  const kf = document.getElementById('fKmFinal');
+  if (sel) sel.value = '';
+  if (ki) ki.value = '';
+  if (kf) kf.value = '';
+}
+
+
 
 const LABEL_CAMPO_KM = {
   placa: 'placa',
@@ -2348,6 +2396,7 @@ async function autoSalvarKmPlaca(campoAlterado) {
   // Campo vazio, ou valor igual ao que já foi enviado: não reenvia.
   if (!valorAtual || valorAtual === ultimoEnvioKmFrota[campoAlterado]) return;
   ultimoEnvioKmFrota[campoAlterado] = valorAtual;
+  salvarKmLocal();
 
   setStatus('Salvando ' + LABEL_CAMPO_KM[campoAlterado] + '…', true);
   try {
@@ -2365,6 +2414,7 @@ async function autoSalvarKmPlaca(campoAlterado) {
       body: JSON.stringify(body)
     });
     const json = await resp.json().catch(() => ({}));
+    salvarKmLocal();
     if (json && json.ok) {
       setStatus('✓ ' + LABEL_CAMPO_KM[campoAlterado] + ' salvo automaticamente' + (json.acao ? ' (' + json.acao + ')' : ''), true);
     } else {
@@ -2856,6 +2906,7 @@ async function confirmarRegistro() {
   if (tipo === 'inicio') verificarLiberacaoParada();
   if (tipo === 'parada') iniciarTimerFimRefeicao();
   if (tipo === 'fim') {
+    limparKmLocal();
     ['inicio', 'parada', 'retorno'].forEach(t => { if (!jornadaState[t]) { const btn = document.getElementById(`btn-${t}`); btn.disabled = true; btn.classList.remove('available'); btn.classList.add('done'); } });
     if (paradaTimer) clearInterval(paradaTimer);
     if (fimRefeicaoTimer) clearInterval(fimRefeicaoTimer);
@@ -3274,7 +3325,7 @@ function iniciarApp() {
   restaurarTimerFimRefeicao();
   verificarDescanso();
   aplicarVisibilidadeEscalacao();
-  carregarPlacasMotorista(); // preenche select de placas do card KM Frota
+  carregarPlacasMotorista(); aplicarKmLocal();
 }
 
 window.addEventListener('load', () => {
