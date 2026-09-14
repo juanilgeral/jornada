@@ -80,8 +80,8 @@
         <tr>
                     <th>Nome</th><th>Placa</th><th>Início</th><th>Operação</th><th>Destino</th>
           <th>Saída Veíc.</th><th>Km Saída</th><th>Chegada Loja</th><th>Abertura Baú</th>
-          <th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>Parada</th>
-          <th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th>
+          <th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>PARADA RF</th>
+          <th>RETORNO RF</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th>
           <th>Trabalhado</th><th>Extra</th><th>Status</th>
         </tr>
       </thead>
@@ -210,6 +210,41 @@ async function buscarControleCsv(iso){
 }
 
 async function carregar(){
+
+const TRUCKSLOG_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TtgHyiAFdj1jCZGfm4VYzqw-4bEluQ34c95cYH_M6OA/gviz/tq?tqx=out:csv&gid=149639861';
+function hhLog_(v){
+  const s = String(v||'').trim();
+  const m = s.match(/(\d{1,2}:\d{2})/);
+  return m ? m[1].padStart(5,'0') : '';
+}
+async function buscarTrucksLogDoDia_(iso){
+  const txt = await fetchTimeout(TRUCKSLOG_CSV_URL+'&_='+Date.now(), 12000);
+  const linhas = txt.split(/\r?\n/).filter(Boolean);
+  const out = {};
+  const p0 = String(iso||'').split('-');
+  const alvos = p0.length===3 ? [p0[2]+'/'+p0[1]+'/'+p0[0], p0[2]+'/'+p0[1]+'/'+p0[0].slice(2)] : [];
+  for(let i=1;i<linhas.length;i++){
+    const r = parseCsvLine(linhas[i]);
+    const dh = String(r[0]||'');
+    if(!alvos.some(a => dh.indexOf(a)===0)) continue;
+    const ev = String(r[1]||'').toUpperCase();
+    const placa = String(r[2]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+    if(!placa) continue;
+    const hora = hhLog_(r[3]) || hhLog_(dh.split(' ').slice(-1)[0]);
+    if(!out[placa]) out[placa] = { saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', parada:'', retorno:'' };
+    const row = out[placa];
+    if(ev==='INICIO_VIAGEM' && hora && !row.saidaVeiculo) row.saidaVeiculo = hora;
+    if(ev==='CHEGADA_CLIENTE' && hora) row.chegadaLoja = hora;
+    if(ev==='ABERTURA_BAU' && hora) row.aberturaBau = hora;
+    if(ev==='INICIO_DESCARREGAMENTO' && hora && !row.aberturaBau) row.aberturaBau = hora;
+    if(ev==='FECHAMENTO_BAU' && hora) row.fechamentoBau = hora;
+    if(ev==='PARADA_REFEICAO' && hora) row.parada = hora;
+    if((ev==='REINICIO_VIAGEM' || ev==='REINICIO') && hora) row.retorno = hora;
+    if((ev==='RETORNO' || ev==='FIM_FINAL' || ev==='FIM_VIAGEM') && hora) row.chegadaCD = hora;
+  }
+  return out;
+}
+
   const iso = $('#fData').value;
   if(!iso) return;
   const tinhaLinhas = $('#tbody') && $('#tbody').querySelectorAll('tr td[colspan]').length === 0 && $('#tbody').querySelectorAll('tr').length > 0;
@@ -226,6 +261,9 @@ async function carregar(){
     const t = await fetchTimeout(`${FROTA_URL}?action=getLancamentos&data=${encodeURIComponent(iso)}`, 12000);
     lancs = JSON.parse(t);
   } catch(e){ console.warn('lancs', e); }
+
+  let trucksLogMap = {};
+  try { trucksLogMap = await buscarTrucksLogDoDia_(iso) || {}; } catch(e){ console.warn('truckslog', e); }
 
   const mapa = {};
   const porPlaca = {};
@@ -296,6 +334,19 @@ async function carregar(){
     const hh = v => { const s=String(v||'').trim(); if(!s||s==='—') return ''; return s.length>=5?s.slice(0,5):s; };
     if(!row.inicio) row.inicio = hh(row.inicioControle);
     if(!row.fim) row.fim = hh(row.fimControle);
+  });
+  Object.values(mapa).forEach(row => {
+    const pk = String(row.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+    const ev = trucksLogMap[pk];
+    if(!ev) return;
+    if(!row.saidaVeiculo && ev.saidaVeiculo) row.saidaVeiculo = ev.saidaVeiculo;
+    if(!row.chegadaLoja && ev.chegadaLoja) row.chegadaLoja = ev.chegadaLoja;
+    if(!row.aberturaBau && ev.aberturaBau) row.aberturaBau = ev.aberturaBau;
+    if(!row.fechamentoBau && ev.fechamentoBau) row.fechamentoBau = ev.fechamentoBau;
+    if(!row.saidaLoja && ev.saidaLoja) row.saidaLoja = ev.saidaLoja;
+    if(!row.chegadaCD && ev.chegadaCD) row.chegadaCD = ev.chegadaCD;
+    if(!row.parada && ev.parada) row.parada = ev.parada;
+    if(!row.retorno && ev.retorno) row.retorno = ev.retorno;
   });
   const lista = Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
   let iniciados=0, almoco=0, fins=0;
