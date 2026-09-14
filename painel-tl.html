@@ -237,26 +237,29 @@ async function buscarTrucksLogDoDia_(iso){
   }
   Object.keys(evts).forEach(placa => {
     const lista = evts[placa];
-    const row = { saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', parada:'', retorno:'' };
-    let ultimoInicioIdx = -1;
-    lista.forEach((e, idx) => { if(e.ev==='INICIO_VIAGEM') ultimoInicioIdx = idx; });
-    const janela = ultimoInicioIdx >= 0 ? lista.slice(ultimoInicioIdx) : lista;
-    janela.forEach(e => {
-      const hora = e.hora;
-      if(!hora) return;
-      if(e.ev==='INICIO_VIAGEM') row.saidaVeiculo = hora;
-      if(e.ev==='CHEGADA_CLIENTE') row.chegadaLoja = hora;
-      if(e.ev==='ABERTURA_BAU') row.aberturaBau = hora;
-      if(e.ev==='INICIO_DESCARREGAMENTO' && !row.aberturaBau) row.aberturaBau = hora;
-      if(e.ev==='FECHAMENTO_BAU') row.fechamentoBau = hora;
-      if(e.ev==='PARADA_REFEICAO') row.parada = hora;
-      if(e.ev==='REINICIO_VIAGEM' || e.ev==='REINICIO') row.retorno = hora;
-      if(e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM') row.chegadaCD = hora;
+    const inicios = [];
+    lista.forEach((e, idx) => { if(e.ev==='INICIO_VIAGEM') inicios.push(idx); });
+    if(!inicios.length) inicios.push(0);
+    const trips = [];
+    inicios.forEach((start, t) => {
+      const janela = lista.slice(start, t+1 < inicios.length ? inicios[t+1] : lista.length);
+      const row = { saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', parada:'', retorno:'' };
+      janela.forEach(e => {
+        const hora = e.hora;
+        if(!hora) return;
+        if(e.ev==='INICIO_VIAGEM') row.saidaVeiculo = hora;
+        if(e.ev==='CHEGADA_CLIENTE') row.chegadaLoja = hora;
+        if(e.ev==='ABERTURA_BAU') row.aberturaBau = hora;
+        if(e.ev==='INICIO_DESCARREGAMENTO' && !row.aberturaBau) row.aberturaBau = hora;
+        if(e.ev==='FECHAMENTO_BAU') row.fechamentoBau = hora;
+        if(e.ev==='PARADA_REFEICAO') row.parada = hora;
+        if(e.ev==='REINICIO_VIAGEM' || e.ev==='REINICIO') row.retorno = hora;
+        if(e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM') row.chegadaCD = hora;
+      });
+      if(!janela.some(e => e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM')) row.chegadaCD = '';
+      trips.push(row);
     });
-    // se depois do último início não houve FIM/RETORNO, não mostra chegada CD de viagem anterior
-    const teveFimDepois = janela.some(e => e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM');
-    if(!teveFimDepois) row.chegadaCD = '';
-    out[placa] = row;
+    out[placa] = trips;
   });
   return out;
 }
@@ -346,25 +349,30 @@ async function buscarTrucksLogDoDia_(iso){
     if(!row.destino && lanc.Destino) row.destino = lanc.Destino;
   });
 
-  Object.values(mapa).forEach(row => {
-    const hh = v => { const s=String(v||'').trim(); if(!s||s==='—') return ''; return s.length>=5?s.slice(0,5):s; };
-    if(!row.inicio) row.inicio = hh(row.inicioControle);
-    if(!row.fim) row.fim = hh(row.fimControle);
+  const hh = v => { const s=String(v||'').trim(); if(!s||s==='—') return ''; return s.length>=5?s.slice(0,5):s; };
+  const lista = [];
+  Object.values(mapa).forEach(base => {
+    if(!base.inicio) base.inicio = hh(base.inicioControle);
+    if(!base.fim) base.fim = hh(base.fimControle);
+    const pk = String(base.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+    const trips = Array.isArray(trucksLogMap[pk]) ? trucksLogMap[pk] : (trucksLogMap[pk] ? [trucksLogMap[pk]] : [{}]);
+    trips.forEach((ev, idx) => {
+      const row = Object.assign({}, base);
+      if(ev.saidaVeiculo) row.saidaVeiculo = ev.saidaVeiculo;
+      if(ev.chegadaLoja) row.chegadaLoja = ev.chegadaLoja;
+      if(ev.aberturaBau) row.aberturaBau = ev.aberturaBau;
+      if(ev.fechamentoBau) row.fechamentoBau = ev.fechamentoBau;
+      if(ev.saidaLoja) row.saidaLoja = ev.saidaLoja;
+      row.chegadaCD = ev.chegadaCD || '';
+      if(!row.parada && ev.parada) row.parada = ev.parada;
+      if(!row.retorno && ev.retorno) row.retorno = ev.retorno;
+      if(idx>0){ row.inicio = ''; row.parada = ev.parada||''; row.retorno = ev.retorno||''; row.fim = ''; row.viagem = idx+1; }
+      else row.viagem = trips.length>1 ? 1 : 0;
+      row.totalViagens = trips.length;
+      lista.push(row);
+    });
   });
-  Object.values(mapa).forEach(row => {
-    const pk = String(row.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-    const ev = trucksLogMap[pk];
-    if(!ev) return;
-    if(ev.saidaVeiculo) row.saidaVeiculo = ev.saidaVeiculo; // último início do dia (viagem atual)
-    if(!row.chegadaLoja && ev.chegadaLoja) row.chegadaLoja = ev.chegadaLoja;
-    if(!row.aberturaBau && ev.aberturaBau) row.aberturaBau = ev.aberturaBau;
-    if(!row.fechamentoBau && ev.fechamentoBau) row.fechamentoBau = ev.fechamentoBau;
-    if(!row.saidaLoja && ev.saidaLoja) row.saidaLoja = ev.saidaLoja;
-    row.chegadaCD = ev.chegadaCD || '';
-    if(!row.parada && ev.parada) row.parada = ev.parada;
-    if(!row.retorno && ev.retorno) row.retorno = ev.retorno;
-  });
-  const lista = Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  lista.sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR') || String(a.saidaVeiculo).localeCompare(String(b.saidaVeiculo)));
   let iniciados=0, almoco=0, fins=0;
   lista.forEach(r => { if(r.inicio) iniciados++; if(r.parada && !r.retorno) almoco++; if(r.fim) fins++; });
   $('#stats').innerHTML = `
@@ -390,7 +398,7 @@ async function buscarTrucksLogDoDia_(iso){
     const trab = r.trabalhado || calcTrabalhado(r);
     const extra = r.extra || calcExtra(trab);
     return `<tr>
-      <td style="font-weight:700">${esc(r.nome)}</td>
+      <td style="font-weight:700">${esc(r.nome)}${r.totalViagens>1?` <span class="pill p-muted">${r.viagem}ª viagem</span>`:''}</td>
       <td style="font-weight:800">${vazio(r.placa)}</td>
       <td>${r.inicio?`<span class="pill p-green">${esc(r.inicio)}</span>`:vazio('')}</td>
       <td><span class="pill p-green">TL</span></td>
