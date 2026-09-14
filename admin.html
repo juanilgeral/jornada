@@ -36,9 +36,35 @@
   .p-muted{background:#1b2433;color:#8b9bb0}
   .empty{text-align:center;padding:28px;color:var(--muted)}
   a.link{color:#93c5fd;text-decoration:none;font-size:.8rem}
+
+  #gate{position:fixed;inset:0;background:#0a0f1e;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+  #gate.hidden{display:none}
+  .gate-card{width:100%;max-width:360px;background:#111827;border:1px solid #1f2d45;border-radius:16px;padding:24px}
+  .gate-card h1{margin:0 0 6px;font-size:1.15rem}
+  .gate-card p{margin:0 0 16px;color:#9aa8bc;font-size:.85rem}
+  .gate-card label{display:block;font-size:.75rem;color:#9aa8bc;margin:10px 0 4px}
+  .gate-card input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f2d45;background:#0a0e14;color:#e8edf5}
+  .gate-card button{width:100%;margin-top:16px;padding:11px;border:0;border-radius:8px;background:#f97316;color:#111;font-weight:800;cursor:pointer}
+  .gate-err{display:none;color:#f87171;font-size:.8rem;margin-top:10px}
+  #denied{display:none;position:fixed;inset:0;background:#0a0f1e;z-index:9998;align-items:center;justify-content:center;padding:24px;text-align:center}
+
 </style>
 </head>
 <body>
+<div id="gate">
+  <div class="gate-card">
+    <h1>Painel Admin</h1>
+    <p>Entre com o mesmo login da Jornada.</p>
+    <label>Usuário</label>
+    <input id="gUser" autocomplete="username" autocapitalize="none">
+    <label>Senha</label>
+    <input id="gPass" type="password" autocomplete="current-password">
+    <button type="button" onclick="entrarPainel()">Entrar</button>
+    <div class="gate-err" id="gErr">Usuário ou senha inválidos, ou sem permissão neste painel.</div>
+  </div>
+</div>
+<div id="denied"><div><h2>Acesso restrito</h2><p>Este painel não é para motorista. Use o app de ponto.</p><p><a href="./index.html" style="color:#93c5fd">Voltar ao ponto</a></p></div></div>
+
 <header>
   <div class="brand">Painel Admin<small>Jornada Juanil — não altera o app de ponto</small></div>
   <div class="row">
@@ -139,46 +165,61 @@ function toBR(iso){
 const CONTROLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/19ztgd86-ivwJveXp0Q_032P1fFaSuC9D9uaMJ4r6mP8/gviz/tq?tqx=out:csv&gid=1559964021';
 
 function extrairPlacaVeiculo(veiculo){
-  const limpo = String(veiculo||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const limpo = String(veiculo||'').toUpperCase().replace(/[^A-Za-z0-9]/g,'');
   const m = limpo.match(/([A-Z]{3}\d[A-Z0-9]\d{2}|[A-Z]{3}\d{4})/);
   return m ? m[1] : limpo;
 }
 function dataBate(cell, iso){
   const p = String(iso||'').split('-');
   if(p.length!==3) return false;
-  const alvos = [p[2]+'/'+p[1]+'/'+p[0].slice(2), p[2]+'/'+p[1]+'/'+p[0], iso];
-  const d = String(cell||'').trim();
+  const alvos = [p[2]+'/'+p[1]+'/'+p[0].slice(2), p[2]+'/'+p[1]+'/'+p[0], iso, p[1]+'/'+p[2]+'/'+p[0]];
+  const d = String(cell||'').trim().replace(/"/g,'');
   return alvos.some(a => d===a || d.indexOf(a)===0);
 }
+function parseCsvLine(line){
+  const out=[]; let cur='', q=false;
+  for(const ch of line){
+    if(ch==='"'){ q=!q; continue; }
+    if(ch===',' && !q){ out.push(cur); cur=''; continue; }
+    cur+=ch;
+  }
+  out.push(cur);
+  return out;
+}
+async function fetchTimeout(url, ms){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), ms||8000);
+  try{
+    const r = await fetch(url, {cache:'no-store', signal: ctrl.signal});
+    return await r.text();
+  } finally { clearTimeout(t); }
+}
 async function buscarControleCsv(iso){
-  const txt = await fetch(CONTROLE_CSV_URL+'&_='+Date.now(), {cache:'no-store'}).then(r=>r.text());
+  const txt = await fetchTimeout(CONTROLE_CSV_URL+'&_='+Date.now(), 10000);
   const linhas = txt.split(/\r?\n/).filter(Boolean);
   if(linhas.length<2) return [];
-  const parse = line => {
-    const out=[]; let cur='', q=false;
-    for(const ch of line){
-      if(ch==='"'){ q=!q; continue; }
-      if(ch===',' && !q){ out.push(cur); cur=''; continue; }
-      cur+=ch;
-    }
-    out.push(cur);
-    return out;
-  };
-  const h = parse(linhas[0]).map(x=>x.trim().toUpperCase());
+  const h = parseCsvLine(linhas[0]).map(x=>x.trim().toUpperCase().replace(/"/g,''));
   const idx = n => h.indexOf(n);
-  const iData=idx('DATA'), iOp=idx('OP'), iVeic=idx('VEICULO'), iMot=idx('MOTORISTA');
-  const iDest=idx('DESTINO');
-  const iSaida = h.indexOf('SAÍDA_VEÍCULO_CD')>=0 ? h.indexOf('SAÍDA_VEÍCULO_CD') : h.indexOf('SAIDA_VEICULO_CD');
+  let iData = idx('DATA');
+  if(iData<0) iData = 0; // planilha às vezes vem com cabeçalho "."
+  const iOp = idx('OP')<0?2:idx('OP');
+  const iVeic = idx('VEICULO')<0?3:idx('VEICULO');
+  const iMot = idx('MOTORISTA')<0?4:idx('MOTORISTA');
+  const iDest = idx('DESTINO');
+  const iSaida = h.indexOf('SAÍDA_VEÍCULO_CD')>=0 ? h.indexOf('SAÍDA_VEÍCULO_CD') : idx('SAIDA_VEICULO_CD');
   const out=[];
   for(let i=1;i<linhas.length;i++){
-    const r = parse(linhas[i]);
+    const r = parseCsvLine(linhas[i]);
     if(!dataBate(r[iData], iso)) continue;
+    const mot = (r[iMot]||'').trim();
+    const veic = (r[iVeic]||'').trim();
+    if(!mot && !veic) continue;
     out.push({
       data: r[iData]||'',
       op: (r[iOp]||'').trim(),
-      veiculo: (r[iVeic]||'').trim(),
-      placa: extrairPlacaVeiculo(r[iVeic]||''),
-      motorista: (r[iMot]||'').trim(),
+      veiculo: veic,
+      placa: extrairPlacaVeiculo(veic),
+      motorista: mot || veic,
       destino: iDest>=0 ? (r[iDest]||'').trim() : '',
       saidaCd: iSaida>=0 ? String(r[iSaida]||'').trim() : ''
     });
@@ -192,11 +233,16 @@ async function carregar(){
   if(!iso) return;
   $('#tbody').innerHTML = '<tr><td colspan="20" class="empty">Carregando…</td></tr>';
 
-  const [ponto, controle, lancs] = await Promise.all([
-    fetch(`${JORNADA_URL}?acao=resumo_dia&data=${encodeURIComponent(toBR(iso))}`).then(r=>r.json()).catch(()=>({registros:[]})),
-    buscarControleCsv(iso).catch(()=>[]),
-    fetch(`${FROTA_URL}?action=getLancamentos&data=${encodeURIComponent(iso)}`).then(r=>r.json()).catch(()=>[])
-  ]);
+  let ponto = {registros:[]}, controle = [], lancs = [];
+  try { controle = await buscarControleCsv(iso) || []; } catch(e){ console.warn('controle', e); }
+  try {
+    const t = await fetchTimeout(`${JORNADA_URL}?acao=resumo_dia&data=${encodeURIComponent(toBR(iso))}`, 10000);
+    ponto = JSON.parse(t);
+  } catch(e){ console.warn('ponto', e); }
+  try {
+    const t = await fetchTimeout(`${FROTA_URL}?action=getLancamentos&data=${encodeURIComponent(iso)}`, 12000);
+    lancs = JSON.parse(t);
+  } catch(e){ console.warn('lancs', e); }
 
   const mapa = {};
   const garanta = (chave, nome) => {
@@ -256,8 +302,12 @@ async function carregar(){
     if(!row.retorno) row.retorno = lanc.HoraRetorno || lanc.FimAlmoco || row.retorno;
   });
 
-  const lista = Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
-  const visiveis = filtro ? lista.filter(r => String(r.operacao||'').toUpperCase()===filtro || (!r.operacao && !filtro)) : lista;
+  const lista = Object.values(mapa).sort((a,b)=>{
+    const ap = a.inicio ? 0 : 1, bp = b.inicio ? 0 : 1;
+    if(ap!==bp) return ap-bp;
+    return String(a.nome).localeCompare(String(b.nome),'pt-BR');
+  });
+  const visiveis = filtro ? lista.filter(r => String(r.operacao||'').toUpperCase()===filtro) : lista;
 
   let iniciados=0, almoco=0, fins=0;
   visiveis.forEach(r => {
@@ -286,7 +336,7 @@ async function carregar(){
     const trab = r.trabalhado || calcTrabalhado(r);
     const extra = r.extra || calcExtra(trab);
     return `<tr>
-      <td style="font-weight:700">${esc(r.nome)}</td>
+      <td style="font-weight:700">${esc(r.nome)}${(!r.inicio && (r.placa||r.operacao))?' <span class="pill p-muted">só Controle</span>':''}</td>
       <td style="font-weight:800">${vazio(r.placa)}</td>
       <td>${r.inicio?`<span class="pill p-green">${esc(r.inicio)}</span>`:vazio('')}</td>
       <td>${pillOp(r.operacao)}</td>
@@ -310,7 +360,141 @@ async function carregar(){
   }).join('');
 }
 
-carregar();
+
+let USERS = {
+  "admin":        { senha: "7391", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" },
+  "angelica":     { senha: "2824", nome: "ANGÉLICA",     status: "ATIVO", funcao: "MOTORISTA" },
+  "alexandre":    { senha: "9153", nome: "ALEXANDRE",    status: "ATIVO", funcao: "MOTORISTA" },
+  "pamela":       { senha: "3027", nome: "PAMELA",       status: "ATIVO", funcao: "MOTORISTA" },
+  "daniel":       { senha: "9453", nome: "DANIEL",       status: "ATIVO", funcao: "MOTORISTA" },
+  "devanilso":    { senha: "1583", nome: "DEVANILSO",    status: "ATIVO", funcao: "MOTORISTA" },
+  "vasconcellos": { senha: "6120", nome: "VASCONCELLOS", status: "ATIVO", funcao: "MOTORISTA" },
+  "ekland":       { senha: "4650", nome: "EKLAND",       status: "ATIVO", funcao: "MOTORISTA" },
+  "heriberto":    { senha: "4073", nome: "HERIBERTO",    status: "ATIVO", funcao: "MOTORISTA" },
+  "sergio":       { senha: "8067", nome: "SÉRGIO",       status: "ATIVO", funcao: "MOTORISTA" },
+  "zilmar":       { senha: "1409", nome: "ZILMAR",       status: "ATIVO", funcao: "MOTORISTA" },
+  "wania":        { senha: "6581", nome: "WÂNIA",        status: "ATIVO", funcao: "ESCRITÓRIO" },
+  "zezinho":      { senha: "6398", nome: "ZEZINHO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "carlinhos":    { senha: "8050", nome: "CARLINHOS",    status: "ATIVO", funcao: "MOTORISTA" },
+  "antonio":      { senha: "1738", nome: "ANTÔNIO",      status: "LICENÇA", funcao: "MOTORISTA" },
+  "irineu":       { senha: "8293", nome: "IRINEU",       status: "ATIVO", funcao: "MOTORISTA" },
+  "camara":       { senha: "5296", nome: "CAMARA",       status: "ATIVO", funcao: "MOTORISTA" },
+  "neves":        { senha: "1794", nome: "NEVES",        status: "ATIVO", funcao: "MOTORISTA" },
+  "valdir":       { senha: "3905", nome: "VALDIR",       status: "ATIVO", funcao: "MOTORISTA" },
+  "tavares":      { senha: "7814", nome: "TAVARES",      status: "ATIVO", funcao: "SUPERVISOR" },
+  "rogerio":      { senha: "5184", nome: "ROGERIO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "edilson":      { senha: "9247", nome: "EDILSON",      status: "ATIVO", funcao: "MOTORISTA" },
+  "sergio.silva": { senha: "4591", nome: "SÉRGIO SILVA", status: "ATIVO", funcao: "MOTORISTA" },
+  "gilmar":       { senha: "6529", nome: "GILMAR",       status: "ATIVO", funcao: "MOTORISTA" },
+  "sandro":       { senha: "1329", nome: "SANDRO",       status: "ATIVO", funcao: "MOTORISTA" },
+  "luiz":         { senha: "2198", nome: "LUIZ",         status: "ATIVO", funcao: "MOTORISTA" },
+  "medeiros":     { senha: "4362", nome: "MEDEIROS",     status: "ATIVO", funcao: "MOTORISTA" },
+  "alex":         { senha: "1476", nome: "ALEX",         status: "ATIVO", funcao: "MOTORISTA" },
+  "wilson":       { senha: "8032", nome: "WILSON",       status: "ATIVO", funcao: "MOTORISTA" },
+  "nogueira":     { senha: "8520", nome: "NOGUEIRA",     status: "ATIVO", funcao: "MOTORISTA" },
+  "mauro":        { senha: "5506", nome: "MAURO",        status: "LICENÇA", funcao: "MOTORISTA" },
+  "ricardo":      { senha: "2458", nome: "RICARDO",      status: "FÉRIAS", funcao: "MOTORISTA" },
+  "nubia":        { senha: "3261", nome: "NÚBIA",        status: "ATIVO", funcao: "ESCRITÓRIO" },
+  "eduardo":      { senha: "3861", nome: "EDUARDO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "assis":        { senha: "3718", nome: "ASSIS",        status: "ATIVO", funcao: "MOTORISTA" },
+  "claudinei":    { senha: "2975", nome: "CLAUDINEI",    status: "FÉRIAS", funcao: "MOTORISTA" },
+  "duarte":       { senha: "2846", nome: "DUARTE",       status: "LICENÇA", funcao: "MOTORISTA" },
+  "roberto":      { senha: "9412", nome: "ROBERTO",      status: "LICENÇA", funcao: "MOTORISTA" },
+  "rosendo":      { senha: "9736", nome: "ROSENDO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "anderson":     { senha: "6042", nome: "ANDERSON",     status: "ATIVO", funcao: "MOTORISTA" },
+  "braz":         { senha: "4715", nome: "BRAZ",         status: "ATIVO", funcao: "PORTARIA" },
+  "isaias":       { senha: "8316", nome: "ISAÍAS",       status: "FÉRIAS", funcao: "MOTORISTA" },
+  "luis":         { senha: "5012", nome: "LUIS",         status: "ATIVO", funcao: "MOTORISTA" },
+  "rene":         { senha: "6913", nome: "RENÊ",         status: "ATIVO", funcao: "MOTORISTA" },
+  "felipe":       { senha: "2786", nome: "FELIPE",       status: "ATIVO", funcao: "MOTORISTA" },
+  "giulia":       { senha: "2709", nome: "GIULIA",       status: "ATIVO", funcao: "AUXILIAR" },
+  "adriano":      { senha: "4827", nome: "ADRIANO",      status: "ATIVO", funcao: "MOTORISTA" },
+  "joel":         { senha: "5742", nome: "JOEL",         status: "ATIVO", funcao: "MOTORISTA" },
+  "walmir":       { senha: "6173", nome: "WALMIR",       status: "ATIVO", funcao: "MOTORISTA" },
+  "vitoria":      { senha: "4657", nome: "VITORIA",      status: "ATIVO", funcao: "JA" },
+  "jone":         { senha: "3286", nome: "JONE",         status: "ATIVO", funcao: "MOTORISTA" },
+  "andre":        { senha: "3718", nome: "ANDRÉ",        status: "ATIVO", funcao: "MOTORISTA" },
+  "mikaele":      { senha: "2679", nome: "MIKAELE",      status: "ATIVO", funcao: "JA" },
+  "ferreira":     { senha: "5943", nome: "FERREIRA",     status: "ATIVO", funcao: "PORTARIA" },
+  "vagner":       { senha: "7248", nome: "VAGNER",       status: "ATIVO", funcao: "MOTORISTA" },
+  "celio":        { senha: "8134", nome: "CÉLIO",        status: "ATIVO", funcao: "MOTORISTA" },
+  "gabriel":      { senha: "9935", nome: "GABRIEL",      status: "ATIVO", funcao: "AUXILIAR" },
+  "souza":        { senha: "8314", nome: "SOUZA",        status: "ATIVO", funcao: "MOTORISTA" },
+  "oliveira":     { senha: "3647", nome: "OLIVEIRA",     status: "ATIVO", funcao: "MOTORISTA" },
+  "marquinho":    { senha: "2424", nome: "MARQUINHO",    status: "ATIVO", funcao: "MOTORISTA" },
+  "marcio":       { senha: "7635", nome: "MARCIO",       status: "LICENÇA", funcao: "MOTORISTA" },
+  "agatha":       { senha: "9364", nome: "AGATHA",       status: "ATIVO", funcao: "ESCRITÓRIO" },
+  "robson":       { senha: "3376", nome: "ROBSON",       status: "ATIVO", funcao: "MOTORISTA" },
+  "thiago":       { senha: "6906", nome: "THIAGO",       status: "ATIVO", funcao: "MOTORISTA" },
+  "carlos":       { senha: "8050", nome: "CARLOS",       status: "ATIVO", funcao: "MOTORISTA" },
+  "marcelo":      { senha: "7912", nome: "MARCELO",      status: "TREINAMENTO", funcao: "MOTORISTA" },
+  "edilei":       { senha: "1520", nome: "EDILEI",       status: "TREINAMENTO", funcao: "MOTORISTA" },
+  "tl":           { senha: "2580", nome: "Cliente Tele-Rio", status: "ATIVO", funcao: "CLIENTE_TL" }
+};
+
+const PAINEL_ALLOWED = ['ADMIN', 'SUPERVISOR', 'ESCRITÓRIO'];
+function normLogin(s){ return String(s||'').trim().toLowerCase(); }
+function funcaoDe(u){ return String((u&&u.funcao)||'').toUpperCase(); }
+function podeVerPainel(u){
+  if(!u) return false;
+  const f = funcaoDe(u);
+  if(u.login==='admin' || f==='ADMIN') return PAINEL_ALLOWED.indexOf('ADMIN')>=0;
+  return PAINEL_ALLOWED.indexOf(f)>=0;
+}
+function aplicarVisibilidadeLinks(u){
+  const f = funcaoDe(u);
+  if(f==='CLIENTE_TL'){
+    document.querySelectorAll('a.link').forEach(a => {
+      const href = a.getAttribute('href')||'';
+      if(href.indexOf('painel-tl')<0) a.style.display='none';
+    });
+  }
+}
+function entrarPainel(){
+  const login = normLogin(document.getElementById('gUser').value);
+  const senha = String(document.getElementById('gPass').value||'');
+  const base = USERS[login];
+  const err = document.getElementById('gErr');
+  if(!base || String(base.senha)!==senha || String(base.status).toUpperCase()!=='ATIVO'){
+    err.style.display='block'; return;
+  }
+  const user = Object.assign({login}, base);
+  if(!podeVerPainel(user)){
+    err.style.display='block'; return;
+  }
+  localStorage.setItem('jt_painel_user', JSON.stringify(user));
+  document.getElementById('gate').classList.add('hidden');
+  aplicarVisibilidadeLinks(user);
+  if(typeof carregar==='function') carregar();
+}
+function iniciarGate(){
+  let user = null;
+  try { user = JSON.parse(localStorage.getItem('jt_painel_user')||'null'); } catch(e){}
+  if(!user){
+    try {
+      const ponto = JSON.parse(localStorage.getItem('jt_saved_user')||'null');
+      if(ponto) user = Object.assign({}, ponto, {login: ponto.login});
+    } catch(e){}
+  }
+  if(user && user.login && USERS[user.login]) user = Object.assign({login:user.login}, USERS[user.login], user);
+  if(user && String((user.funcao||'')).toUpperCase()==='MOTORISTA'){
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('denied').style.display='flex';
+    return false;
+  }
+  if(user && podeVerPainel(user)){
+    document.getElementById('gate').classList.add('hidden');
+    aplicarVisibilidadeLinks(user);
+    return true;
+  }
+  document.getElementById('gate').classList.remove('hidden');
+  return false;
+}
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter' && !document.getElementById('gate').classList.contains('hidden')) entrarPainel();
+});
+
+if(iniciarGate()) carregar();
 </script>
 </body>
 </html>
