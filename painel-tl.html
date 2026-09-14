@@ -55,9 +55,9 @@
       <thead>
         <tr>
           <th>Nome</th><th>Placa</th><th>Início</th><th>Operação</th><th>Destino</th>
-          <th>Saída Veíc.</th><th>Km Saída</th><th>Chegada Loja</th><th>Abertura Baú</th>
-          <th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>Parada</th>
-          <th>Retorno</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th>
+          <th>Saída Veíc.</th><th>Chegada Loja</th><th>Abertura Baú</th><th>Fechamento Baú</th>
+          <th>Saída Loja</th><th>Total Loja</th><th>Parada</th><th>Retorno</th>
+          <th>Chegada CD</th><th>Km Saída</th><th>Km Chegada</th><th>Fim</th>
           <th>Trabalhado</th><th>Extra</th><th>Status</th>
         </tr>
       </thead>
@@ -115,6 +115,57 @@ function calcTotalLoja(chegada, saida){
 
 function toBR(iso){ const p=String(iso||'').split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso; }
 
+
+const CONTROLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/19ztgd86-ivwJveXp0Q_032P1fFaSuC9D9uaMJ4r6mP8/gviz/tq?tqx=out:csv&gid=1559964021';
+
+function extrairPlacaVeiculo(veiculo){
+  const limpo = String(veiculo||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const m = limpo.match(/([A-Z]{3}\d[A-Z0-9]\d{2}|[A-Z]{3}\d{4})/);
+  return m ? m[1] : limpo;
+}
+function dataBate(cell, iso){
+  const p = String(iso||'').split('-');
+  if(p.length!==3) return false;
+  const alvos = [p[2]+'/'+p[1]+'/'+p[0].slice(2), p[2]+'/'+p[1]+'/'+p[0], iso];
+  const d = String(cell||'').trim();
+  return alvos.some(a => d===a || d.indexOf(a)===0);
+}
+async function buscarControleCsv(iso){
+  const txt = await fetch(CONTROLE_CSV_URL+'&_='+Date.now(), {cache:'no-store'}).then(r=>r.text());
+  const linhas = txt.split(/\r?\n/).filter(Boolean);
+  if(linhas.length<2) return [];
+  const parse = line => {
+    const out=[]; let cur='', q=false;
+    for(const ch of line){
+      if(ch==='"'){ q=!q; continue; }
+      if(ch===',' && !q){ out.push(cur); cur=''; continue; }
+      cur+=ch;
+    }
+    out.push(cur);
+    return out;
+  };
+  const h = parse(linhas[0]).map(x=>x.trim().toUpperCase());
+  const idx = n => h.indexOf(n);
+  const iData=idx('DATA'), iOp=idx('OP'), iVeic=idx('VEICULO'), iMot=idx('MOTORISTA');
+  const iDest=idx('DESTINO');
+  const iSaida = h.indexOf('SAÍDA_VEÍCULO_CD')>=0 ? h.indexOf('SAÍDA_VEÍCULO_CD') : h.indexOf('SAIDA_VEICULO_CD');
+  const out=[];
+  for(let i=1;i<linhas.length;i++){
+    const r = parse(linhas[i]);
+    if(!dataBate(r[iData], iso)) continue;
+    out.push({
+      data: r[iData]||'',
+      op: (r[iOp]||'').trim(),
+      veiculo: (r[iVeic]||'').trim(),
+      placa: extrairPlacaVeiculo(r[iVeic]||''),
+      motorista: (r[iMot]||'').trim(),
+      destino: iDest>=0 ? (r[iDest]||'').trim() : '',
+      saidaCd: iSaida>=0 ? String(r[iSaida]||'').trim() : ''
+    });
+  }
+  return out;
+}
+
 async function carregar(){
   const iso = $('#fData').value;
   if(!iso) return;
@@ -122,7 +173,7 @@ async function carregar(){
 
   const [ponto, controle, lancs] = await Promise.all([
     fetch(`${JORNADA_URL}?acao=resumo_dia&data=${encodeURIComponent(toBR(iso))}`).then(r=>r.json()).catch(()=>({registros:[]})),
-    fetch(`${FROTA_URL}?action=getControleDoDia&data=${encodeURIComponent(iso)}&_=${Date.now()}`).then(r=>r.json()).catch(()=>[]),
+    buscarControleCsv(iso).catch(()=>[]),
     fetch(`${FROTA_URL}?action=getLancamentos&data=${encodeURIComponent(iso)}`).then(r=>r.json()).catch(()=>[])
   ]);
 
@@ -200,7 +251,6 @@ async function carregar(){
       <td><span class="pill p-green">TL</span></td>
       <td>${vazio(r.destino)}</td>
       <td>${vazio(r.saidaVeiculo)}</td>
-      <td>${vazio(r.kmSaida)}</td>
       <td>${vazio(r.chegadaLoja)}</td>
       <td>${vazio(r.aberturaBau)}</td>
       <td>${vazio(r.fechamentoBau)}</td>
@@ -209,6 +259,7 @@ async function carregar(){
       <td>${r.parada?`<span class="pill p-yellow">${esc(r.parada)}</span>`:vazio('')}</td>
       <td>${r.retorno?`<span class="pill p-blue">${esc(r.retorno)}</span>`:vazio('')}</td>
       <td>${vazio(r.chegadaCD)}</td>
+      <td>${vazio(r.kmSaida)}</td>
       <td>${vazio(r.kmChegada)}</td>
       <td>${r.fim?`<span class="pill p-red">${esc(r.fim)}</span>`:vazio('')}</td>
       <td>${vazio(trab)}</td>
