@@ -221,34 +221,52 @@ async function carregar(){
   } catch(e){ console.warn('lancs', e); }
 
   const mapa = {};
+  const porPlaca = {};
   const garanta = (chave, nome) => {
     if(!mapa[chave]) mapa[chave] = { nome, inicio:'', parada:'', retorno:'', fim:'', placa:'', destino:'', saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', kmSaida:'', kmChegada:'', totalLoja:'', operacao:'TL' };
     return mapa[chave];
   };
+  const chavePlaca = v => String(v||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  const acharPorPlaca = placa => {
+    const k = chavePlaca(placa);
+    if(!k) return null;
+    if(porPlaca[k]) return porPlaca[k];
+    return Object.values(mapa).find(r => chavePlaca(r.placa)===k) || null;
+  };
 
   (Array.isArray(controle)?controle:[]).filter(i => String(i.op||'').toUpperCase()==='TL').forEach(item => {
-    const chave = normNome(item.motorista);
+    const chave = normNome(item.motorista) || chavePlaca(item.placa) || String(item.veiculo||'');
     if(!chave) return;
-    const row = garanta(chave, item.motorista || chave);
+    const row = garanta(chave, item.motorista || item.placa || chave);
     row.placa = item.placa || row.placa;
     row.destino = item.destino || row.destino;
-    if(!row.saidaVeiculo) row.saidaVeiculo = item.saidaCd || '';
+    row.operacao = 'TL';
+    if(item.saidaCd) row.saidaVeiculo = item.saidaCd;
+    if(row.placa) porPlaca[chavePlaca(row.placa)] = row;
   });
 
   (ponto.registros||[]).forEach(r => {
     const chave = normNome(r.nome);
-    if(!mapa[chave]) return; // TL panel: só quem está no Controle TL
-    mapa[chave].inicio = r.inicio || mapa[chave].inicio;
-    mapa[chave].parada = r.parada || mapa[chave].parada;
-    mapa[chave].retorno = r.retorno || mapa[chave].retorno;
-    mapa[chave].fim = r.fim || mapa[chave].fim;
+    let row = mapa[chave];
+    if(!row){
+      // tenta 1º nome (Camara / CAMARA / JOAO)
+      const first = chave.split(' ')[0];
+      row = Object.values(mapa).find(x => normNome(x.nome).split(' ')[0]===first);
+    }
+    if(!row) return;
+    row.inicio = r.inicio || row.inicio;
+    row.parada = r.parada || row.parada;
+    row.retorno = r.retorno || row.retorno;
+    row.fim = r.fim || row.fim;
+    row.trabalhado = r.trabalhado || row.trabalhado;
+    row.extra = r.extra || row.extra;
   });
 
   (Array.isArray(lancs)?lancs:[]).forEach(lanc => {
     if(/ignorado/i.test(String(lanc.Status||''))) return;
-    const chave = normNome(lanc.Motorista);
-    if(!mapa[chave]) return;
-    const row = mapa[chave];
+    let row = acharPorPlaca(lanc.Placa);
+    if(!row) row = mapa[normNome(lanc.Motorista)];
+    if(!row) return;
     if(lanc.KmSaida) row.kmSaida = lanc.KmSaida;
     if(lanc.KmChegada) row.kmChegada = lanc.KmChegada;
     if(lanc.HoraProgramadaSaida) row.saidaVeiculo = lanc.HoraProgramadaSaida;
@@ -262,6 +280,7 @@ async function carregar(){
     row.chegadaCD = lanc.HoraChegadaCD || row.chegadaCD;
     if(!row.parada) row.parada = lanc.HoraParada || lanc.InicioAlmoco || row.parada;
     if(!row.retorno) row.retorno = lanc.HoraRetorno || lanc.FimAlmoco || row.retorno;
+    if(!row.destino && lanc.Destino) row.destino = lanc.Destino;
   });
 
   const lista = Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
