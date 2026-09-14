@@ -2947,57 +2947,114 @@ function normalizarNome_(nome) {
 async function buscarFrotaJornadaDoDia_(dataISO) {
   const mapa = {};
   if (!dataISO) return mapa;
-  try {
-    // Aceita YYYY-MM-DD; se vier DD/MM/YYYY converte
-    let dataParam = String(dataISO).trim();
-    const mBr = dataParam.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (mBr) dataParam = `${mBr[3]}-${mBr[2]}-${mBr[1]}`;
 
+  let dataParam = String(dataISO).trim();
+  const mBr = dataParam.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (mBr) dataParam = `${mBr[3]}-${mBr[2]}-${mBr[1]}`;
+
+  const placaKey = (p) => String(p || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+  // 1) CONTROLE = só PLACA / OP / DESTINO / saída prevista (NÃO usa KM do Controle)
+  try {
+    const respC = await fetch(
+      `${FROTA_JORNADA_API_URL}?action=getControleDoDia&data=${encodeURIComponent(dataParam)}&_=${Date.now()}`,
+      { cache: 'no-store' }
+    );
+    if (respC.ok) {
+      const listaC = await respC.json();
+      if (Array.isArray(listaC)) {
+        listaC.forEach(item => {
+          const chave = normalizarNome_(item.motorista);
+          if (!chave) return;
+          (mapa[chave] = mapa[chave] || []).push({
+            nome: item.motorista || chave,
+            placa: item.placa || '',
+            operacao: item.op || '',
+            destino: item.destino || '',
+            saidaVeiculo: item.saidaCd || '',
+            chegadaLoja: '',
+            aberturaBau: '',
+            fechamentoBau: '',
+            saidaLoja: '',
+            totalLoja: '',
+            chegadaCD: '',
+            kmSaida: '',
+            kmChegada: '',
+            statusFrota: 'Controle',
+            origem: 'controle'
+          });
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('[Controle] falha:', e);
+  }
+
+  // 2) App de ponto / Lancamentos = KM do motorista + horários reais
+  try {
     const resp = await fetch(
       `${FROTA_JORNADA_API_URL}?action=getLancamentos&data=${encodeURIComponent(dataParam)}`,
       { cache: 'no-store' }
     );
-    if (!resp.ok) {
-      console.warn('[Frota Jornada] HTTP', resp.status);
-      return mapa;
+    if (resp.ok) {
+      const lista = await resp.json();
+      if (Array.isArray(lista)) {
+        lista.forEach(lanc => {
+          const chave = normalizarNome_(lanc.Motorista);
+          if (!chave) return;
+          const paradas = (lanc.Paradas || []).slice().sort((a,b) => (a.NumeroLoja||0)-(b.NumeroLoja||0));
+          const melhor = paradas.find(p => p.HoraChegada || p.HoraAberturaBau || p.HoraFechamentoBau || p.HoraSaida) || paradas[0] || {};
+          const listaChave = mapa[chave] || [];
+          let alvo = listaChave.find(v => placaKey(v.placa) && placaKey(v.placa) === placaKey(lanc.Placa))
+                  || listaChave[0];
+          if (!alvo) {
+            alvo = {
+              nome: lanc.Motorista || chave,
+              placa: '',
+              operacao: lanc.Operacao || '',
+              destino: lanc.Destino || '',
+              saidaVeiculo: '',
+              chegadaLoja: '',
+              aberturaBau: '',
+              fechamentoBau: '',
+              saidaLoja: '',
+              totalLoja: '',
+              chegadaCD: '',
+              kmSaida: '',
+              kmChegada: '',
+              statusFrota: lanc.Status || '',
+              origem: 'frota'
+            };
+            (mapa[chave] = mapa[chave] || []).push(alvo);
+          }
+
+          // PLACA: Controle prevalece. Só usa a do lançamento se Controle não tiver.
+          if (!alvo.placa && lanc.Placa) alvo.placa = lanc.Placa;
+          if (!alvo.operacao && lanc.Operacao) alvo.operacao = lanc.Operacao;
+          if (!alvo.destino && lanc.Destino) alvo.destino = lanc.Destino;
+
+          // KM: SOMENTE do app de ponto (Lancamentos), nunca do Controle
+          if (lanc.KmSaida) alvo.kmSaida = lanc.KmSaida;
+          if (lanc.KmChegada) alvo.kmChegada = lanc.KmChegada;
+
+          if (lanc.HoraProgramadaSaida) alvo.saidaVeiculo = lanc.HoraProgramadaSaida;
+          alvo.chegadaLoja = melhor.HoraChegada || alvo.chegadaLoja;
+          alvo.aberturaBau = melhor.HoraAberturaBau || alvo.aberturaBau;
+          alvo.fechamentoBau = melhor.HoraFechamentoBau || alvo.fechamentoBau;
+          alvo.saidaLoja = melhor.HoraSaida || alvo.saidaLoja;
+          alvo.totalLoja = melhor.TotalLoja || alvo.totalLoja;
+          alvo.chegadaCD = lanc.HoraChegadaCD || alvo.chegadaCD;
+          if (lanc.Status) alvo.statusFrota = lanc.Status;
+        });
+      }
     }
-    const lista = await resp.json();
-    if (!Array.isArray(lista)) {
-      console.warn('[Frota Jornada] resposta não é lista', lista);
-      return mapa;
-    }
-    // guarda TODAS as viagens do motorista naquele dia (carga casada,
-    // 2ª/3ª saída etc.), não só a mais recente
-    lista.forEach(lanc => {
-      const chave = normalizarNome_(lanc.Motorista);
-      if (!chave) return;
-      const paradas = (lanc.Paradas || []).slice().sort((a,b) => (a.NumeroLoja||0)-(b.NumeroLoja||0));
-      const melhor = paradas.find(p => p.HoraChegada || p.HoraAberturaBau || p.HoraFechamentoBau || p.HoraSaida) || paradas[0] || {};
-      (mapa[chave] = mapa[chave] || []).push({
-        nome: lanc.Motorista || chave,
-        placa: lanc.Placa || '',
-        operacao: lanc.Operacao || '',
-        destino: lanc.Destino || '',
-        saidaVeiculo: lanc.HoraProgramadaSaida || lanc.HoraSaida || '',
-        chegadaLoja: melhor.HoraChegada || '',
-        aberturaBau: melhor.HoraAberturaBau || '',
-        fechamentoBau: melhor.HoraFechamentoBau || '',
-        saidaLoja: melhor.HoraSaida || '',
-        totalLoja: melhor.TotalLoja || '',
-        chegadaCD: lanc.HoraChegadaCD || '',
-        kmSaida: lanc.KmSaida || '',
-        kmChegada: lanc.KmChegada || '',
-        statusFrota: lanc.Status || ''
-      });
-    });
-    // ordena as viagens de cada motorista pela hora de saída, pra ficar na
-    // sequência real do dia (1ª viagem, 2ª viagem...)
-    Object.keys(mapa).forEach(chave => {
-      mapa[chave].sort((a, b) => (a.saidaVeiculo || '').localeCompare(b.saidaVeiculo || ''));
-    });
   } catch (e) {
     console.warn('[Frota Jornada] falha ao buscar lançamentos:', e);
   }
+
+  Object.keys(mapa).forEach(chave => {
+    mapa[chave].sort((a, b) => (a.saidaVeiculo || '').localeCompare(b.saidaVeiculo || ''));
+  });
   return mapa;
 }
 
