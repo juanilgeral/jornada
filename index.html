@@ -3121,6 +3121,34 @@ async function buscarTrucksLogAtualIdx_(iso){
   return out;
 }
 
+
+const LANC_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TtgHyiAFdj1jCZGfm4VYzqw-4bEluQ34c95cYH_M6OA/gviz/tq?tqx=out:csv&gid=2095137635';
+async function buscarKmLancamentosDoDiaIdx_(iso){
+  const mapa = {};
+  try {
+    const txt = await (await fetchComTempo_(LANC_CSV_URL+'&_='+Date.now(), 12000)).text();
+    const linhas = txt.split(/\r?\n/).filter(Boolean);
+    if(!linhas.length) return mapa;
+    const h = parseCsvLineIdx_(linhas[0]).map(x => String(x||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+    const idx = n => h.findIndex(x => x.replace(/[^A-Z0-9]/g,'')===n.replace(/[^A-Z0-9]/g,''));
+    const iData = idx('DATA'), iPlaca = idx('PLACA'), iKs = idx('KMSAIDA'), iKc = idx('KMCHEGADA');
+    const p0 = String(iso||'').split('-');
+    const alvos = p0.length===3 ? [iso, p0[2]+'/'+p0[1]+'/'+p0[0]] : [iso];
+    for(let i=1;i<linhas.length;i++){
+      const r = parseCsvLineIdx_(linhas[i]);
+      const dt = String(r[iData]||'');
+      if(!alvos.some(a => dt.indexOf(a)===0 || dt.includes(a))) continue;
+      const pk = String(r[iPlaca]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+      if(!pk) continue;
+      const ks = String(iKs>=0?r[iKs]:'').trim();
+      const kc = String(iKc>=0?r[iKc]:'').trim();
+      if(!ks && !kc) continue;
+      mapa[pk] = { kmSaida: ks, kmChegada: kc };
+    }
+  } catch(e){ console.warn('km lanc', e); }
+  return mapa;
+}
+
 async function buscarFrotaJornadaDoDia_(dataISO) {
   const mapa = {};
   if (!dataISO) return mapa;
@@ -3205,6 +3233,18 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
       });
     });
   } catch(e){ console.warn('[TrucksLog merge]', e); }
+  try {
+    const kmMap = await buscarKmLancamentosDoDiaIdx_(dataParam);
+    Object.keys(mapa).forEach(chave => {
+      (mapa[chave]||[]).forEach(alvo => {
+        const pk = String(alvo.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+        const km = kmMap[pk];
+        if(!km) return;
+        if(km.kmSaida) alvo.kmSaida = km.kmSaida;
+        if(km.kmChegada) alvo.kmChegada = km.kmChegada;
+      });
+    });
+  } catch(e){ console.warn('[KM]', e); }
 
   Object.keys(mapa).forEach(chave => {
     mapa[chave].sort((a, b) => (a.saidaVeiculo || '').localeCompare(b.saidaVeiculo || ''));

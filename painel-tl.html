@@ -209,6 +209,39 @@ async function buscarControleCsv(iso){
   return out;
 }
 
+function fetchComTempo_(resource, ms){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms || 10000);
+  return fetch(resource, { cache:'no-store', signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
+const LANC_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TtgHyiAFdj1jCZGfm4VYzqw-4bEluQ34c95cYH_M6OA/gviz/tq?tqx=out:csv&gid=2095137635';
+async function buscarKmLancamentosDoDia_(iso){
+  const mapa = {};
+  try {
+    const txt = await (await fetchComTempo_(LANC_CSV_URL+'&_='+Date.now(), 12000)).text();
+    const linhas = txt.split(/\r?\n/).filter(Boolean);
+    if(!linhas.length) return mapa;
+    const h = parseCsvLine(linhas[0]).map(x => String(x||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+    const idx = n => h.findIndex(x => x.replace(/[^A-Z0-9]/g,'')===n.replace(/[^A-Z0-9]/g,''));
+    const iData = idx('DATA'), iPlaca = idx('PLACA'), iKs = idx('KMSAIDA'), iKc = idx('KMCHEGADA');
+    const p0 = String(iso||'').split('-');
+    const alvos = p0.length===3 ? [iso, p0[2]+'/'+p0[1]+'/'+p0[0]] : [iso];
+    for(let i=1;i<linhas.length;i++){
+      const r = parseCsvLine(linhas[i]);
+      const dt = String(r[iData]||'');
+      if(!alvos.some(a => dt.indexOf(a)===0 || dt.includes(a))) continue;
+      const pk = String(r[iPlaca]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+      if(!pk) continue;
+      const ks = String(iKs>=0?r[iKs]:'').trim();
+      const kc = String(iKc>=0?r[iKc]:'').trim();
+      if(!ks && !kc) continue;
+      mapa[pk] = { kmSaida: ks, kmChegada: kc };
+    }
+  } catch(e){ console.warn('km lanc', e); }
+  return mapa;
+}
+
 async function carregar(){
 
 const TRUCKSLOG_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TtgHyiAFdj1jCZGfm4VYzqw-4bEluQ34c95cYH_M6OA/gviz/tq?tqx=out:csv&gid=149639861';
@@ -369,6 +402,16 @@ async function buscarTrucksLogDoDia_(iso){
     if(!row.parada && ev.parada) row.parada = ev.parada;
     if(!row.retorno && ev.retorno) row.retorno = ev.retorno;
   });
+  try {
+    const kmMap = await buscarKmLancamentosDoDia_(iso);
+    Object.values(mapa).forEach(row => {
+      const pk = String(row.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+      const km = kmMap[pk];
+      if(!km) return;
+      if(km.kmSaida) row.kmSaida = km.kmSaida;
+      if(km.kmChegada) row.kmChegada = km.kmChegada;
+    });
+  } catch(e){ console.warn('km', e); }
   const lista = Object.values(mapa).sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR'));
   let iniciados=0, almoco=0, fins=0;
   lista.forEach(r => { if(r.inicio) iniciados++; if(r.parada && !r.retorno) almoco++; if(r.fim) fins++; });
