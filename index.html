@@ -1635,7 +1635,7 @@
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Nome</th><th>Placa</th><th>Início</th><th>Operação</th><th>Destino</th><th>Saída Veíc.</th><th>Km Saída</th><th>Chegada Loja</th><th>Abertura Baú</th><th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>PARADA RF</th><th>RETORNO RF</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
+          <thead><tr><th>Nome</th><th>Placa</th><th>Início</th><th>OP</th><th>Destino</th><th>Saída Veíc.</th><th>Km Saída</th><th>Chegada Loja</th><th>Abertura Baú</th><th>Fechamento Baú</th><th>Saída Loja</th><th>Total Loja</th><th>PARADA RF</th><th>RETORNO RF</th><th>Chegada CD</th><th>Km Chegada</th><th>Fim</th><th>Trabalhado</th><th>Extra</th><th>Status</th></tr></thead>
           <tbody id="admin-tbody"><tr><td colspan="20" class="admin-empty">Selecione uma data e clique em Buscar</td></tr></tbody>
         </table>
       </div>
@@ -2924,10 +2924,24 @@ async function enviarParaSheets(payload) {
 // ════════════════════════════════════════════════════════════
 // ADMIN
 // ════════════════════════════════════════════════════════════
+function dataOperacionalISO_(){
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone:'America/Sao_Paulo',
+    year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', hour12:false
+  }).formatToParts(new Date());
+  const get = t => (parts.find(p=>p.type===t)||{}).value;
+  let y = Number(get('year')), m = Number(get('month')), d = Number(get('day'));
+  const h = Number(get('hour'));
+  if (h < 1) {
+    const dt = new Date(Date.UTC(y, m-1, d));
+    dt.setUTCDate(dt.getUTCDate()-1);
+    y = dt.getUTCFullYear(); m = dt.getUTCMonth()+1; d = dt.getUTCDate();
+  }
+  return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+}
 function iniciarAdmin() {
   showScreen('admin-screen');
-  const hoje = new Date();
-  const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+  const hojeISO = dataOperacionalISO_();
   document.getElementById('admin-data').value = hojeISO;
   document.getElementById('admin-semana-data').value = hojeISO;
   buscarDia();
@@ -3490,7 +3504,7 @@ window.addEventListener('load', () => {
 // ════════════════════════════════════════════════════════════
 // AUTO-REFRESH & SYNC
 // ════════════════════════════════════════════════════════════
-const AUTO_REFRESH_MS = 3 * 60 * 1000;
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
 let refreshCountdown = AUTO_REFRESH_MS;
 let refreshInterval = null;
 let countdownInterval = null;
