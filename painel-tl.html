@@ -256,6 +256,24 @@ async function buscarKmLancamentosDoDia_(iso){
 async function carregar(){
 
 const TRUCKSLOG_CSV_URL = 'https://docs.google.com/spreadsheets/d/1TtgHyiAFdj1jCZGfm4VYzqw-4bEluQ34c95cYH_M6OA/gviz/tq?tqx=out:csv&gid=149639861';
+
+function ehChegadaCDEvt_(ev, detalhe){
+  const e = String(ev||'').toUpperCase();
+  const t = String(detalhe||'').toUpperCase();
+  if (e==='LS_FIM_MACRO' || e==='CV_FIM_LOJA') return false;
+  if (e==='RETORNO') return true;
+  if (e!=='FIM_VIAGEM' && e!=='FIM_FINAL') return false;
+  const loja = /SHOP|LOJA|PARTAGE|MERCADO|SUPER|HIPER|ATACAD|REENTREGA/.test(t);
+  const base = /\bCD\b|BASE|GARAGEM|JUANIL|QUEIMADOS|PAVUNA/.test(t);
+  if (loja && !base) return false;
+  if (base) return true;
+  return false;
+}
+function destEhLoja_(dest){
+  const t = String(dest||'').toUpperCase();
+  if (/\bCD\b|BASE|GARAGEM|JUANIL|QUEIMADOS/.test(t)) return false;
+  return /SHOP|LOJA|PARTAGE|MERCADO|SUPER|HIPER|ATACAD|REENTREGA/.test(t);
+}
 function hhLog_(v){
   const s = String(v||'').trim();
   const m = s.match(/(\d{1,2}:\d{2})/);
@@ -277,7 +295,7 @@ async function buscarTrucksLogDoDia_(iso){
     if(!placa) continue;
     const hora = hhLog_(r[3]) || hhLog_(dh.split(' ').slice(-1)[0]);
     if(!evts[placa]) evts[placa] = [];
-    evts[placa].push({ ev, hora, ts: dh });
+    evts[placa].push({ ev, hora, ts: dh, det: String(r[3]||'') });
   }
   Object.keys(evts).forEach(placa => {
     const lista = evts[placa];
@@ -304,9 +322,9 @@ async function buscarTrucksLogDoDia_(iso){
       if(e.ev==='FECHAMENTO_BAU') row.fechamentoBau = hora;
       if(e.ev==='PARADA_REFEICAO') row.parada = hora;
       if(e.ev==='REINICIO_VIAGEM' || e.ev==='REINICIO') row.retorno = hora;
-      if(e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM') row.chegadaCD = hora;
+      if(ehChegadaCDEvt_(e.ev, e.det)) row.chegadaCD = hora;
     });
-    if(!janela.some(e => e.ev==='RETORNO' || e.ev==='FIM_FINAL' || e.ev==='FIM_VIAGEM')) row.chegadaCD = '';
+    if(!janela.some(e => ehChegadaCDEvt_(e.ev, e.det))) row.chegadaCD = '';
     out[placa] = row;
   });
   return out;
@@ -391,7 +409,7 @@ async function buscarTrucksLogDoDia_(iso){
     row.fechamentoBau = melhor.HoraFechamentoBau || row.fechamentoBau;
     row.saidaLoja = melhor.HoraSaida || row.saidaLoja;
     row.totalLoja = melhor.TotalLoja || row.totalLoja;
-    row.chegadaCD = lanc.HoraChegadaCD || row.chegadaCD;
+    if (lanc.HoraChegadaCD && !destEhLoja_(row.destino || lanc.Destino)) row.chegadaCD = lanc.HoraChegadaCD;
     if(!row.parada) row.parada = lanc.HoraParada || lanc.InicioAlmoco || row.parada;
     if(!row.retorno) row.retorno = lanc.HoraRetorno || lanc.FimAlmoco || row.retorno;
     if(!row.destino && lanc.Destino) row.destino = lanc.Destino;

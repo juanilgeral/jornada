@@ -3085,6 +3085,24 @@ async function buscarControleCsvIdx_(iso){
 
 
 const TRUCKSLOG_CSV_URL_IDX = 'https://docs.google.com/spreadsheets/d/1TtgHyiAFdj1jCZGfm4VYzqw-4bEluQ34c95cYH_M6OA/gviz/tq?tqx=out:csv&gid=149639861';
+
+function ehChegadaCDEvt_(ev, detalhe){
+  const e = String(ev||'').toUpperCase();
+  const t = String(detalhe||'').toUpperCase();
+  if (e==='LS_FIM_MACRO' || e==='CV_FIM_LOJA') return false;
+  if (e==='RETORNO') return true;
+  if (e!=='FIM_VIAGEM' && e!=='FIM_FINAL') return false;
+  const loja = /SHOP|LOJA|PARTAGE|MERCADO|SUPER|HIPER|ATACAD|REENTREGA/.test(t);
+  const base = /\bCD\b|BASE|GARAGEM|JUANIL|QUEIMADOS|PAVUNA/.test(t);
+  if (loja && !base) return false;
+  if (base) return true;
+  return false;
+}
+function destEhLoja_(dest){
+  const t = String(dest||'').toUpperCase();
+  if (/\bCD\b|BASE|GARAGEM|JUANIL|QUEIMADOS/.test(t)) return false;
+  return /SHOP|LOJA|PARTAGE|MERCADO|SUPER|HIPER|ATACAD|REENTREGA/.test(t);
+}
 function hhLogIdx_(v){
   const s = String(v||'').trim();
   const m = s.match(/(\d{1,2}:\d{2})/);
@@ -3106,7 +3124,7 @@ async function buscarTrucksLogAtualIdx_(iso){
       const placa = String(r[2]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
       if(!placa) continue;
       const hora = hhLogIdx_(r[3]) || hhLogIdx_(dh.split(' ').slice(-1)[0]);
-      (evts[placa]=evts[placa]||[]).push({ev,hora});
+      (evts[placa]=evts[placa]||[]).push({ev,hora,det:String(r[3]||'')});
     }
     Object.keys(evts).forEach(placa => {
       const lista = evts[placa];
@@ -3123,9 +3141,9 @@ async function buscarTrucksLogAtualIdx_(iso){
         if(e.ev==='CHEGADA_CLIENTE') row.chegadaLoja=hora;
         if(e.ev==='ABERTURA_BAU' || (e.ev==='INICIO_DESCARREGAMENTO' && !row.aberturaBau)) row.aberturaBau=hora;
         if(e.ev==='FECHAMENTO_BAU') row.fechamentoBau=hora;
-        if(e.ev==='RETORNO'||e.ev==='FIM_FINAL'||e.ev==='FIM_VIAGEM') row.chegadaCD=hora;
+        if(ehChegadaCDEvt_(e.ev, e.det)) row.chegadaCD=hora;
       });
-      if(!janela.some(e => e.ev==='RETORNO'||e.ev==='FIM_FINAL'||e.ev==='FIM_VIAGEM')) row.chegadaCD='';
+      if(!janela.some(e => ehChegadaCDEvt_(e.ev, e.det))) row.chegadaCD='';
       out[placa]=row;
     });
   } catch(e){ console.warn('[TrucksLog]', e); }
@@ -3220,7 +3238,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
           alvo.fechamentoBau = melhor.HoraFechamentoBau || alvo.fechamentoBau;
           alvo.saidaLoja = melhor.HoraSaida || alvo.saidaLoja;
           alvo.totalLoja = melhor.TotalLoja || alvo.totalLoja;
-          alvo.chegadaCD = lanc.HoraChegadaCD || alvo.chegadaCD;
+          if (lanc.HoraChegadaCD && !destEhLoja_(alvo.destino || lanc.Destino)) alvo.chegadaCD = lanc.HoraChegadaCD;
           if (lanc.Status) alvo.statusFrota = lanc.Status;
         });
       }
