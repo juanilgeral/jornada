@@ -3062,6 +3062,7 @@ async function buscarControleCsvIdx_(iso){
   const iSaida = h.indexOf('SAÍDA_VEÍCULO_CD')>=0 ? h.indexOf('SAÍDA_VEÍCULO_CD') : idx('SAIDA_VEICULO_CD');
   const iOn = h.findIndex(x => x.includes('PONTO') && x.includes('ON'));
   const iOff = h.findIndex(x => x.includes('PONTO') && (x.includes('OFF') || x.includes('FIM')));
+  const iRet = h.findIndex(x => x.includes('RETORNO') && x.includes('CD'));
 
   const out=[];
   for(let i=1;i<linhas.length;i++){
@@ -3076,7 +3077,8 @@ async function buscarControleCsvIdx_(iso){
       destino: iDest>=0 ? (row[iDest]||'').trim() : '',
       saidaCd: iSaida>=0 ? String(row[iSaida]||'').trim() : '',
       pontoOn: iOn>=0 ? String(row[iOn]||'').trim() : '',
-      pontoOff: iOff>=0 ? String(row[iOff]||'').trim() : ''
+      pontoOff: iOff>=0 ? String(row[iOff]||'').trim() : '',
+      retornoCd: iRet>=0 ? String(row[iRet]||'').trim() : ''
     });
   }
   return out;
@@ -3201,7 +3203,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         saidaVeiculo: item.saidaCd || '',
         chegadaLoja: '', aberturaBau: '', fechamentoBau: '', saidaLoja: '', totalLoja: '',
         chegadaCD: '', kmSaida: '', kmChegada: '', horaParada: '', horaRetorno: '',
-        inicioControle: item.pontoOn || '', fimControle: item.pontoOff || '',
+        inicioControle: item.pontoOn || '', fimControle: item.pontoOff || '', retornoCd: item.retornoCd || '',
         statusFrota: 'Controle', origem: 'controle'
       });
     });
@@ -3253,15 +3255,22 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         const pk = String(alvo.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
         const ev = logMap[pk];
         if(!ev) return;
+        if(ev.fimViagem) alvo.fimViagem = ev.fimViagem;
         if(ev.saidaVeiculo && !alvo.saidaVeiculo) alvo.saidaVeiculo = ev.saidaVeiculo;
         if(ev.chegadaLoja) alvo.chegadaLoja = ev.chegadaLoja;
         if(ev.aberturaBau) alvo.aberturaBau = ev.aberturaBau;
         if(ev.fechamentoBau) alvo.fechamentoBau = ev.fechamentoBau;
         if(ev.saidaLoja) alvo.saidaLoja = ev.saidaLoja;
         const op = String(alvo.operacao||'').toUpperCase();
-        if(op==='TL'){
-          if(ev.fimViagem) alvo.chegadaCD = ev.fimViagem;
-        } else if(ev.chegadaCD){
+        if (alvo.retornoCd) {
+          alvo.chegadaCD = alvo.retornoCd;
+        } else if (alvo.kmSaida || alvo.kmChegada) {
+          // KM do app = chegou no CD/base; aceita FIM da Trucks mesmo com destino de loja
+          if (ev.fimViagem) alvo.chegadaCD = ev.fimViagem;
+          else if (ev.chegadaCD) alvo.chegadaCD = ev.chegadaCD;
+        } else if (op==='TL') {
+          if (ev.fimViagem) alvo.chegadaCD = ev.fimViagem;
+        } else if (ev.chegadaCD) {
           alvo.chegadaCD = ev.chegadaCD;
         }
       });
@@ -3276,6 +3285,8 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         if(!km) return;
         if(km.kmSaida) alvo.kmSaida = km.kmSaida;
         if(km.kmChegada) alvo.kmChegada = km.kmChegada;
+        if (!alvo.chegadaCD && (km.kmChegada || alvo.kmChegada) && alvo.fimViagem) alvo.chegadaCD = alvo.fimViagem;
+        if (alvo.retornoCd) alvo.chegadaCD = alvo.retornoCd;
       });
     });
   } catch(e){ console.warn('[KM]', e); }

@@ -198,6 +198,7 @@ async function buscarControleCsv(iso){
   const iSaida = h.indexOf('SAÍDA_VEÍCULO_CD')>=0 ? h.indexOf('SAÍDA_VEÍCULO_CD') : idx('SAIDA_VEICULO_CD');
   const iOn = h.findIndex(x => x.includes('PONTO') && x.includes('ON'));
   const iOff = h.findIndex(x => x.includes('PONTO') && (x.includes('OFF') || x.includes('FIM')));
+  const iRet = h.findIndex(x => x.includes('RETORNO') && x.includes('CD'));
 
   const out=[];
   for(let i=1;i<linhas.length;i++){
@@ -214,7 +215,8 @@ async function buscarControleCsv(iso){
       destino: iDest>=0 ? (r[iDest]||'').trim() : '',
       saidaCd: iSaida>=0 ? String(r[iSaida]||'').trim() : '',
       pontoOn: iOn>=0 ? String(r[iOn]||'').trim() : '',
-      pontoOff: iOff>=0 ? String(r[iOff]||'').trim() : ''
+      pontoOff: iOff>=0 ? String(r[iOff]||'').trim() : '',
+      retornoCd: iRet>=0 ? String(r[iRet]||'').trim() : ''
     });
   }
   return out;
@@ -374,6 +376,7 @@ async function buscarTrucksLogDoDia_(iso){
     if(item.saidaCd) row.saidaVeiculo = item.saidaCd;
     if(item.pontoOn) row.inicioControle = item.pontoOn;
     if(item.pontoOff) row.fimControle = item.pontoOff;
+    if(item.retornoCd) row.retornoCd = item.retornoCd;
     if(row.placa) porPlaca[chavePlaca(row.placa)] = row;
   });
 
@@ -427,7 +430,7 @@ async function buscarTrucksLogDoDia_(iso){
     if(ev.aberturaBau) row.aberturaBau = ev.aberturaBau;
     if(ev.fechamentoBau) row.fechamentoBau = ev.fechamentoBau;
     if(ev.saidaLoja) row.saidaLoja = ev.saidaLoja;
-    row.chegadaCD = ev.chegadaCD || '';
+    row.chegadaCD = row.retornoCd || ev.chegadaCD || '';
     if(!row.parada && ev.parada) row.parada = ev.parada;
     if(!row.retorno && ev.retorno) row.retorno = ev.retorno;
   });
@@ -439,6 +442,11 @@ async function buscarTrucksLogDoDia_(iso){
       if(!km) return;
       if(km.kmSaida) row.kmSaida = km.kmSaida;
       if(km.kmChegada) row.kmChegada = km.kmChegada;
+      if(row.retornoCd) row.chegadaCD = row.retornoCd;
+      else if((row.kmChegada || (km && km.kmChegada)) && !row.chegadaCD) {
+        const ev2 = trucksLogMap[pk];
+        if(ev2 && ev2.chegadaCD) row.chegadaCD = ev2.chegadaCD;
+      }
     });
   } catch(e){ console.warn('km', e); }
   const lista = Object.values(mapa).sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR'));
