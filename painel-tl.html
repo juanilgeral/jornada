@@ -237,7 +237,7 @@ async function buscarKmLancamentosDoDia_(iso){
     if(!linhas.length) return mapa;
     const h = parseCsvLine(linhas[0]).map(x => String(x||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
     const idx = n => h.findIndex(x => x.replace(/[^A-Z0-9]/g,'')===n.replace(/[^A-Z0-9]/g,''));
-    const iData = idx('DATA'), iPlaca = idx('PLACA'), iKs = idx('KMSAIDA'), iKc = idx('KMCHEGADA');
+    const iData = idx('DATA'), iPlaca = idx('PLACA'), iKs = idx('KMSAIDA'), iKc = idx('KMCHEGADA'), iCd = idx('HORACHEGADACD');
     const p0 = String(iso||'').split('-');
     const alvos = p0.length===3 ? [iso, p0[2]+'/'+p0[1]+'/'+p0[0]] : [iso];
     for(let i=1;i<linhas.length;i++){
@@ -249,7 +249,8 @@ async function buscarKmLancamentosDoDia_(iso){
       const ks = String(iKs>=0?r[iKs]:'').trim();
       const kc = String(iKc>=0?r[iKc]:'').trim();
       if(!ks && !kc) continue;
-      mapa[pk] = { kmSaida: ks, kmChegada: kc };
+      const hc = String(iCd>=0?r[iCd]:'').trim();
+      mapa[pk] = { kmSaida: ks, kmChegada: kc, horaCD: hc };
     }
   } catch(e){ console.warn('km lanc', e); }
   return mapa;
@@ -430,7 +431,8 @@ async function buscarTrucksLogDoDia_(iso){
     if(ev.aberturaBau) row.aberturaBau = ev.aberturaBau;
     if(ev.fechamentoBau) row.fechamentoBau = ev.fechamentoBau;
     if(ev.saidaLoja) row.saidaLoja = ev.saidaLoja;
-    row.chegadaCD = row.retornoCd || ev.chegadaCD || '';
+    if (row.retornoCd) row.chegadaCD = row.retornoCd;
+    else if (ev.chegadaCD) row.chegadaCD = ev.chegadaCD;
     if(!row.parada && ev.parada) row.parada = ev.parada;
     if(!row.retorno && ev.retorno) row.retorno = ev.retorno;
   });
@@ -443,7 +445,8 @@ async function buscarTrucksLogDoDia_(iso){
       if(km.kmSaida) row.kmSaida = km.kmSaida;
       if(km.kmChegada) row.kmChegada = km.kmChegada;
       if(row.retornoCd) row.chegadaCD = row.retornoCd;
-      else if((row.kmChegada || (km && km.kmChegada)) && !row.chegadaCD) {
+      else if(km.horaCD) row.chegadaCD = km.horaCD;
+      else if((row.kmChegada || km.kmChegada) && !row.chegadaCD) {
         const ev2 = trucksLogMap[pk];
         if(ev2 && ev2.chegadaCD) row.chegadaCD = ev2.chegadaCD;
       }

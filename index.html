@@ -3163,7 +3163,7 @@ async function buscarKmLancamentosDoDiaIdx_(iso){
     if(!linhas.length) return mapa;
     const h = parseCsvLineIdx_(linhas[0]).map(x => String(x||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
     const idx = n => h.findIndex(x => x.replace(/[^A-Z0-9]/g,'')===n.replace(/[^A-Z0-9]/g,''));
-    const iData = idx('DATA'), iPlaca = idx('PLACA'), iKs = idx('KMSAIDA'), iKc = idx('KMCHEGADA');
+    const iData = idx('DATA'), iPlaca = idx('PLACA'), iKs = idx('KMSAIDA'), iKc = idx('KMCHEGADA'), iCd = idx('HORACHEGADACD');
     const p0 = String(iso||'').split('-');
     const alvos = p0.length===3 ? [iso, p0[2]+'/'+p0[1]+'/'+p0[0]] : [iso];
     for(let i=1;i<linhas.length;i++){
@@ -3175,7 +3175,8 @@ async function buscarKmLancamentosDoDiaIdx_(iso){
       const ks = String(iKs>=0?r[iKs]:'').trim();
       const kc = String(iKc>=0?r[iKc]:'').trim();
       if(!ks && !kc) continue;
-      mapa[pk] = { kmSaida: ks, kmChegada: kc };
+      const hc = String(iCd>=0?r[iCd]:'').trim();
+      mapa[pk] = { kmSaida: ks, kmChegada: kc, horaCD: hc };
     }
   } catch(e){ console.warn('km lanc', e); }
   return mapa;
@@ -3285,8 +3286,9 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         if(!km) return;
         if(km.kmSaida) alvo.kmSaida = km.kmSaida;
         if(km.kmChegada) alvo.kmChegada = km.kmChegada;
-        if (!alvo.chegadaCD && (km.kmChegada || alvo.kmChegada) && alvo.fimViagem) alvo.chegadaCD = alvo.fimViagem;
         if (alvo.retornoCd) alvo.chegadaCD = alvo.retornoCd;
+        else if (km.horaCD) alvo.chegadaCD = km.horaCD;
+        else if (!alvo.chegadaCD && (km.kmChegada || alvo.kmChegada) && alvo.fimViagem) alvo.chegadaCD = alvo.fimViagem;
       });
     });
   } catch(e){ console.warn('[KM]', e); }
