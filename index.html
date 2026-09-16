@@ -3134,13 +3134,14 @@ async function buscarTrucksLogAtualIdx_(iso){
       lista.forEach((e,idx)=>{ if(e.ev==='INICIO_VIAGEM' && idx>=lastFim) lastIni=idx; });
       if(lastIni<0) lista.forEach((e,idx)=>{ if(e.ev==='INICIO_VIAGEM') lastIni=idx; });
       const janela = lastIni>=0 ? lista.slice(lastIni) : lista;
-      const row = { saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'' };
+      const row = { saidaVeiculo:'', chegadaLoja:'', aberturaBau:'', fechamentoBau:'', saidaLoja:'', chegadaCD:'', fimViagem:'' };
       janela.forEach(e => {
         const hora=e.hora; if(!hora) return;
         if(e.ev==='INICIO_VIAGEM' && !row.saidaVeiculo) row.saidaVeiculo=hora;
         if(e.ev==='CHEGADA_CLIENTE') row.chegadaLoja=hora;
         if(e.ev==='ABERTURA_BAU' || (e.ev==='INICIO_DESCARREGAMENTO' && !row.aberturaBau)) row.aberturaBau=hora;
         if(e.ev==='FECHAMENTO_BAU') row.fechamentoBau=hora;
+        if(e.ev==='FIM_VIAGEM'||e.ev==='FIM_FINAL'||e.ev==='RETORNO') row.fimViagem=hora;
         if(ehChegadaCDEvt_(e.ev, e.det)) row.chegadaCD=hora;
       });
       if(!janela.some(e => ehChegadaCDEvt_(e.ev, e.det))) row.chegadaCD='';
@@ -3238,7 +3239,7 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
           alvo.fechamentoBau = melhor.HoraFechamentoBau || alvo.fechamentoBau;
           alvo.saidaLoja = melhor.HoraSaida || alvo.saidaLoja;
           alvo.totalLoja = melhor.TotalLoja || alvo.totalLoja;
-          if (lanc.HoraChegadaCD && !destEhLoja_(alvo.destino || lanc.Destino)) alvo.chegadaCD = lanc.HoraChegadaCD;
+          if (lanc.HoraChegadaCD && (String(alvo.operacao||lanc.Operacao||'').toUpperCase()==='TL' || !destEhLoja_(alvo.destino || lanc.Destino))) alvo.chegadaCD = lanc.HoraChegadaCD;
           if (lanc.Status) alvo.statusFrota = lanc.Status;
         });
       }
@@ -3257,8 +3258,12 @@ async function buscarFrotaJornadaDoDia_(dataISO) {
         if(ev.aberturaBau) alvo.aberturaBau = ev.aberturaBau;
         if(ev.fechamentoBau) alvo.fechamentoBau = ev.fechamentoBau;
         if(ev.saidaLoja) alvo.saidaLoja = ev.saidaLoja;
-        if(ev.chegadaCD) alvo.chegadaCD = ev.chegadaCD;
-        else if(!alvo.chegadaCD) alvo.chegadaCD = '';
+        const op = String(alvo.operacao||'').toUpperCase();
+        if(op==='TL'){
+          if(ev.fimViagem) alvo.chegadaCD = ev.fimViagem;
+        } else if(ev.chegadaCD){
+          alvo.chegadaCD = ev.chegadaCD;
+        }
       });
     });
   } catch(e){ console.warn('[TrucksLog merge]', e); }
