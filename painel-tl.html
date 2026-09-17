@@ -368,9 +368,11 @@ async function buscarTrucksLogDoDia_(iso){
   };
 
   (Array.isArray(controle)?controle:[]).filter(i => String(i.op||'').toUpperCase()==='TL').forEach(item => {
-    const chave = normNome(item.motorista) || chavePlaca(item.placa) || String(item.veiculo||'');
-    if(!chave) return;
-    const row = garanta(chave, item.motorista || item.placa || chave);
+    const base = normNome(item.motorista) || chavePlaca(item.placa) || String(item.veiculo||'');
+    if(!base) return;
+    const chave = base + '|' + String(item.saidaCd||'') + '|' + String(item.destino||'') + '|' + chavePlaca(item.placa);
+    const row = garanta(chave, item.motorista || item.placa || base);
+    row.nomeChave = base;
     row.placa = item.placa || row.placa;
     row.destino = item.destino || row.destino;
     row.operacao = 'TL';
@@ -383,19 +385,16 @@ async function buscarTrucksLogDoDia_(iso){
 
   (ponto.registros||[]).forEach(r => {
     const chave = normNome(r.nome);
-    let row = mapa[chave];
-    if(!row){
-      // tenta 1º nome (Camara / CAMARA / JOAO)
-      const first = chave.split(' ')[0];
-      row = Object.values(mapa).find(x => normNome(x.nome).split(' ')[0]===first);
-    }
-    if(!row) return;
+    const rows = Object.values(mapa).filter(x => x.nomeChave===chave || normNome(x.nome).split(' ')[0]===chave.split(' ')[0]);
+    if(!rows.length) return;
+    rows.forEach(row => {
     row.inicio = r.inicio || row.inicio;
     row.parada = r.parada || row.parada;
     row.retorno = r.retorno || row.retorno;
     row.fim = r.fim || row.fim;
     row.trabalhado = r.trabalhado || row.trabalhado;
     row.extra = r.extra || row.extra;
+    });
   });
 
   (Array.isArray(lancs)?lancs:[]).forEach(lanc => {
@@ -452,11 +451,17 @@ async function buscarTrucksLogDoDia_(iso){
       }
     });
   } catch(e){ console.warn('km', e); }
-  const lista = Object.values(mapa).sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+  const lista = Object.values(mapa).sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR') || String(a.saidaVeiculo).localeCompare(String(b.saidaVeiculo)));
+  const nomesUnicos = new Set(lista.map(r => r.nomeChave || normNome(r.nome)));
   let iniciados=0, almoco=0, fins=0;
-  lista.forEach(r => { if(r.inicio) iniciados++; if(r.parada && !r.retorno) almoco++; if(r.fim) fins++; });
+  nomesUnicos.forEach(n => {
+    const rs = lista.filter(r => (r.nomeChave||normNome(r.nome))===n);
+    if(rs.some(r=>r.inicio)) iniciados++;
+    if(rs.some(r=>r.parada && !r.retorno)) almoco++;
+    if(rs.some(r=>r.fim)) fins++;
+  });
   $('#stats').innerHTML = `
-    <div class="stat"><div class="n">${lista.length}</div><div class="l">Motoristas TL</div></div>
+    <div class="stat"><div class="n">${nomesUnicos.size}</div><div class="l">Motoristas TL</div></div>
     <div class="stat"><div class="n" style="color:var(--green)">${iniciados}</div><div class="l">Em jornada</div></div>
     <div class="stat"><div class="n" style="color:var(--amber)">${almoco}</div><div class="l">Almoço</div></div>
     <div class="stat"><div class="n" style="color:var(--red)">${fins}</div><div class="l">Finalizados</div></div>`;
@@ -468,7 +473,15 @@ async function buscarTrucksLogDoDia_(iso){
   }
 
   $('#tbody').style.opacity = '1';
-  $('#tbody').innerHTML = lista.map(r => {
+  const porNome = {};
+  lista.forEach(r => {
+    const k = r.nomeChave || normNome(r.nome);
+    (porNome[k]=porNome[k]||[]).push(r);
+  });
+  const html = [];
+  Object.keys(porNome).sort().forEach(k => {
+    const viagens = porNome[k];
+    viagens.forEach((r, idxViagem) => {
     let st='Aguardando', cls='p-muted';
     if(r.fim){ st='Finalizado'; cls='p-red'; }
     else if(r.retorno){ st='Trabalhando'; cls='p-green'; }
@@ -477,8 +490,11 @@ async function buscarTrucksLogDoDia_(iso){
     const totalLoja = r.totalLoja || calcTotalLoja(r.chegadaLoja, r.saidaLoja);
     const trab = r.trabalhado || calcTrabalhado(r);
     const extra = r.extra || calcExtra(trab);
-    return `<tr>
-      <td style="font-weight:700">${esc(r.nome)}</td>
+    const nomeCel = idxViagem===0
+      ? `<td style="font-weight:700">${esc(r.nome)}${viagens.length>1?` <span class="pill p-muted">${viagens.length} viagens</span>`:''}</td>`
+      : `<td style="font-weight:500;color:var(--muted);font-size:0.8rem">↳ ${idxViagem+1}ª viagem</td>`;
+    html.push(`<tr>
+      ${nomeCel}
       <td style="font-weight:800">${vazio(r.placa)}</td>
       <td>${r.inicio?`<span class="pill p-green">${esc(r.inicio)}</span>`:vazio('')}</td>
       <td><span class="pill p-green">TL</span></td>
@@ -498,8 +514,10 @@ async function buscarTrucksLogDoDia_(iso){
       <td>${vazio(trab)}</td>
       <td>${vazio(extra)}</td>
       <td><span class="pill ${cls}">${st}</span></td>
-    </tr>`;
-  }).join('');
+    </tr>`);
+    });
+  });
+  $('#tbody').innerHTML = html.join('');
 }
 
 let USERS = {
