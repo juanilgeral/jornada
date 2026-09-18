@@ -404,7 +404,7 @@ async function buscarTrucksLogDoDia_(iso){
     if(!row) return;
     if(lanc.KmSaida) row.kmSaida = lanc.KmSaida;
     if(lanc.KmChegada) row.kmChegada = lanc.KmChegada;
-    if(lanc.HoraProgramadaSaida) row.saidaVeiculo = lanc.HoraProgramadaSaida;
+    if(lanc.HoraProgramadaSaida && !row.saidaVeiculo) row.saidaVeiculo = lanc.HoraProgramadaSaida;
     const paradas = (lanc.Paradas||[]).slice().sort((a,b)=>(Number(a.NumeroLoja)||0)-(Number(b.NumeroLoja)||0));
     const melhor = paradas.find(p => p.HoraChegada || p.HoraAberturaBau || p.HoraFechamentoBau || p.HoraSaida) || paradas[0] || {};
     row.chegadaLoja = melhor.HoraChegada || row.chegadaLoja;
@@ -425,7 +425,7 @@ async function buscarTrucksLogDoDia_(iso){
     const pk = String(row.placa||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
     const ev = trucksLogMap[pk];
     if(!ev) return;
-    if(ev.saidaVeiculo) row.saidaVeiculo = ev.saidaVeiculo;
+    if(ev.saidaVeiculo && !row.saidaVeiculo) row.saidaVeiculo = ev.saidaVeiculo;
     if(ev.chegadaLoja) row.chegadaLoja = ev.chegadaLoja;
     if(ev.aberturaBau) row.aberturaBau = ev.aberturaBau;
     if(ev.fechamentoBau) row.fechamentoBau = ev.fechamentoBau;
