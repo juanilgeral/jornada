@@ -418,7 +418,22 @@ async function buscarTrucksLogDoDia_(iso){
     if(!row.destino && lanc.Destino) row.destino = lanc.Destino;
   });
 
-  const hh = v => { const s=String(v||'').trim(); if(!s||s==='—') return ''; return s.length>=5?s.slice(0,5):s; };
+  const hh = v => {
+    const s=String(v||'').trim();
+    if(!s||s==='—'||s==='-') return '';
+    const hhmm = s.length>=5?s.slice(0,5):s;
+    const m = hhmm.match(/^(\d{1,2}):(\d{2})/);
+    if(!m) return '';
+    const agora = new Date();
+    const hojeISO = agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-'+String(agora.getDate()).padStart(2,'0');
+    if (iso && iso > hojeISO) return '';
+    if (!iso || iso === hojeISO) {
+      const mins = Number(m[1])*60+Number(m[2]);
+      const agoraMins = agora.getHours()*60+agora.getMinutes();
+      if (mins > agoraMins) return '';
+    }
+    return hhmm;
+  };
   Object.values(mapa).forEach(row => {
     if(!row.inicio) row.inicio = hh(row.inicioControle);
     if(!row.fim) row.fim = hh(row.fimControle);

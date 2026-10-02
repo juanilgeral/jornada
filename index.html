@@ -3315,10 +3315,25 @@ function renderTabelaDia(registros, frotaMap) {
     if (k) pontoByNome[k] = r;
   });
 
+  // Horário da planilha de controle só entra se o app não registrou
+  // e se esse horário já chegou. Não publica início/fim futuro
+  // (motorista ainda não pegou no serviço).
   const hhCtrl = v => {
     const s = String(v || '').trim();
     if (!s || s === '—' || s === '-') return '';
-    return s.length >= 5 ? s.slice(0, 5) : s;
+    const hhmm = s.length >= 5 ? s.slice(0, 5) : s;
+    const m = hhmm.match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return '';
+    const inputData = (document.getElementById('admin-data') || {}).value || '';
+    const agora = new Date();
+    const hojeISO = agora.getFullYear() + '-' + String(agora.getMonth()+1).padStart(2,'0') + '-' + String(agora.getDate()).padStart(2,'0');
+    if (inputData && inputData > hojeISO) return '';
+    if (!inputData || inputData === hojeISO) {
+      const mins = Number(m[1]) * 60 + Number(m[2]);
+      const agoraMins = agora.getHours() * 60 + agora.getMinutes();
+      if (mins > agoraMins) return '';
+    }
+    return hhmm;
   };
 
   const tbody = document.getElementById('admin-tbody');
