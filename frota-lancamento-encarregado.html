@@ -263,7 +263,7 @@ function getScriptUrl() {
 const FUNCOES_PERMITIDAS = new Set(['ADMIN', 'ENCARREGADO', 'SUPERVISOR', 'AUXILIAR']);
 
 let USERS = {
-  "admin": { senha: "7391", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" }
+  "admin": { senha: "0768", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" }
 };
 
 const $ = s => document.querySelector(s);
@@ -421,7 +421,7 @@ function parseRCMCsv(csvText) {
 
   if (idxNome < 0 || idxGuerra < 0 || idxSenha < 0 || idxSit < 0) return null;
 
-  const newUsers = { "admin": { senha: "7391", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" } };
+  const newUsers = { "admin": { senha: "0768", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" } };
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map(c => c.trim().replace(/\r/g, ''));

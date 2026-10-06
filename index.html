@@ -1437,6 +1437,20 @@
   </div>
 </div>
 
+
+<!-- PLANTAO GATE -->
+<div id="plantao-screen" class="screen">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">🔒</div>
+      <h1>Acesso <span>monitorado</span></h1>
+      <p id="plantao-sub">Aguardando liberação do supervisor</p>
+    </div>
+    <p id="plantao-msg" style="font-size:0.92rem;line-height:1.45;color:var(--text);text-align:center;margin:0 0 1rem;">Pedido enviado. O supervisor foi avisado no WhatsApp e no painel.</p>
+    <button class="btn-primary" type="button" onclick="cancelarPlantao()">Cancelar pedido</button>
+  </div>
+</div>
+
 <!-- APP SCREEN -->
 <div id="app-screen" class="screen">
   <div class="app-header">
@@ -1613,6 +1627,23 @@
   </div>
 
   <div class="admin-body">
+
+    <div id="plantao-admin-card" style="border:1px solid rgba(245,158,11,0.45);border-radius:12px;padding:0.9rem 1rem;background:rgba(245,158,11,0.06);">
+      <div style="display:flex;justify-content:space-between;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+        <strong style="color:var(--warn);font-size:0.92rem;">Plantão CV · Vasconcellos / Daniel</strong>
+        <span id="plantao-admin-status" style="font-size:0.75rem;color:#c8a96e;">cadeira livre</span>
+      </div>
+      <p id="plantao-admin-msg" style="font-size:0.8rem;color:var(--text);margin:0.55rem 0 0.7rem;">Nenhum pedido no momento.</p>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="btn-sync" type="button" onclick="plantaoDecidir('liberar')">Liberar</button>
+        <button class="btn-logout" style="color:var(--red);border-color:var(--red);" type="button" onclick="plantaoDecidir('negar')">Negar</button>
+      </div>
+      <div style="margin-top:0.7rem;font-size:0.72rem;color:var(--muted);">
+        WhatsApp automático: 21 97269-0650. Chave CallMeBot (uma vez):
+        <input id="plantao-apikey" type="text" placeholder="cole a apikey" style="margin-top:0.35rem;width:100%;max-width:220px;" onchange="salvarPlantaoKey()">
+      </div>
+    </div>
+
     <div id="painel-dia">
       <div class="admin-date-row">
         <input type="date" id="admin-data" />
@@ -2039,7 +2070,7 @@ async function buscarEscalacaoHistorico(dataISO) {
 // ════════════════════════════════════════════════════════════
 
 let USERS = {
-  "admin":        { senha: "7391", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" },
+  "admin":        { senha: "0768", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" },
   "angelica":     { senha: "2824", nome: "ANGÉLICA",     status: "ATIVO", funcao: "MOTORISTA" },
   "alexandre":    { senha: "9153", nome: "ALEXANDRE",    status: "ATIVO", funcao: "MOTORISTA" },
   "pamela":       { senha: "3027", nome: "PAMELA",       status: "ATIVO", funcao: "MOTORISTA" },
@@ -2144,7 +2175,7 @@ function parseRCMCsv(csvText) {
 
   if (idxNome < 0 || idxGuerra < 0 || idxSenha < 0 || idxSit < 0) return null;
 
-  const newUsers = { "admin": { senha: "7391", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" } };
+  const newUsers = { "admin": { senha: "0768", nome: "Administrador", status: "ATIVO", funcao: "ADMIN" } };
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map(c => c.trim().replace(/\r/g,''));
@@ -2953,6 +2984,7 @@ function iniciarAdmin() {
   document.getElementById('admin-data').value = hojeISO;
   document.getElementById('admin-semana-data').value = hojeISO;
   buscarDia();
+  iniciarMonitorPlantao();
 }
 function mudarAba(aba) {
   document.getElementById('painel-dia').style.display = aba === 'dia' ? 'block' : 'none';
@@ -3502,6 +3534,231 @@ function saveSetup() {
   startAutoSync();
 }
 
+
+// ════════════════════════════════════════════════════════════
+// PLANTAO CV — Vasconcellos e Daniel (uma cadeira, aviso automático)
+// ════════════════════════════════════════════════════════════
+const PLANTAO_LOGINS = ['vasconcellos', 'daniel'];
+const PLANTAO_WHATSAPP = '5521972690650';
+const PLANTAO_TOPIC = 'jornada-juanil-plantao-cv-0768-k9m2';
+let plantaoTimer = null;
+let plantaoHeartbeat = null;
+let plantaoAlarmTimer = null;
+let plantaoUltimoPedido = '';
+
+function ehPlantao(login) {
+  return PLANTAO_LOGINS.indexOf(String(login || '').toLowerCase()) >= 0;
+}
+function plantaoKey() {
+  try { return localStorage.getItem('jt_callmebot_key') || ''; } catch (e) { return ''; }
+}
+function salvarPlantaoKey() {
+  const el = document.getElementById('plantao-apikey');
+  if (!el) return;
+  localStorage.setItem('jt_callmebot_key', (el.value || '').trim());
+  publicarPlantao('config', { login: 'admin', nome: 'Administrador', apikey: (el.value || '').trim() });
+}
+function avisarWhatsapp(texto) {
+  const key = plantaoKey();
+  if (!key) return;
+  const url = 'https://api.callmebot.com/whatsapp.php?phone=' + PLANTAO_WHATSAPP
+    + '&text=' + encodeURIComponent(texto)
+    + '&apikey=' + encodeURIComponent(key);
+  try {
+    const img = new Image();
+    img.src = url;
+  } catch (e) {}
+}
+function publicarPlantao(tipo, user, extra) {
+  const body = Object.assign({
+    tipo: tipo,
+    login: user && user.login,
+    nome: user && user.nome,
+    sid: localStorage.getItem('jt_plantao_sid') || '',
+    ts: Date.now()
+  }, extra || {});
+  if (tipo === 'pedir') body.sid = body.sid || ('p' + Date.now());
+  fetch('https://ntfy.sh/' + PLANTAO_TOPIC, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  }).catch(function () {});
+  return body;
+}
+async function lerEventosPlantao() {
+  const resp = await fetch('https://ntfy.sh/' + PLANTAO_TOPIC + '/json?poll=1&since=24h', { cache: 'no-store' });
+  const text = await resp.text();
+  const ev = [];
+  text.split('\n').forEach(function (line) {
+    if (!line.trim()) return;
+    try {
+      const row = JSON.parse(line);
+      if (!row.message) return;
+      const msg = JSON.parse(row.message);
+      if (msg && msg.tipo) ev.push(msg);
+    } catch (e) {}
+  });
+  ev.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
+  return ev;
+}
+function reduzirPlantao(ev) {
+  const st = { ocupado: null, pedido: null, apikey: plantaoKey() };
+  ev.forEach(function (m) {
+    if (m.tipo === 'config' && m.apikey) {
+      st.apikey = m.apikey;
+      try { localStorage.setItem('jt_callmebot_key', m.apikey); } catch (e) {}
+    }
+    if (m.tipo === 'pedir') st.pedido = m;
+    if (m.tipo === 'negar') {
+      if (!st.pedido || st.pedido.sid === m.sid || st.pedido.login === m.login) st.pedido = null;
+    }
+    if (m.tipo === 'liberar' || m.tipo === 'vivo') {
+      st.ocupado = m;
+      if (m.tipo === 'liberar') st.pedido = null;
+    }
+    if (m.tipo === 'sair') {
+      if (!st.ocupado || st.ocupado.login === m.login || st.ocupado.sid === m.sid) st.ocupado = null;
+    }
+  });
+  return st;
+}
+function iniciarPlantaoGate() {
+  const sid = 'p' + Date.now();
+  localStorage.setItem('jt_plantao_sid', sid);
+  showScreen('plantao-screen');
+  document.getElementById('plantao-sub').textContent = currentUser.nome;
+  document.getElementById('plantao-msg').textContent = 'Conferindo a cadeira do plantão...';
+  lerEventosPlantao().then(function (ev) {
+    const st = reduzirPlantao(ev);
+    if (st.ocupado && st.ocupado.login !== currentUser.login) {
+      document.getElementById('plantao-msg').textContent = st.ocupado.nome + ' ainda está no plantão. Ele precisa sair pelo botão. Só então o supervisor libera a sua entrada.';
+      publicarPlantao('pedir', currentUser, { bloqueado: true, ocupadoPor: st.ocupado.nome });
+      avisarWhatsapp(currentUser.nome + ' pediu entrada no Jornada, mas ' + st.ocupado.nome + ' ainda está dentro. Não liberar até a saída.');
+    } else {
+      document.getElementById('plantao-msg').textContent = 'Pedido enviado. O supervisor foi avisado no WhatsApp e no painel. Esta tela abre sozinha quando você liberar.';
+      publicarPlantao('pedir', currentUser);
+      avisarWhatsapp('Pedido de entrada no Jornada: ' + currentUser.nome + '. Abra o painel admin para liberar ou negar. Enquanto o outro encarregado estiver dentro, não libere.');
+    }
+  }).catch(function () {
+    document.getElementById('plantao-msg').textContent = 'Não foi possível falar com o controle de plantão. Tente de novo em instantes.';
+  });
+  if (plantaoTimer) clearInterval(plantaoTimer);
+  plantaoTimer = setInterval(checarLiberacaoPlantao, 8000);
+}
+function checarLiberacaoPlantao() {
+  if (!currentUser || !ehPlantao(currentUser.login)) return;
+  const sid = localStorage.getItem('jt_plantao_sid') || '';
+  lerEventosPlantao().then(function (ev) {
+    const st = reduzirPlantao(ev);
+    const negado = ev.some(function (m) { return m.tipo === 'negar' && (m.sid === sid || m.login === currentUser.login) && m.ts > Date.now() - 120000; });
+    if (negado && !(st.ocupado && st.ocupado.sid === sid)) {
+      document.getElementById('plantao-msg').textContent = 'O supervisor negou este acesso.';
+      return;
+    }
+    if (st.ocupado && st.ocupado.login === currentUser.login && st.ocupado.sid === sid) {
+      if (plantaoTimer) clearInterval(plantaoTimer);
+      localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
+      iniciarApp();
+      iniciarHeartbeatPlantao();
+    }
+  }).catch(function () {});
+}
+function cancelarPlantao() {
+  if (plantaoTimer) clearInterval(plantaoTimer);
+  if (currentUser) publicarPlantao('negar', currentUser);
+  pararHeartbeatPlantao();
+  localStorage.removeItem('jt_plantao_sid');
+  currentUser = null;
+  showScreen('login-screen');
+}
+function iniciarHeartbeatPlantao() {
+  pararHeartbeatPlantao();
+  plantaoHeartbeat = setInterval(function () {
+    if (!currentUser || !ehPlantao(currentUser.login)) return;
+    publicarPlantao('vivo', currentUser);
+  }, 60000);
+}
+function pararHeartbeatPlantao() {
+  if (plantaoHeartbeat) clearInterval(plantaoHeartbeat);
+  plantaoHeartbeat = null;
+}
+async function validarSessaoPlantaoSalva() {
+  // Plantão já liberado: reabrir o app não pede de novo. A cadeira só vira com o botão Sair.
+  iniciarApp();
+  iniciarHeartbeatPlantao();
+  publicarPlantao('vivo', currentUser);
+  try {
+    const ev = await lerEventosPlantao();
+    const st = reduzirPlantao(ev);
+    if (st.ocupado && st.ocupado.login && st.ocupado.login !== currentUser.login) {
+      pararHeartbeatPlantao();
+      localStorage.removeItem('jt_saved_user');
+      const outro = st.ocupado.nome || st.ocupado.login;
+      iniciarPlantaoGate();
+      const msg = document.getElementById('plantao-msg');
+      if (msg) msg.textContent = outro + ' assumiu o plantão. Saia pelo botão e aguarde a liberação do supervisor.';
+    }
+  } catch (e) {}
+}
+function tocarAlarmePlantao() {
+  try {
+    const ctx = getAudioCtx ? getAudioCtx() : null;
+    if (!ctx) return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.value = 880;
+    g.gain.value = 0.05;
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.25);
+  } catch (e) {}
+}
+function iniciarMonitorPlantao() {
+  const keyEl = document.getElementById('plantao-apikey');
+  if (keyEl) keyEl.value = plantaoKey();
+  if (plantaoTimer) clearInterval(plantaoTimer);
+  const tick = function () {
+    lerEventosPlantao().then(function (ev) {
+      const st = reduzirPlantao(ev);
+      const status = document.getElementById('plantao-admin-status');
+      const msg = document.getElementById('plantao-admin-msg');
+      if (!status || !msg) return;
+      if (st.ocupado) status.textContent = 'dentro: ' + (st.ocupado.nome || st.ocupado.login);
+      else status.textContent = 'cadeira livre';
+      if (st.pedido) {
+        msg.textContent = (st.pedido.nome || st.pedido.login) + ' pediu entrada'
+          + (st.pedido.bloqueado ? ' (bloqueado: ' + (st.pedido.ocupadoPor || 'outro') + ' ainda está dentro)' : '')
+          + '.';
+        if (plantaoUltimoPedido !== st.pedido.sid) {
+          plantaoUltimoPedido = st.pedido.sid;
+          avisarWhatsapp('Pedido de entrada no Jornada: ' + (st.pedido.nome || st.pedido.login) + '. Libere ou negue no painel admin.');
+        }
+        if (!plantaoAlarmTimer) plantaoAlarmTimer = setInterval(tocarAlarmePlantao, 4000);
+      } else {
+        msg.textContent = st.ocupado ? (st.ocupado.nome + ' está no app.') : 'Nenhum pedido no momento.';
+        if (plantaoAlarmTimer) { clearInterval(plantaoAlarmTimer); plantaoAlarmTimer = null; }
+      }
+    }).catch(function () {});
+  };
+  tick();
+  plantaoTimer = setInterval(tick, 8000);
+}
+function plantaoDecidir(tipo) {
+  lerEventosPlantao().then(function (ev) {
+    const st = reduzirPlantao(ev);
+    if (!st.pedido) return;
+    if (tipo === 'liberar' && st.ocupado && st.ocupado.login !== st.pedido.login) {
+      alert(st.ocupado.nome + ' ainda está dentro. Espere a saída para liberar ' + st.pedido.nome + '.');
+      return;
+    }
+    const alvo = { login: st.pedido.login, nome: st.pedido.nome };
+    publicarPlantao(tipo, alvo, { sid: st.pedido.sid });
+    avisarWhatsapp(tipo === 'liberar'
+      ? (alvo.nome + ' foi liberado no Jornada.')
+      : ('Entrada de ' + alvo.nome + ' foi negada.'));
+  }).catch(function () {});
+}
+
 function doLogin() {
   const user = document.getElementById('login-user').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
@@ -3514,13 +3771,23 @@ function doLogin() {
     status: USERS[user].status,
     funcao: USERS[user].funcao || 'MOTORISTA'
   };
+  if (ehPlantao(user)) {
+    iniciarPlantaoGate();
+    return;
+  }
   localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
   iniciarApp();
 }
 
 function doLogout() {
   if (!confirm('Confirmar saída?')) return;
+  if (currentUser && ehPlantao(currentUser.login)) {
+    publicarPlantao('sair', currentUser);
+    avisarWhatsapp(currentUser.nome + ' saiu do app. A cadeira do plantão CV está livre.');
+  }
+  pararHeartbeatPlantao();
   localStorage.removeItem('jt_saved_user');
+  localStorage.removeItem('jt_plantao_sid');
   currentUser = null;
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
@@ -3552,6 +3819,10 @@ window.addEventListener('load', () => {
     currentUser = JSON.parse(savedUser);
     if (!currentUser.funcao) {
       currentUser.funcao = (USERS[currentUser.login] || {}).funcao || 'MOTORISTA';
+    }
+    if (ehPlantao(currentUser.login)) {
+      validarSessaoPlantaoSalva();
+      return;
     }
     iniciarApp();
     return;
