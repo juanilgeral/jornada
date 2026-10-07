@@ -2229,6 +2229,7 @@ async function syncUsersFromSheet() {
           currentUser.funcao = novaFuncao;
           localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
           aplicarVisibilidadeEscalacao();
+          aplicarVisibilidadeKmFrota();
         }
       }
     }
@@ -2267,6 +2268,18 @@ function aplicarVisibilidadeEscalacao() {
   } else {
     card.style.display = 'none';
   }
+}
+
+function esconderKmFrota() {
+  if (!currentUser) return false;
+  const f = (currentUser.funcao || '').toUpperCase();
+  return f.indexOf('AUXILIAR') >= 0 || f.indexOf('ENCARREG') >= 0 || f.indexOf('SUPERVIS') >= 0 || f.indexOf('PORTARIA') >= 0 || f.indexOf('ESCRIT') >= 0;
+}
+
+function aplicarVisibilidadeKmFrota() {
+  const card = document.getElementById('card-km-frota');
+  if (!card) return;
+  card.style.display = esconderKmFrota() ? 'none' : '';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -3807,7 +3820,8 @@ function iniciarApp() {
   restaurarTimerFimRefeicao();
   verificarDescanso();
   aplicarVisibilidadeEscalacao();
-  carregarPlacasMotorista(); aplicarKmLocal();
+  aplicarVisibilidadeKmFrota();
+  if (!esconderKmFrota()) { carregarPlacasMotorista(); aplicarKmLocal(); }
 }
 
 window.addEventListener('load', () => {
