@@ -1549,7 +1549,7 @@
     </div>
 
 
-    <div class="card" id="card-km-frota" style="margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface,#0f1419);">
+    <div class="card" id="card-km-frota" style="display:none;margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface,#0f1419);">
       <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:8px;color:#f0f4fa;">🚚 Frota — KM do veículo</div>
       <p style="font-size:0.84rem;color:#d0d8e6;margin:0 0 14px;line-height:1.5;">Informe o <b style="color:#ffffff;">KM Inicial</b> ao sair e o <b style="color:#ffffff;">KM Final</b> ao chegar no CD ou Base Juanil. A placa pode ser confirmada abaixo (ou vem do Controle).</p>
       <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">Placa</label>
@@ -2077,7 +2077,7 @@ let USERS = {
   "daniel":       { senha: "9453", nome: "DANIEL",       status: "ATIVO", funcao: "MOTORISTA" },
   "devanilso":    { senha: "1583", nome: "DEVANILSO",    status: "ATIVO", funcao: "MOTORISTA" },
   "vasconcellos": { senha: "6120", nome: "VASCONCELLOS", status: "ATIVO", funcao: "MOTORISTA" },
-  "ekland":       { senha: "4650", nome: "EKLAND",       status: "ATIVO", funcao: "MOTORISTA" },
+  "ekland":       { senha: "4650", nome: "EKLAND",       status: "ATIVO", funcao: "SUPERVISOR" },
   "heriberto":    { senha: "4073", nome: "HERIBERTO",    status: "ATIVO", funcao: "MOTORISTA" },
   "sergio":       { senha: "8067", nome: "SÉRGIO",       status: "ATIVO", funcao: "MOTORISTA" },
   "zilmar":       { senha: "1409", nome: "ZILMAR",       status: "ATIVO", funcao: "MOTORISTA" },
@@ -2223,14 +2223,16 @@ async function syncUsersFromSheet() {
         return;
       }
 
+      rcmFuncaoConfirmada = true;
       if (currentUser && currentUser.login !== 'admin' && USERS[currentUser.login]) {
-        const novaFuncao = USERS[currentUser.login].funcao;
-        if (novaFuncao !== currentUser.funcao) {
-          currentUser.funcao = novaFuncao;
-          localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
-          aplicarVisibilidadeEscalacao();
-          aplicarVisibilidadeKmFrota();
-        }
+        const rec = USERS[currentUser.login];
+        currentUser.funcao = rec.funcao || 'MOTORISTA';
+        currentUser.status = rec.status || currentUser.status;
+        currentUser.nome = rec.nome || currentUser.nome;
+        localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
+        aplicarVisibilidadeEscalacao();
+        aplicarVisibilidadeKmFrota();
+        if (!esconderKmFrota()) { carregarPlacasMotorista(); aplicarKmLocal(); }
       }
     }
   } catch(e) {
@@ -2270,10 +2272,13 @@ function aplicarVisibilidadeEscalacao() {
   }
 }
 
+let rcmFuncaoConfirmada = false;
+
 function esconderKmFrota() {
-  if (!currentUser) return false;
-  const f = (currentUser.funcao || '').toUpperCase();
-  return f.indexOf('AUXILIAR') >= 0 || f.indexOf('ENCARREG') >= 0 || f.indexOf('SUPERVIS') >= 0 || f.indexOf('PORTARIA') >= 0 || f.indexOf('ESCRIT') >= 0;
+  if (!currentUser || currentUser.login === 'admin') return true;
+  if (!rcmFuncaoConfirmada) return true;
+  const f = (currentUser.funcao || '').toUpperCase().trim();
+  return f !== 'MOTORISTA';
 }
 
 function aplicarVisibilidadeKmFrota() {
