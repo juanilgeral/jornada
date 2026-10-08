@@ -1552,22 +1552,20 @@
     </div>
 
 
-    <div class="card" id="card-km-frota" style="display:none;margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--surface,#0f1419);">
-      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:8px;">
+    <div class="card" id="card-km-frota" style="display:none;margin-top:8px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface,#0f1419);text-align:center;">
+      <label style="font-size:0.82rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;letter-spacing:0.04em;">PLACA:</label>
+      <select id="fPlacaMotorista" onchange="autoSalvarKmPlaca('placa')" style="width:100%;max-width:280px;margin:0 auto 12px;padding:10px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);font-size:1rem;text-align:center;">
+        <option value="">Selecione a placa</option>
+      </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:420px;margin:0 auto;">
         <div>
-          <label style="font-size:0.78rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:4px;">PLACA:</label>
-          <select id="fPlacaMotorista" onchange="autoSalvarKmPlaca('placa')" style="width:100%;padding:9px 10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);font-size:0.9rem;">
-            <option value="">Selecione a placa</option>
-          </select>
+          <label style="font-size:0.82rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;letter-spacing:0.03em;">KM INICIAL:</label>
+          <input type="number" inputmode="numeric" id="fKmInicial" onblur="autoSalvarKmPlaca('kmInicial')" style="width:100%;padding:10px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:1rem;text-align:center;">
         </div>
         <div>
-          <label style="font-size:0.78rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:4px;">KM INICIAL:</label>
-          <input type="number" inputmode="numeric" id="fKmInicial" onblur="autoSalvarKmPlaca('kmInicial')" style="width:100%;padding:9px 10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.9rem;">
+          <label style="font-size:0.82rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;letter-spacing:0.03em;">KM FINAL:</label>
+          <input type="number" inputmode="numeric" id="fKmFinal" onblur="autoSalvarKmPlaca('kmFinal')" style="width:100%;padding:10px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:1rem;text-align:center;">
         </div>
-      </div>
-      <div style="margin-top:8px;">
-        <label style="font-size:0.78rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:4px;">KM FINAL:</label>
-        <input type="number" inputmode="numeric" id="fKmFinal" onblur="autoSalvarKmPlaca('kmFinal')" style="width:100%;padding:9px 10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.9rem;">
       </div>
       <div id="statusKmFrota" style="display:none;"></div>
     </div>
