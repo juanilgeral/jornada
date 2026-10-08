@@ -3642,8 +3642,10 @@ function reduzirPlantao(ev) {
   return st;
 }
 function iniciarPlantaoGate() {
-  const sid = 'p' + Date.now();
-  localStorage.setItem('jt_plantao_sid', sid);
+  localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
+  avisarEntradaPlantao();
+  iniciarApp();
+  return;
   showScreen('plantao-screen');
   document.getElementById('plantao-sub').textContent = currentUser.nome;
   document.getElementById('plantao-msg').textContent = 'Conferindo a cadeira do plantão...';
@@ -3702,22 +3704,7 @@ function pararHeartbeatPlantao() {
   plantaoHeartbeat = null;
 }
 async function validarSessaoPlantaoSalva() {
-  // Plantão já liberado: reabrir o app não pede de novo. A cadeira só vira com o botão Sair.
   iniciarApp();
-  iniciarHeartbeatPlantao();
-  publicarPlantao('vivo', currentUser);
-  try {
-    const ev = await lerEventosPlantao();
-    const st = reduzirPlantao(ev);
-    if (st.ocupado && st.ocupado.login && st.ocupado.login !== currentUser.login) {
-      pararHeartbeatPlantao();
-      localStorage.removeItem('jt_saved_user');
-      const outro = st.ocupado.nome || st.ocupado.login;
-      iniciarPlantaoGate();
-      const msg = document.getElementById('plantao-msg');
-      if (msg) msg.textContent = outro + ' assumiu o plantão. Saia pelo botão e aguarde a liberação do supervisor.';
-    }
-  } catch (e) {}
 }
 function tocarAlarmePlantao() {
   try {
