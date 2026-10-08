@@ -1632,13 +1632,9 @@
     <div id="plantao-admin-card" style="border:1px solid rgba(245,158,11,0.45);border-radius:12px;padding:0.9rem 1rem;background:rgba(245,158,11,0.06);">
       <div style="display:flex;justify-content:space-between;gap:0.5rem;align-items:center;flex-wrap:wrap;">
         <strong style="color:var(--warn);font-size:0.92rem;">Plantão CV · Vasconcellos / Daniel</strong>
-        <span id="plantao-admin-status" style="font-size:0.75rem;color:#c8a96e;">cadeira livre</span>
+        <span id="plantao-admin-status" style="font-size:0.75rem;color:#c8a96e;">sem entrada</span>
       </div>
-      <p id="plantao-admin-msg" style="font-size:0.8rem;color:var(--text);margin:0.55rem 0 0.7rem;">Nenhum pedido no momento.</p>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-        <button class="btn-sync" type="button" onclick="plantaoDecidir('liberar')">Liberar</button>
-        <button class="btn-logout" style="color:var(--red);border-color:var(--red);" type="button" onclick="plantaoDecidir('negar')">Negar</button>
-      </div>
+      <p id="plantao-admin-msg" style="font-size:0.8rem;color:var(--text);margin:0.55rem 0 0.7rem;">Ninguém entrou ainda.</p>
       <div style="margin-top:0.7rem;font-size:0.72rem;color:var(--muted);">
         WhatsApp automático: 21 99579-7058. Chave CallMeBot (uma vez):
         <input id="plantao-apikey" type="text" placeholder="cole a apikey" style="margin-top:0.35rem;width:100%;max-width:220px;" onchange="salvarPlantaoKey()">
@@ -3747,20 +3743,20 @@ function iniciarMonitorPlantao() {
       const status = document.getElementById('plantao-admin-status');
       const msg = document.getElementById('plantao-admin-msg');
       if (!status || !msg) return;
-      if (st.ocupado) status.textContent = 'dentro: ' + (st.ocupado.nome || st.ocupado.login);
-      else status.textContent = 'cadeira livre';
-      if (st.pedido) {
-        msg.textContent = (st.pedido.nome || st.pedido.login) + ' pediu entrada'
-          + (st.pedido.bloqueado ? ' (bloqueado: ' + (st.pedido.ocupadoPor || 'outro') + ' ainda está dentro)' : '')
-          + '.';
-        if (plantaoUltimoPedido !== st.pedido.sid) {
-          plantaoUltimoPedido = st.pedido.sid;
-          avisarWhatsapp('Pedido de entrada no Jornada: ' + (st.pedido.nome || st.pedido.login) + '. Libere ou negue no painel admin.');
+      const ultimo = ev.filter(function (m) { return m.tipo === 'entrou' || m.tipo === 'sair'; }).pop();
+      if (!ultimo) {
+        status.textContent = 'sem entrada';
+        msg.textContent = 'Ninguém entrou ainda.';
+      } else if (ultimo.tipo === 'entrou') {
+        status.textContent = 'entrou';
+        msg.textContent = (ultimo.nome || ultimo.login) + ' entrou no app.';
+        if (plantaoUltimoPedido !== String(ultimo.ts)) {
+          plantaoUltimoPedido = String(ultimo.ts);
+          tocarAlarmePlantao();
         }
-        if (!plantaoAlarmTimer) plantaoAlarmTimer = setInterval(tocarAlarmePlantao, 4000);
       } else {
-        msg.textContent = st.ocupado ? (st.ocupado.nome + ' está no app.') : 'Nenhum pedido no momento.';
-        if (plantaoAlarmTimer) { clearInterval(plantaoAlarmTimer); plantaoAlarmTimer = null; }
+        status.textContent = 'saiu';
+        msg.textContent = (ultimo.nome || ultimo.login) + ' saiu do app.';
       }
     }).catch(function () {});
   };
@@ -3783,6 +3779,16 @@ function plantaoDecidir(tipo) {
   }).catch(function () {});
 }
 
+
+function avisarEntradaPlantao() {
+  if (!currentUser || !ehPlantao(currentUser.login)) return;
+  const marca = currentUser.login + '|' + new Date().toDateString();
+  if (sessionStorage.getItem('jt_plantao_avisado') === marca) return;
+  sessionStorage.setItem('jt_plantao_avisado', marca);
+  publicarPlantao('entrou', currentUser);
+  avisarWhatsapp(currentUser.nome + ' entrou no app Jornada.');
+}
+
 function doLogin() {
   const user = document.getElementById('login-user').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
@@ -3795,11 +3801,8 @@ function doLogin() {
     status: USERS[user].status,
     funcao: USERS[user].funcao || 'MOTORISTA'
   };
-  if (ehPlantao(user)) {
-    iniciarPlantaoGate();
-    return;
-  }
   localStorage.setItem('jt_saved_user', JSON.stringify(currentUser));
+  if (ehPlantao(user)) avisarEntradaPlantao();
   iniciarApp();
 }
 
@@ -3807,7 +3810,7 @@ function doLogout() {
   if (!confirm('Confirmar saída?')) return;
   if (currentUser && ehPlantao(currentUser.login)) {
     publicarPlantao('sair', currentUser);
-    avisarWhatsapp(currentUser.nome + ' saiu do app. A cadeira do plantão CV está livre.');
+    avisarWhatsapp(currentUser.nome + ' saiu do app Jornada.');
   }
   pararHeartbeatPlantao();
   localStorage.removeItem('jt_saved_user');
@@ -3844,10 +3847,6 @@ window.addEventListener('load', () => {
     currentUser = JSON.parse(savedUser);
     if (!currentUser.funcao) {
       currentUser.funcao = (USERS[currentUser.login] || {}).funcao || 'MOTORISTA';
-    }
-    if (ehPlantao(currentUser.login)) {
-      validarSessaoPlantaoSalva();
-      return;
     }
     iniciarApp();
     return;
