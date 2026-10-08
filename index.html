@@ -1552,24 +1552,24 @@
     </div>
 
 
-    <div class="card" id="card-km-frota" style="display:none;margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface,#0f1419);">
-      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:8px;color:#f0f4fa;">🚚 Frota — KM do veículo</div>
-      <p style="font-size:0.84rem;color:#d0d8e6;margin:0 0 14px;line-height:1.5;">Informe o <b style="color:#ffffff;">KM Inicial</b> ao sair e o <b style="color:#ffffff;">KM Final</b> ao chegar no CD ou Base Juanil. A placa pode ser confirmada abaixo (ou vem do Controle).</p>
-      <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">Placa</label>
-      <select id="fPlacaMotorista" onchange="autoSalvarKmPlaca('placa')" style="width:100%;margin-bottom:12px;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);font-size:0.95rem;">
-        <option value="">Selecione a placa</option>
-      </select>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="card" id="card-km-frota" style="display:none;margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--surface,#0f1419);">
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:8px;">
         <div>
-          <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">KM Inicial</label>
-          <input type="number" inputmode="numeric" id="fKmInicial" placeholder="Saída" onblur="autoSalvarKmPlaca('kmInicial')" style="width:100%;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.95rem;">
+          <label style="font-size:0.78rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:4px;">PLACA:</label>
+          <select id="fPlacaMotorista" onchange="autoSalvarKmPlaca('placa')" style="width:100%;padding:9px 10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);font-size:0.9rem;">
+            <option value="">Selecione a placa</option>
+          </select>
         </div>
         <div>
-          <label style="font-size:0.88rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:6px;">KM Final</label>
-          <input type="number" inputmode="numeric" id="fKmFinal" placeholder="CD/Base" onblur="autoSalvarKmPlaca('kmFinal')" style="width:100%;padding:11px 12px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.95rem;">
+          <label style="font-size:0.78rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:4px;">KM INICIAL:</label>
+          <input type="number" inputmode="numeric" id="fKmInicial" onblur="autoSalvarKmPlaca('kmInicial')" style="width:100%;padding:9px 10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.9rem;">
         </div>
       </div>
-      <div id="statusKmFrota" style="font-size:0.8rem;color:#9aa8bc;margin-top:12px;">Cada campo salva sozinho ao ser preenchido — não precisa de botão.</div>
+      <div style="margin-top:8px;">
+        <label style="font-size:0.78rem;font-weight:700;color:#eef3fa;display:block;margin-bottom:4px;">KM FINAL:</label>
+        <input type="number" inputmode="numeric" id="fKmFinal" onblur="autoSalvarKmPlaca('kmFinal')" style="width:100%;padding:9px 10px;border-radius:8px;background:#0a0e14;color:var(--text);border:1px solid var(--border);box-sizing:border-box;font-size:0.9rem;">
+      </div>
+      <div id="statusKmFrota" style="display:none;"></div>
     </div>
 
     <div>
@@ -2145,6 +2145,7 @@ let USERS = {
 function ehMotorista() {
   if (!currentUser) return false;
   if (currentUser.login === 'admin') return false;
+  if (typeof rcmFuncaoConfirmada !== 'undefined' && !rcmFuncaoConfirmada) return false;
   const funcao = (typeof funcaoEfetiva === 'function' ? funcaoEfetiva() : (currentUser.funcao || '')).toUpperCase().trim();
   return funcao === 'MOTORISTA';
 }
