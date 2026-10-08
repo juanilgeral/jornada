@@ -654,6 +654,36 @@ async function initApp(){
   $('#btnLogout').onclick = doLogout;
 
   await carregarLista();
+  if (!window.__listaAuto) {
+    window.__listaAuto = setInterval(atualizarListaSilenciosa, 20000);
+  }
+}
+
+function editandoAgora() {
+  if (MODO !== 'lista') return true;
+  const modal = document.getElementById('modal-outro');
+  if (modal && modal.style.display === 'flex') return true;
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = (el.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+  return false;
+}
+
+async function atualizarListaSilenciosa() {
+  if (editandoAgora()) return;
+  if (!$('#listaCard')) return;
+  try {
+    const [lista, pontoMap] = await Promise.all([
+      apiGet({action:'getLancamentos', data: DATA_FILTRO}),
+      buscarPontoDoDia(DATA_FILTRO)
+    ]);
+    if (editandoAgora()) return;
+    if (!Array.isArray(lista)) return;
+    LISTA = lista;
+    PONTO_MAP = pontoMap || {};
+    renderLista();
+  } catch (e) {}
 }
 
 function opPassaFiltro(op, filtro){
