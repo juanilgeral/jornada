@@ -2174,7 +2174,7 @@ function parseRCMCsv(csvText) {
   const idxGuerra = header.findIndex(h => h.includes('GUERRA'));
   const idxSenha  = header.findIndex(h => h.includes('SENHA'));
   const idxSit    = header.findIndex(h => h.includes('SITUA') || h.includes('SUTU'));
-  const idxFuncao = header.findIndex(h => h.replace(/\s/g,'').toUpperCase().includes('FUN') && !h.includes('FUNCION'));
+  const idxFuncao = header.findIndex(h => { const u = h.replace(/\s/g,'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); return u === 'FUNCAO' || u.startsWith('FUNCAO'); });
 
   if (idxNome < 0 || idxGuerra < 0 || idxSenha < 0 || idxSit < 0) return null;
 
