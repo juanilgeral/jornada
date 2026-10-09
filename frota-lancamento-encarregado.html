@@ -1071,6 +1071,34 @@ function renderNovo(nomePrefill){
   };
 }
 
+function chaveOpLanc(op){
+  const o = String(op || '').trim().toUpperCase();
+  if (o.startsWith('OUTRO')) return 'OUTRO';
+  const m = o.match(/^(LS|TL|HT|CV)\b/);
+  return m ? m[1] : o;
+}
+function podePreencherOperacao(op){
+  return true;
+}
+function podePreencherSegundaLoja(op){
+  const f = String((currentUser && currentUser.funcao) || '').toUpperCase();
+  if (f === 'ADMIN' || f === 'SUPERVISOR') return true;
+  return chaveOpLanc(op) !== 'TL';
+}
+function horaCurta(v){
+  const m = String(v || '').match(/(\d{2}:\d{2})/);
+  return m ? m[1] : '';
+}
+function dataInput(v){
+  const s = String(v || '').trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return m[1] + '-' + m[2] + '-' + m[3];
+  m = s.match(/^(\d{2})\/(\d{2})\/(\d{2,4})/);
+  if (!m) return '';
+  const ano = m[3].length === 2 ? '20' + m[3] : m[3];
+  return ano + '-' + m[2] + '-' + m[1];
+}
+
 /* ======================= EDITAR LANÇAMENTO ======================= */
 function renderEditar(){
   if(!LANC){ carregarLista(); return; }
@@ -1123,91 +1151,77 @@ function renderEditar(){
     </div>
   `;
 
+  const liberado = true;
+  const dis = '';
+  const loja2ok = podePreencherSegundaLoja(LANC.Operacao);
+  const dis2 = loja2ok ? '' : 'disabled';
+  const avisoTrava = loja2ok ? '' : `<p class="hint" style="margin:0 0 10px">Na TL, auxiliar e encarregado não preenchem a 2ª loja. O restante da linha continua liberado.</p>`;
+  const campo = (label, id, val, tipo) => `
+      <label>${label}</label>
+      <input type="${tipo || 'text'}" id="${id}" ${dis} value="${escHtml(val || '')}">`;
+  const hora = (label, id, val) => campo(label, id, horaCurta(val), 'time');
   html += `
     <div class="card">
-      <h2><span class="n">1</span> Dados principais</h2>
-      <label>Hora programada / saída do veículo</label>
-      <input type="time" id="fHoraSaida" value="${escHtml(LANC.HoraProgramadaSaida||'')}">
-
-      <label>Destino</label>
-      <input id="fDestinoEdit" value="${escHtml(LANC.Destino||'')}" placeholder="Destino">
-
-      <label>Motorista (corrigir se necessário)</label>
-      ${MOTORISTAS.length
-        ? `<select id="fMotoristaEdit"><option value="">—</option>${MOTORISTAS.map(n =>
-            `<option value="${escHtml(n)}" ${n===LANC.Motorista?'selected':''}>${escHtml(n)}</option>`).join('')}</select>`
-        : `<input id="fMotoristaEdit" value="${escHtml(LANC.Motorista||'')}">`}
-
-      <button class="secondary" id="btnSalvarPrincipais">Salvar dados principais</button>
+      <h2><span class="n">1</span> Preenchimento da programação</h2>
+      ${avisoTrava}
+      ${campo('Motorista', 'fMotoristaEdit', LANC.Motorista)}
+      ${hora('Ponto on mot.', 'fPontoOn', LANC.PontoOn)}
+      <label>Previsão refeição (calculada)</label>
+      <input value="${escHtml(LANC.PrevisaoRefeicao||'')}" disabled>
+      <label>Ponto off moto. (calculado)</label>
+      <input value="${escHtml(LANC.PontoOffMoto||'')}" disabled>
+      <label>Próx. hora disp. (calculada)</label>
+      <input value="${escHtml(LANC.ProxHoraDisp||'')}" disabled>
+      ${campo('Destino', 'fDestinoEdit', LANC.Destino)}
+      ${hora('Saída veículo CD', 'fHoraSaida', LANC.HoraProgramadaSaida)}
+      ${campo('SM', 'fSm', LANC.Sm)}
+      ${campo('Data carregamento', 'fDataCarrg', dataInput(LANC.DataCarrg), 'date')}
+      ${campo('Km saída', 'fKmSaida', LANC.KmSaida, 'number')}
+      <button class="secondary" id="btnSalvarPrincipais" ${dis}>Salvar dados principais</button>
+    </div>
+    <div class="card">
+      <h2><span class="n">2</span> 1ª loja</h2>
+      ${campo('1ª loja', 'fLoja1', LANC.Loja1)}
+      ${hora('Abertura 1', 'fAbertura1', LANC.Abertura1)}
+      ${hora('Fechado 1', 'fFechado1', LANC.Fechado1)}
+      ${hora('Saída 1', 'fSaida1', LANC.Saida1)}
+      <label>Total loja 1 (calculado)</label>
+      <input value="${escHtml(LANC.TotalLoja1||'')}" disabled>
+      <button class="secondary" id="btnSalvarLoja1" ${dis}>Salvar 1ª loja</button>
+    </div>
+    <div class="card">
+      <h2><span class="n">3</span> 2ª loja</h2>
+      <label>2ª loja</label>
+      <input id="fLoja2" ${dis2} value="${escHtml(LANC.Loja2||'')}">
+      <label>Abertura 2</label>
+      <input type="time" id="fAbertura2" ${dis2} value="${escHtml(horaCurta(LANC.Abertura2))}">
+      <label>Fechado 2</label>
+      <input type="time" id="fFechado2" ${dis2} value="${escHtml(horaCurta(LANC.Fechado2))}">
+      <label>Saída 2</label>
+      <input type="time" id="fSaida2" ${dis2} value="${escHtml(horaCurta(LANC.Saida2))}">
+      <label>Total loja 2 (calculado)</label>
+      <input value="${escHtml(LANC.TotalLoja2||'')}" disabled>
+      <button class="secondary" id="btnSalvarLoja2" ${dis2}>Salvar 2ª loja</button>
+    </div>
+    <div class="card">
+      <h2><span class="n">4</span> Chegada</h2>
+      ${campo('Diesel chegada', 'fDiesel', LANC.DieselChegada)}
+      ${hora('Chegada veículo CD', 'fHoraCD', LANC.HoraChegadaCD)}
+      ${hora('Ponto off mot.', 'fPontoOffMot', LANC.PontoOffMot)}
+      <label>Hora total motorista (calculada)</label>
+      <input value="${escHtml(LANC.HoraTotalMotorista||'')}" disabled>
+      ${campo('Data chegada', 'fDataChegada', dataInput(LANC.DataChegada || LANC.Data), 'date')}
+      ${campo('Km chegada', 'fKmChegada', LANC.KmChegada, 'number')}
+      <label>Total loja (calculado)</label>
+      <input value="${escHtml(LANC.TotalLoja||'')}" disabled>
+      <label>Km percorrido (calculado)</label>
+      <input value="${escHtml(LANC.KmPercorrido||'')}" disabled>
+      ${campo('Observações', 'fObs', LANC.Observacoes)}
+      <button class="primary" id="btnSalvarRetorno" ${dis}>Salvar chegada</button>
     </div>
   `;
 
-  html += `
-    <div class="card">
-      <h2><span class="n">2</span> Lojas / Paradas</h2>
-  `;
-
-  if(!paradas.length){
-    html += `<p class="hint" style="margin:0 0 10px">Nenhuma loja lançada ainda.</p>`;
-  }
-
-  paradas.forEach((p, i) => {
-    const id = p.ID || p.id;
     html += `
-      <div class="loja-block" data-parada-id="${escHtml(id)}">
-        <div class="loja-title">
-          <span>Loja ${p.NumeroLoja || (i+1)}</span>
-          ${p.HoraSaida ? '<span class="badge-ok">✓ completa</span>' : ''}
-        </div>
-        <label>Chegada</label>
-        <div class="campo-hora">
-          <input type="time" id="p_${id}_chegada" value="${escHtml(p.HoraChegada||'')}">
-          <button class="secondary btn-salva-parada" data-parada="${escHtml(id)}" data-campo="HoraChegada">Salvar</button>
-        </div>
-        <label>Abertura baú</label>
-        <div class="campo-hora">
-          <input type="time" id="p_${id}_abertura" value="${escHtml(p.HoraAberturaBau||'')}">
-          <button class="secondary btn-salva-parada" data-parada="${escHtml(id)}" data-campo="HoraAberturaBau">Salvar</button>
-        </div>
-        <label>Fechamento baú</label>
-        <div class="campo-hora">
-          <input type="time" id="p_${id}_fechamento" value="${escHtml(p.HoraFechamentoBau||'')}">
-          <button class="secondary btn-salva-parada" data-parada="${escHtml(id)}" data-campo="HoraFechamentoBau">Salvar</button>
-        </div>
-        <label>Saída da loja</label>
-        <div class="campo-hora">
-          <input type="time" id="p_${id}_saida" value="${escHtml(p.HoraSaida||'')}">
-          <button class="secondary btn-salva-parada" data-parada="${escHtml(id)}" data-campo="HoraSaida">Salvar</button>
-        </div>
-      </div>
-    `;
-  });
-
-  if(!concluido){
-    html += `
-      <button class="ghost" id="btnAddLoja" style="width:100%;margin-top:12px">+ Adicionar loja</button>
-    `;
-  }
-  html += `</div>`;
-
-  html += `
-    <div class="card">
-      <h2><span class="n">3</span> Retorno ao CD / Finalização</h2>
-      <label>Hora de chegada no CD</label>
-      <input type="time" id="fHoraCD" value="${escHtml(LANC.HoraChegadaCD||'')}">
-
-      <label>Data de chegada (se virar o dia)</label>
-      <input type="date" id="fDataChegada" value="${escHtml(LANC.DataChegada || LANC.Data || '')}">
-
-      <label>Km de chegada</label>
-      <input type="number" inputmode="numeric" id="fKmChegada" value="${escHtml(LANC.KmChegada||'')}">
-
-      <button class="primary" id="btnSalvarRetorno">${concluido ? 'Atualizar finalização' : 'Salvar e finalizar'}</button>
-      ${!concluido ? '<button class="secondary" id="btnSalvarRetornoParcial">Salvar sem finalizar</button>' : ''}
-    </div>
-  `;
-
-  html += `
     <button class="secondary" id="btnVoltar">← Voltar à lista</button>
   `;
 
@@ -1252,22 +1266,47 @@ function renderEditar(){
   bindAlmoco('#btnAlmocoInicio', '#fAlmocoInicio', 'parada', 'Início do almoço lançado no ponto');
   bindAlmoco('#btnAlmocoFim', '#fAlmocoFim', 'retorno', 'Término do almoço lançado no ponto');
 
-  $('#btnSalvarPrincipais').onclick = async () => {
-    const campos = {
-      HoraProgramadaSaida: $('#fHoraSaida').value,
-      Destino: ($('#fDestinoEdit').value || '').trim()
-    };
-    const mot = ($('#fMotoristaEdit')?.value || '').trim();
-    if(mot) campos.Motorista = mot;
-
+  const salvarCampos = async (campos, okMsg) => {
+    if (!podePreencherOperacao(LANC.Operacao)) {
+      toast('Esta operação está travada para o seu perfil', true);
+      return;
+    }
     try{
       const r = await apiPost({action:'atualizarLancamento', id: LANC.ID, campos});
       if(r.ok){
-        toast('Dados salvos');
+        toast(okMsg || 'Dados salvos');
         LANC = await apiGet({action:'getLancamento', id: LANC.ID});
         renderEditar();
       }else toast(r.erro || 'Erro ao salvar', true);
     }catch(e){ toast('Falha de conexão', true); }
+  };
+  const val = id => ($(id)?.value || '').trim();
+  if($('#btnSalvarPrincipais')) $('#btnSalvarPrincipais').onclick = () => salvarCampos({
+    Motorista: val('#fMotoristaEdit'),
+    PontoOn: val('#fPontoOn'),
+    Destino: val('#fDestinoEdit'),
+    HoraProgramadaSaida: val('#fHoraSaida'),
+    Sm: val('#fSm'),
+    DataCarrg: val('#fDataCarrg'),
+    KmSaida: val('#fKmSaida')
+  }, 'Dados principais salvos');
+  if($('#btnSalvarLoja1')) $('#btnSalvarLoja1').onclick = () => salvarCampos({
+    Loja1: val('#fLoja1'),
+    Abertura1: val('#fAbertura1'),
+    Fechado1: val('#fFechado1'),
+    Saida1: val('#fSaida1')
+  }, '1ª loja salva');
+  if($('#btnSalvarLoja2')) $('#btnSalvarLoja2').onclick = () => {
+    if (!podePreencherSegundaLoja(LANC.Operacao)) {
+      toast('Na TL a 2ª loja fica travada', true);
+      return;
+    }
+    salvarCampos({
+      Loja2: val('#fLoja2'),
+      Abertura2: val('#fAbertura2'),
+      Fechado2: val('#fFechado2'),
+      Saida2: val('#fSaida2')
+    }, '2ª loja salva');
   };
 
   $$('.btn-salva-parada').forEach(btn => {
@@ -1311,27 +1350,14 @@ function renderEditar(){
     };
   }
 
-  const salvarRetorno = async (finalizar) => {
-    const campos = {
-      HoraChegadaCD: $('#fHoraCD').value,
-      DataChegada: $('#fDataChegada').value,
-      KmChegada: ($('#fKmChegada').value || '').trim()
-    };
-
-    try{
-      const r = await apiPost({action:'atualizarLancamento', id: LANC.ID, campos});
-      if(r.ok){
-        toast(finalizar ? 'Finalizado / atualizado' : 'Salvo');
-        LANC = await apiGet({action:'getLancamento', id: LANC.ID});
-        renderEditar();
-      }else toast(r.erro || 'Erro ao salvar', true);
-    }catch(e){ toast('Falha de conexão', true); }
-  };
-
-  $('#btnSalvarRetorno').onclick = () => salvarRetorno(true);
-  if($('#btnSalvarRetornoParcial')){
-    $('#btnSalvarRetornoParcial').onclick = () => salvarRetorno(false);
-  }
+  if($('#btnSalvarRetorno')) $('#btnSalvarRetorno').onclick = () => salvarCampos({
+    DieselChegada: val('#fDiesel'),
+    HoraChegadaCD: val('#fHoraCD'),
+    PontoOffMot: val('#fPontoOffMot'),
+    DataChegada: val('#fDataChegada'),
+    KmChegada: val('#fKmChegada'),
+    Observacoes: val('#fObs')
+  }, 'Chegada salva');
 }
 
 /* ======================= START ======================= */
