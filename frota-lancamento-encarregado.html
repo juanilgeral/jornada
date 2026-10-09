@@ -85,6 +85,7 @@
   .pill{
     display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;
   }
+  .pill.programado{background:#243044;color:#9fb4c9;}
   .pill.andamento{background:#3a2f10;color:var(--amber);}
   .pill.rota{background:#132a3c;color:var(--blue);}
   .pill.retorno{background:#2b1f3a;color:#b18ef0;}
@@ -812,7 +813,7 @@ function renderLista(){
     return;
   }
 
-  const ordem = { 'Em andamento':0, 'Em rota / lojas':1, 'Retornando ao CD':2, 'Concluído':3 };
+  const ordem = { 'Programado':0, 'Em andamento':1, 'Em rota / lojas':2, 'Retornando ao CD':3, 'Concluído':4 };
   filtrada.sort((a,b) => {
     const sa = ordem[a.Status] ?? 9;
     const sb = ordem[b.Status] ?? 9;
