@@ -942,10 +942,12 @@ function renderNovo(nomePrefill){
   $('#statusLine').textContent = (currentUser ? currentUser.nome + ' · ' : '') + 'Novo lançamento';
 
   const prefill = String(nomePrefill || '').trim();
+  const nomeLimpo = n => String(n || '').trim().replace(/^['"“”‘’]+|['"“”‘’]+$/g, '').trim();
   const optsMotorista = MOTORISTAS.length
     ? MOTORISTAS.map(n => {
-        const sel = prefill && normalizarNome(n) === normalizarNome(prefill) ? ' selected' : '';
-        return `<option value="${escHtml(n)}"${sel}>${escHtml(n)}</option>`;
+        const limpo = nomeLimpo(n);
+        const sel = prefill && normalizarNome(limpo) === normalizarNome(prefill) ? ' selected' : '';
+        return `<option value="${escHtml(limpo)}"${sel}>${escHtml(limpo)}</option>`;
       }).join('')
     : '<option value="">— digite o nome —</option>';
 
