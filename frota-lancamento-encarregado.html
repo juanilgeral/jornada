@@ -271,6 +271,20 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
 let currentUser = null;
+const FROTAS = [
+  ['063','LBW 8156'],['064','LUV 9296'],['065','KZQ 9648'],['066','LUB 1400'],
+  ['067','LUX 9063'],['068','LSN 1702'],['074','LKK 6551'],['075','KUT 8573'],
+  ['088','KYP 3601'],['091','KPE 2252'],['092','LSF 4199'],['093','KVF 3715'],
+  ['094','KQT 1919'],['095','LTJ 4440'],['096','KQS 2672'],['097','LRX 4831'],
+  ['098','LRX 4828'],['099','LRX 4830'],['100','LRX 4829'],['101','LRX 4832'],
+  ['102','LRT 4821'],['103','KWB 9779'],['104','LRC 3089'],['105','KPU 7450'],
+  ['106','LSZ 5959'],['107','LRR 8757'],['108','LSM 7748'],['109','LSM 7749'],
+  ['110','LSM 7750'],['111','KRO 8527'],['112','KRO 8528'],['113','KXU 6988'],
+  ['114','KXU 6989'],['115','KXW 7716'],['116','LSQ 6092'],['117','KRR 2728'],
+  ['118','LSQ 6093'],['119','LRP 8A18'],['120','LTF 9726'],['121','KRZ 8143'],
+  ['122','DPF 7I23'],['123','ATJ 3F42'],['124','ATI 4G85'],['125','OWO 2F73']
+];
+function veiculoFmt(ft, placa){ return String(ft).padStart(3,'0') + ' ' + String(placa).trim().toUpperCase(); }
 let PLACAS = [];
 let MOTORISTAS = [];
 let LISTA = [];
@@ -936,23 +950,10 @@ function renderNovo(nomePrefill){
     : '<option value="">— digite o nome —</option>';
 
   let optsPlaca = '<option value="">Selecione a placa</option>';
-  if(PLACAS.length){
-    const porOp = {};
-    PLACAS.forEach(p => {
-      const op = p.op || p.OP || 'Geral';
-      if(!porOp[op]) porOp[op] = [];
-      porOp[op].push(p);
-    });
-    Object.keys(porOp).sort().forEach(op => {
-      optsPlaca += `<optgroup label="${escHtml(op)}">`;
-      porOp[op].forEach(p => {
-        const placa = p.placa || p.PLACA || p;
-        const frota = p.frota || p.FT || '';
-        optsPlaca += `<option value="${escHtml(placa)}">${escHtml(placa)}${frota ? ' — Frota '+frota : ''}</option>`;
-      });
-      optsPlaca += '</optgroup>';
-    });
-  }
+  FROTAS.forEach(([ft, placa]) => {
+    const veic = veiculoFmt(ft, placa);
+    optsPlaca += `<option value="${escHtml(veic)}">${escHtml(veic)}</option>`;
+  });
 
   app.innerHTML = `
     <div class="card">
