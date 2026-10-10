@@ -1272,7 +1272,15 @@ function renderEditar(){
       return;
     }
     try{
-      const r = await apiPost({action:'atualizarLancamento', id: LANC.ID, campos});
+      const r = await apiPost({
+        action:'atualizarLancamento',
+        id: LANC.ID,
+        Motorista: LANC.Motorista,
+        Data: LANC.Data,
+        Operacao: LANC.Operacao,
+        Placa: LANC.Placa,
+        campos
+      });
       if(r.ok){
         toast(okMsg || 'Dados salvos');
         LANC = await apiGet({action:'getLancamento', id: LANC.ID});
