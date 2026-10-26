@@ -1377,6 +1377,40 @@ function renderEditar(){
   }, 'Chegada salva');
 }
 
+  async function carregarMotoristasDoCSV() {
+  try {
+    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQU606Dbi9ZWn1RSpKGn9Daey3XAsTWRDgstXI3ARb6Na2UF-nZ1hkfB7EVFwzfvQ/pub?gid=182320512&single=true&output=csv&cachebust=' + Date.now();
+    const resp = await fetch(url);
+    const text = await resp.text();
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) return [];
+    const sep = lines[0].includes(';') ? ';' : ',';
+    const lista = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+      // Coluna L = 11 (função), M = 12 (guerra), O = 14 (situação) — ajuste se precisar
+      const situacao = (cols[14] || '').toUpperCase();
+      if (situacao !== 'ATIVO') continue;
+      const nome = cols[12] || '';
+      if (!nome) continue;
+      lista.push({ nome: nome });
+    }
+    const unicos = [];
+    const vistos = new Set();
+    for (const m of lista) {
+      const key = m.nome.toUpperCase();
+      if (!vistos.has(key)) {
+        vistos.add(key);
+        unicos.push(m);
+      }
+    }
+    return unicos.sort((a, b) => a.nome.localeCompare(b.nome));
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+  
 /* ======================= START ======================= */
 (async function boot(){
   // pré-carrega usuários da planilha enquanto mostra login
