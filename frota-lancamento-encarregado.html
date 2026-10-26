@@ -1393,18 +1393,18 @@ function renderEditar(){
       if (situacao !== 'ATIVO') continue;
       const nome = cols[12] || '';
       if (!nome) continue;
-      lista.push({ nome: nome });
+      lista.push(nome);
     }
-    const unicos = [];
+        const unicos = [];
     const vistos = new Set();
-    for (const m of lista) {
-      const key = m.nome.toUpperCase();
+    for (const nome of lista) {
+      const key = nome.toUpperCase();
       if (!vistos.has(key)) {
         vistos.add(key);
-        unicos.push(m);
+        unicos.push(nome);
       }
     }
-    return unicos.sort((a, b) => a.nome.localeCompare(b.nome));
+    return unicos.sort((a, b) => a.localeCompare(b));
   } catch (e) {
     console.error(e);
     return [];
