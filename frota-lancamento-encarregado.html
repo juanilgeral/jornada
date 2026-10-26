@@ -1386,11 +1386,13 @@ function renderEditar(){
     if (lines.length < 2) return [];
     const sep = lines[0].includes(';') ? ';' : ',';
     const lista = [];
-    for (let i = 1; i < lines.length; i++) {
+        for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
-      // Coluna L = 11 (função), M = 12 (guerra), O = 14 (situação) — ajuste se precisar
+      // Coluna L = 11 (função), M = 12 (guerra), O = 14 (situação)
+      const funcao = (cols[11] || '').toUpperCase();
       const situacao = (cols[14] || '').toUpperCase();
       if (situacao !== 'ATIVO') continue;
+      if (!funcao.includes('MOTORISTA')) continue;   // só motoristas
       const nome = cols[12] || '';
       if (!nome) continue;
       lista.push(nome);
