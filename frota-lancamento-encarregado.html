@@ -658,7 +658,7 @@ async function initApp(){
     PLACAS = await apiGet({action:'getPlacas'}) || [];
   }catch(e){ PLACAS = []; }
   try{
-    MOTORISTAS = await apiGet({action:'getMotoristas'}) || [];
+    MOTORISTAS = await carregarMotoristasDoCSV();
   }catch(e){ MOTORISTAS = []; }
 
   $('#btnVoltarLista').onclick = () => {
@@ -1390,6 +1390,7 @@ function renderEditar(){
     setTimeout(() => $('#login-user').focus(), 100);
   }
 })();
+  (async function boot(){
 </script>
 </body>
 </html>
